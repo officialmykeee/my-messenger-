@@ -23,6 +23,7 @@
             flex-direction: column;
             font-family: Arial, sans-serif;
             position: relative;
+            padding-bottom: 10px; /* Added to move message bar up slightly from bottom */
         }
         .message-container {
             display: flex;
@@ -199,26 +200,14 @@
         const navButtons = document.querySelectorAll('.emoji-picker-nav button');
 
         let currentTab = 0; // 0: Emoji, 1: Gifs, 2: Stickers
-        let keyboardHeight = 0; // To store the calculated keyboard height
-
-        // Function to calculate and apply keyboard push-up, aligning input with keyboard
-        function adjustForKeyboard() {
-            const viewportHeight = window.innerHeight;
-            const fullHeight = window.screen.height;
-            keyboardHeight = fullHeight - viewportHeight; // Approximate keyboard height
-            if (keyboardHeight > 0) {
-                const messageBarHeight = 40; // Height of message-bar in pixels
-                messageContainer.style.transform = `translateY(-${keyboardHeight - messageBarHeight}px)`; // Align input just above keyboard
-            } else {
-                messageContainer.style.transform = 'translateY(0)';
-            }
-        }
+        let isEmojiPickerActive = false; // Track if emoji picker is active
 
         smileIcon.addEventListener('click', () => {
             emojiPicker.classList.add('active');
             smileIcon.style.display = 'none'; // Hide smile icon
             keyboardToggleIcon.style.display = 'flex'; // Show keyboard toggle icon
             inputField.blur(); // Hide keyboard
+            isEmojiPickerActive = true; // Mark picker as active
             const pickerHeight = emojiPicker.offsetHeight;
             messageContainer.style.transform = `translateY(-${pickerHeight}px) translateY(-11px)`;
             emojiPicker.style.bottom = '0'; // Ensure it touches the bottom
@@ -228,19 +217,20 @@
             emojiPicker.classList.remove('active');
             smileIcon.style.display = 'flex'; // Show smile icon
             keyboardToggleIcon.style.display = 'none'; // Hide keyboard toggle icon
-            messageContainer.style.transform = 'translateY(0)'; // Reset transform
-            adjustForKeyboard(); // Calculate and apply push-up based on keyboard height
+            messageContainer.style.transform = 'translateY(0)';
             inputField.focus(); // Show device keyboard
+            isEmojiPickerActive = false; // Mark picker as inactive
         });
 
         // Close emoji picker when clicking outside
         document.addEventListener('click', (e) => {
-            if (!messageBar.contains(e.target) && !emojiPicker.contains(e.target)) {
+            if (!messageBar.contains(e.target) && !emojiPicker.contains(e.target) && e.target !== inputField) {
                 emojiPicker.classList.remove('active');
                 smileIcon.style.display = 'flex'; // Show smile icon
                 keyboardToggleIcon.style.display = 'none'; // Hide keyboard toggle icon
                 messageContainer.style.transform = 'translateY(0)';
                 inputField.blur(); // Hide keyboard
+                isEmojiPickerActive = false; // Mark picker as inactive
             }
         });
 
@@ -267,20 +257,27 @@
             }
         });
 
-        // Handle input focus to mimic WhatsApp behavior and adjust for keyboard
+        // Handle input focus to close emoji picker and switch to typing
         inputField.addEventListener('focus', () => {
-            if (!emojiPicker.classList.contains('active')) {
-                adjustForKeyboard(); // Dynamically adjust based on keyboard height
-            }
-        });
-        inputField.addEventListener('blur', () => {
-            if (!emojiPicker.classList.contains('active')) {
-                messageContainer.style.transform = 'translateY(0)';
+            if (isEmojiPickerActive) {
+                // Close emoji picker when input is clicked
+                emojiPicker.classList.remove('active');
+                smileIcon.style.display = 'flex'; // Show smile icon
+                keyboardToggleIcon.style.display = 'none'; // Hide keyboard toggle icon
+                messageContainer.style.transform = 'translateY(0)'; // Reset position
+                isEmojiPickerActive = false; // Mark picker as inactive
+                // Input is already focused due to click, so no need to call inputField.focus()
+            } else {
+                messageContainer.style.transform = 'translateY(0)'; // Prevent upward movement
             }
         });
 
-        // Adjust when window resizes (e.g., keyboard appears/disappears)
-        window.addEventListener('resize', adjustForKeyboard);
+        inputField.addEventListener('blur', () => {
+            if (!isEmojiPickerActive) {
+                messageContainer.style.transform = 'translateY(0)';
+            }
+            // No change needed if emojiPicker is active, as it handles its own positioning
+        });
     </script>
 </body>
-  </html>
+</html>
