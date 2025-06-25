@@ -6,6 +6,9 @@
   <title>Message Bar</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
   <style>
+    :root {
+      --viewport-height: 100vh;
+    }
     html, body {
       height: 100%;
       overflow: hidden;
@@ -14,6 +17,8 @@
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+      font: inherit;
+      line-height: normal;
     }
     body {
       margin: 0;
@@ -44,7 +49,6 @@
       border-radius: 12px;
       padding: 0 10px;
       box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-      margin-bottom: 0;
       transform: translateX(-22px);
       transition: transform 0.3s ease;
     }
@@ -114,12 +118,12 @@
         margin-left: -120px;
       }
     }
-
     .emoji-picker {
       position: fixed;
       left: 0;
+      bottom: 0;
       width: 100%;
-      max-height: calc(100vh - 40px);
+      max-height: calc(var(--viewport-height) - 40px);
       background-color: #f0f0f0;
       border-top-left-radius: 10px;
       border-top-right-radius: 10px;
@@ -133,7 +137,6 @@
     .emoji-picker.active {
       transform: translateY(0);
     }
-
     .emoji-picker-nav {
       display: flex;
       justify-content: space-around;
@@ -157,7 +160,6 @@
     .emoji-picker-nav button.active {
       color: #075e54;
     }
-
     .emoji-content {
       padding: 10px;
       display: grid;
@@ -186,7 +188,6 @@
     </div>
     <i class="fas fa-microphone icon mic-icon"></i>
   </div>
-
   <div class="emoji-picker" id="emojiPicker">
     <div class="emoji-picker-nav">
       <button class="active">Emoji</button>
@@ -202,7 +203,6 @@
       <span class="emoji">😎</span>
     </div>
   </div>
-
   <script>
     const smileIcon = document.getElementById('smileIcon');
     const keyboardToggleIcon = document.getElementById('keyboardToggleIcon');
@@ -215,14 +215,25 @@
     let currentTab = 0;
     let isEmojiPickerActive = false;
 
+    // Update viewport height
+    function updateViewportHeight() {
+      document.documentElement.style.setProperty('--viewport-height', `${window.innerHeight}px`);
+    }
+    window.addEventListener('resize', updateViewportHeight);
+    window.addEventListener('load', updateViewportHeight);
+    updateViewportHeight();
+
     smileIcon.addEventListener('click', () => {
       emojiPicker.classList.add('active');
       smileIcon.style.display = 'none';
       keyboardToggleIcon.style.display = 'flex';
       chatInput.blur();
       isEmojiPickerActive = true;
-      const pickerHeight = emojiPicker.offsetHeight;
-      messageContainer.style.transform = `translateY(-${pickerHeight + 11}px)`;
+      requestAnimationFrame(() => {
+        const pickerHeight = emojiPicker.offsetHeight;
+        const buffer = 10;
+        messageContainer.style.transform = `translateY(-${pickerHeight + buffer}px)`;
+      });
     });
 
     keyboardToggleIcon.addEventListener('click', () => {
