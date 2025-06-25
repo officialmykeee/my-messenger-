@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Message Bar</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        html, body {
+            height: 100%;
+            overflow: hidden; /* Prevent scroll */
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: flex-end;
+            flex-direction: column;
+            font-family: Arial, sans-serif;
+            position: relative;
+            padding-bottom: 10px; /* Move message bar up slightly from bottom */
+        }
+        .message-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 0 10px;
+            position: relative;
+            transition: transform 0.3s ease;
+        }
+        .message-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 268px;
+            height: 40px;
+            background-color: #f1f1f1;
+            border-radius: 12px;
+            padding: 0 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            margin-bottom: 0; /* Removed margin to bring picker closer */
+            transform: translateX(-22px);
+            transition: transform 0.3s ease;
+        }
+        .chat-input {
+            flex-grow: 1;
+            border: none;
+            background: none;
+            outline: none;
+            font-size: 16px;
+            color: #888;
+            padding-left: 10px;
+            line-height: 40px; /* Align text vertically within the bar */
+            overflow: hidden; /* Prevent scrolling within div */
+            white-space: nowrap; /* Prevent line breaks */
+            text-overflow: ellipsis; /* Handle overflow text */
+        }
+        .chat-input:empty::before {
+            content: attr(data-placeholder);
+            color: #888;
+            pointer-events: none; /* Prevent interaction with placeholder */
+        }
+        /* Base icon styles */
+        .icon {
+            width: 30px;
+            height: 30px;
+            font-size: 22px;
+            color: black;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.3s ease, transform 0.3s ease;
+        }
+        .icon:hover {
+            color: #007bff;
+            transform: scale(1.1);
+        }
+        /* Custom icon styles */
+        .paperclip-icon {
+            top: -3px;
+            position: relative;
+        }
+        .smile-icon {
+            margin-left: -150px;
+            position: relative;
+            top: -3px;
+        }
+        .mic-icon {
+            margin-left: 10px;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background-color: #749cbf; /* Changed background color */
+            color: #fff; /* Changed icon color to white */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .keyboard-toggle-icon {
+            margin-left: -150px;
+            position: relative;
+            top: -3px;
+            display: none;
+        }
+        .message-bar .icon {
+            margin-top: 9px;
+        }
+        @media (max-width: 400px) {
+            .smile-icon {
+                margin-left: -120px;
+            }
+            .keyboard-toggle-icon {
+                margin-left: -120px;
+            }
+        }
+
+        /* Emoji Picker Styles */
+        .emoji-picker {
+            display: none;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: auto;
+            max-height: calc(100vh - 40px);
+            background-color: #f0f0f0;
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
+            overflow-y: auto;
+            padding: 0;
+            z-index: 1000;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+        .emoji-picker.active {
+            display: block;
+            transform: translateY(0);
+        }
+
+        /* Navbar Styles */
+        .emoji-picker-nav {
+            display: flex;
+            justify-content: space-around;
+            background-color: #e0e0e0;
+            padding: 5px 0;
+            border-bottom: 1px solid #ccc;
+        }
+        .emoji-picker-nav button {
+            flex: 1;
+            border: none;
+            background: none;
+            font-size: 14px;
+            color: #333;
+            cursor: pointer;
+            padding: 5px;
+            text-align: center;
+        }
+        .emoji-picker-nav button:hover {
+            color: #007bff;
+        }
+        .emoji-picker-nav button.active {
+            color: #075e54;
+        }
+
+        /* Emoji Content Area */
+        .emoji-content {
+            padding: 10px;
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 5px;
+            min-height: 200px;
+        }
+    </style>
+</head>
+<body>
+    <div class="message-container" id="messageContainer">
+        <div class="message-bar" id="messageBar">
+            <i class="fas fa-paperclip icon paperclip-icon"></i>
+            <div contenteditable="true" class="chat-input" data-placeholder="Type a message..." id="chatInput"></div>
+            <i class="far fa-smile icon smile-icon" id="smileIcon"></i>
+            <i class="fas fa-keyboard icon keyboard-toggle-icon" id="keyboardToggleIcon"></i>
+        </div>
+        <i class="fas fa-microphone icon mic-icon"></i>
+    </div>
+    <div class="emoji-picker" id="emojiPicker">
+        <div class="emoji-picker-nav">
+            <button class="active">Emoji</button>
+            <button>Gifs</button>
+            <button>Stickers</button>
+        </div>
+        <div class="emoji-content">
+            <!-- Empty for now, content can be added later -->
+        </div>
+    </div>
+
+    <script>
+        const smileIcon = document.getElementById('smileIcon');
+        const keyboardToggleIcon = document.getElementById('keyboardToggleIcon');
+        const messageBar = document.getElementById('messageBar');
+        const chatInput = document.getElementById('chatInput');
+        const emojiPicker = document.getElementById('emojiPicker');
+        const messageContainer = document.getElementById('messageContainer');
+        const navButtons = document.querySelectorAll('.emoji-picker-nav button');
+
+        let currentTab = 0; // 0: Emoji, 1: Gifs, 2: Stickers
+        let isEmojiPickerActive = false; // Track if emoji picker is active
+
+        smileIcon.addEventListener('click', () => {
+            emojiPicker.classList.add('active');
+            smileIcon.style.display = 'none';
+            keyboardToggleIcon.style.display = 'flex';
+            chatInput.blur();
+            isEmojiPickerActive = true;
+            const pickerHeight = emojiPicker.offsetHeight;
+            messageContainer.style.transform = `translateY(-${pickerHeight}px) translateY(-11px)`;
+            emojiPicker.style.bottom = '0';
+        });
+
+        keyboardToggleIcon.addEventListener('click', () => {
+            emojiPicker.classList.remove('active');
+            smileIcon.style.display = 'flex';
+            keyboardToggleIcon.style.display = 'none';
+            messageContainer.style.transform = 'translateY(0)';
+            chatInput.focus();
+            isEmojiPickerActive = false;
+        });
+
+        // Close emoji picker when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!messageBar.contains(e.target) && !emojiPicker.contains(e.target) && e.target !== chatInput) {
+                emojiPicker.classList.remove('active');
+                smileIcon.style.display = 'flex';
+                keyboardToggleIcon.style.display = 'none';
+                messageContainer.style.transform = 'translateY(0)';
+                chatInput.blur();
+                isEmojiPickerActive = false;
+            }
+        });
+
+        // Navigate between tabs
+        navButtons.forEach((button, index) => {
+            button.addEventListener('click', () => {
+                navButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                currentTab = index;
+                if (currentTab > 2) currentTab = 0;
+            });
+        });
+
+        // Add emoji to chat input when clicked
+        emojiPicker.addEventListener('click', (e) => {
+            if (e.target.classList.contains('emoji')) {
+                chatInput.innerText += e.target.textContent;
+                // Do not refocus to avoid keyboard
+                const range = document.createRange();
+                const selection = window.getSelection();
+                range.selectNodeContents(chatInput);
+                range.collapse(false);
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+        });
+
+        // Handle input focus to close emoji picker and switch to typing
+        chatInput.addEventListener('focus', () => {
+            if (isEmojiPickerActive) {
+                emojiPicker.classList.remove('active');
+                smileIcon.style.display = 'flex';
+                keyboardToggleIcon.style.display = 'none';
+                messageContainer.style.transform = 'translateY(0)';
+                isEmojiPickerActive = false;
+                // Input is already focused due to click
+            } else {
+                messageContainer.style.transform = 'translateY(0)';
+            }
+        });
+
+        chatInput.addEventListener('blur', () => {
+            if (!isEmojiPickerActive) {
+                messageContainer.style.transform = 'translateY(0)';
+            }
+        });
+    </script>
+</body>
+</html>
