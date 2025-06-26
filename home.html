@@ -308,6 +308,20 @@
       color: #000;
       margin-right: 10px;
       cursor: pointer;
+      transition: color 0.2s ease;
+    }
+
+    .recording-interface .cancel-btn.active {
+      color: #ff0000;
+      animation: shake 0.3s ease-in-out;
+    }
+
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      25% { transform: translateX(-3px); }
+      50% { transform: translateX(3px); }
+      75% { transform: translateX(-3px); }
+      100% { transform: translateX(0); }
     }
 
     .recording-interface .timer {
@@ -541,6 +555,11 @@
       .recording-interface .cancel-btn {
         font-size: 14px;
         margin-right: 8px;
+      }
+
+      .recording-interface .cancel-btn.active {
+        color: #ff0000;
+        animation: shake 0.3s ease-in-out;
       }
 
       .recording-interface .timer {
@@ -843,6 +862,7 @@
     let initialTouchY;
     let initialTouchX;
     let isLocked = false;
+    let isDeleteActive = false;
     let micIconStartX;
     let recordingDiv = null;
     let pauseIcon = null;
@@ -958,6 +978,7 @@
           console.log('Voice note sent:', audioBlob);
           isRecording = false;
           isPaused = false;
+          isDeleteActive = false;
           elapsedTime = 0;
           removeRecordingInterface();
           hidePauseIcon();
@@ -990,6 +1011,10 @@
       } catch (error) {
         console.error('Error accessing microphone:', error);
         alert('Please allow microphone access to record audio.');
+        isRecording = false;
+        isDeleteActive = false;
+        removeRecordingInterface();
+        hidePauseIcon();
       }
     }
 
@@ -997,6 +1022,7 @@
       if (mediaRecorder && isRecording) {
         mediaRecorder.stop();
         clearInterval(timerInterval);
+        isDeleteActive = false;
       }
     }
 
@@ -1017,11 +1043,34 @@
         const currentTouchX = e.touches[0].clientX;
         const deltaY = initialTouchY - currentTouchY;
         const deltaX = currentTouchX - initialTouchX;
-        micIcon.style.transform = `translate(${deltaX}px, ${-deltaY}px)`;
-        if (deltaY > 50) {
+
+        // Only allow vertical movement for lock (upward slide)
+        if (deltaX < 0) {
+          micIcon.style.transform = deltaY > 0 ? `translate(0, ${-deltaY}px)` : `translate(0, 0)`;
+        } else {
+          micIcon.style.transform = deltaY > 0 ? `translate(${deltaX}px, ${-deltaY}px)` : `translate(${deltaX}px, 0)`;
+        }
+
+        const cancelBtn = document.getElementById('cancelBtn');
+        if (deltaX < -50) { // Slide left to activate delete
+          isDeleteActive = true;
+          if (cancelBtn) {
+            cancelBtn.classList.add('active');
+          }
+        } else {
+          isDeleteActive = false;
+          if (cancelBtn) {
+            cancelBtn.classList.remove('active');
+          }
+        }
+
+        if (deltaY > 50 && !isDeleteActive) { // Slide up to lock
           isLocked = true;
           micIcon.classList.add('locked');
           showPauseIcon();
+          if (cancelBtn) {
+            cancelBtn.classList.remove('active');
+          }
           console.log('Recording locked');
         }
       }
@@ -1030,9 +1079,26 @@
     micIcon.addEventListener('touchend', (e) => {
       e.preventDefault();
       if (isRecording && !isLocked) {
-        stopRecording();
-        console.log('Voice note sent on release');
-        micIcon.style.transform = 'translate(0, 0)';
+        if (isDeleteActive) {
+          stopRecording();
+          console.log('Recording discarded');
+          isRecording = false;
+          isDeleteActive = false;
+          isPaused = false;
+          elapsedTime = 0;
+          micIcon.classList.remove('locked');
+          micIcon.style.transform = 'translate(0, 0)';
+          hidePauseIcon();
+          removeRecordingInterface();
+          const cancelBtn = document.getElementById('cancelBtn');
+          if (cancelBtn) {
+            cancelBtn.classList.remove('active');
+          }
+        } else {
+          stopRecording();
+          console.log('Voice note sent on release');
+          micIcon.style.transform = 'translate(0, 0)';
+        }
       }
     });
 
@@ -1053,10 +1119,13 @@
         isRecording = false;
         isLocked = false;
         isPaused = false;
+        isDeleteActive = false;
         elapsedTime = 0;
         micIcon.classList.remove('locked');
         micIcon.style.transform = 'translate(0, 0)';
         hidePauseIcon();
+        removeRecordingInterface();
+        e.target.classList.remove('active');
       } else if (e.target.id === 'pauseIcon' && isRecording && isLocked) {
         togglePauseResume();
       }
