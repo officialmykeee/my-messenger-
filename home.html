@@ -219,6 +219,29 @@
       padding: 5px;
     }
 
+    .mic-container {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      background-color: #749cbf;
+      border-radius: 50%;
+      margin: 0 8px;
+      cursor: pointer;
+      position: relative;
+      transition: transform 0.1s ease, background-color 0.2s ease;
+    }
+
+    .mic-container.locked {
+      background-color: #4a90e2;
+    }
+
+    .mic-container .fa-microphone {
+      font-size: 20px;
+      color: #fff;
+    }
+
     .pause-icon {
       font-size: 22px;
       color: #8696a0;
@@ -481,6 +504,16 @@
         margin: 0 6px;
       }
 
+      .mic-container {
+        width: 32px;
+        height: 32px;
+        margin: 0 6px;
+      }
+
+      .mic-container .fa-microphone {
+        font-size: 18px;
+      }
+
       .pause-icon {
         font-size: 20px;
         margin: 0 6px;
@@ -615,7 +648,9 @@
     <i class="fas fa-smile icon" id="smileToggler" onclick="toggleEmojiPicker()"></i>
     <textarea class="input-field" placeholder="Message" id="inputField" rows="1"></textarea>
     <i class="fas fa-paperclip icon" id="pinIcon"></i>
-    <i class="fas fa-microphone icon" id="micIcon"></i>
+    <div class="mic-container" id="micIcon">
+      <i class="fas fa-microphone"></i>
+    </div>
   </div>
   <div class="emoji-picker" id="emojiPicker">
     <div class="emoji-picker-navbar">
@@ -792,23 +827,9 @@
         e.preventDefault();
         const message = this.value.trim();
         if (message) {
-          const chatContainer = document.getElementById('chatContainer');
-          const newMessage = document.createElement('div');
-          newMessage.classList.add('message', 'sent');
-          newMessage.innerHTML = `
-            <div class="bubble-container">
-              <div class="bubble">${message}</div>
-            </div>
-            <div class="profile">
-              <span class="timestamp">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-              <span class="check">✓</span>
-            </div>
-          `;
-          chatContainer.appendChild(newMessage);
+          console.log('Message sent:', message);
           this.value = '';
-          setTimeout(() => {
-            scrollToLatestMessage();
-          }, 50);
+          this.focus();
         }
       }
     });
@@ -828,16 +849,16 @@
     let elapsedTime = 0;
 
     function createPauseIcon() {
-      if (!pauseIcon) {
-        pauseIcon = document.createElement('i');
-        pauseIcon.classList.add('fas', 'fa-pause', 'pause-icon');
-        pauseIcon.id = 'pauseIcon';
-        inputContainer.appendChild(pauseIcon);
-      }
+      pauseIcon = document.createElement('i');
+      pauseIcon.classList.add('fas', 'fa-pause', 'pause-icon');
+      pauseIcon.id = 'pauseIcon';
+      inputContainer.appendChild(pauseIcon);
     }
 
     function showPauseIcon() {
-      createPauseIcon();
+      if (!pauseIcon) {
+        createPauseIcon();
+      }
       pauseIcon.classList.add('active');
     }
 
@@ -933,7 +954,7 @@
 
         mediaRecorder.onstop = () => {
           const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-          stream.getTracks().forEach((track) => track.stop());
+          stream.getTracks().forEach(track => track.stop());
           console.log('Voice note sent:', audioBlob);
           isRecording = false;
           isPaused = false;
@@ -943,9 +964,6 @@
           micIcon.classList.remove('locked');
           micIcon.style.transform = 'translate(0, 0)';
           isLocked = false;
-          setTimeout(() => {
-            scrollToLatestMessage();
-          }, 50);
         };
 
         mediaRecorder.onpause = () => {
@@ -972,9 +990,6 @@
       } catch (error) {
         console.error('Error accessing microphone:', error);
         alert('Please allow microphone access to record audio.');
-        isRecording = false;
-        removeRecordingInterface();
-        hidePauseIcon();
       }
     }
 
@@ -1042,7 +1057,6 @@
         micIcon.classList.remove('locked');
         micIcon.style.transform = 'translate(0, 0)';
         hidePauseIcon();
-        removeRecordingInterface();
       } else if (e.target.id === 'pauseIcon' && isRecording && isLocked) {
         togglePauseResume();
       }
@@ -1050,14 +1064,6 @@
 
     window.addEventListener('load', () => {
       scrollToLatestMessage();
-    });
-
-    emojiPickerBody.addEventListener('click', (e) => {
-      if (e.target.classList.contains('sticker')) {
-        inputField.value += e.target.alt;
-        inputField.focus();
-        toggleEmojiPicker();
-      }
     });
   </script>
 </body>
