@@ -232,6 +232,7 @@
       align-items: center;
       position: relative;
       transition: transform 0.1s ease, color 0.2s ease;
+      animation: echo 0.5s ease-in-out infinite;
     }
 
     .icon.red-dot.trash-icon {
@@ -240,10 +241,16 @@
       font-size: 24px;
     }
 
+    @keyframes echo {
+      0% { transform: scale(1) translate(0, 0); }
+      50% { transform: scale(1.05) translate(0, -2px); }
+      100% { transform: scale(1) translate(0, 0); }
+    }
+
     @keyframes openClose {
-      0% { transform: scale(0.8); } /* Covers itself (scales down) */
-      50% { transform: scale(1.2); } /* Bounces open (scales up) */
-      100% { transform: scale(0.8); } /* Returns to covered state */
+      0% { transform: scale(0.8); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(0.8); }
     }
 
     @keyframes shake {
@@ -939,9 +946,9 @@
 
     function showPauseIcon() {
       if (!pauseIcon) {
-        createPauseIcon();
-      }
-      pauseIcon.classList.add('active');
+      createPauseIcon();
+    }
+    pauseIcon.classList.add('active');
     }
 
     function hidePauseIcon() {
