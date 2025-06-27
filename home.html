@@ -219,6 +219,41 @@
       padding: 5px;
     }
 
+    .icon.smile-toggled {
+      display: none;
+    }
+
+    .icon.red-dot {
+      font-size: 24px;
+      color: #ff0000;
+      margin: 0 8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      position: relative;
+      transition: transform 0.1s ease, color 0.2s ease;
+    }
+
+    .icon.red-dot.trash-icon {
+      color: #ff0000;
+      animation: openClose 0.8s ease-in-out infinite, shake 0.3s ease-in-out infinite;
+      font-size: 24px;
+    }
+
+    @keyframes openClose {
+      0% { transform: scale(0.8); } /* Covers itself (scales down) */
+      50% { transform: scale(1.2); } /* Bounces open (scales up) */
+      100% { transform: scale(0.8); } /* Returns to covered state */
+    }
+
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      50% { transform: translateX(5px); }
+      75% { transform: translateX(-5px); }
+      100% { transform: translateX(0); }
+    }
+
     .mic-container {
       display: inline-flex;
       align-items: center;
@@ -230,7 +265,21 @@
       margin: 0 8px;
       cursor: pointer;
       position: relative;
-      transition: transform 0.1s ease, background-color 0.2s ease;
+      transition: transform 0.1s ease, background-color 0.2s ease, width 0.2s ease, height 0.2s ease;
+    }
+
+    .mic-container.recording {
+      width: 60px;
+      height: 60px;
+      background-color: #ff0000;
+      position: absolute;
+      right: -10px;
+      animation: pulse 1.5s infinite;
+    }
+
+    .mic-container.recording .fa-microphone {
+      font-size: 30px;
+      color: #fff;
     }
 
     .mic-container.locked {
@@ -240,6 +289,12 @@
     .mic-container .fa-microphone {
       font-size: 20px;
       color: #fff;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
     }
 
     .pause-icon {
@@ -270,9 +325,10 @@
       outline: none;
       min-height: 20px;
       line-height: 1.5;
-      margin: 0 15px;
+      margin: 0 15px 0 8px;
       resize: none;
       box-sizing: border-box;
+      max-width: calc(100% - 80px);
     }
 
     .input-field::placeholder {
@@ -295,39 +351,30 @@
       outline: none;
       min-height: 20px;
       line-height: 1.5;
-      margin: 0 15px;
+      margin: 0 15px 0 8px;
       box-sizing: border-box;
       display: flex;
       align-items: center;
       justify-content: space-between;
       position: relative;
+      max-width: calc(100% - 80px);
     }
 
-    .recording-interface .cancel-btn {
-      font-size: 16px;
-      color: #000;
-      margin-right: 10px;
-      cursor: pointer;
-      transition: color 0.2s ease;
-    }
-
-    .recording-interface .cancel-btn.active {
-      color: #ff0000;
-      animation: shake 0.3s ease-in-out;
-    }
-
-    @keyframes shake {
-      0% { transform: translateX(0); }
-      25% { transform: translateX(-3px); }
-      50% { transform: translateX(3px); }
-      75% { transform: translateX(-3px); }
-      100% { transform: translateX(0); }
+    .recording-interface .cancel-label {
+      font-size: 14px;
+      color: #666;
+      margin-right: auto;
     }
 
     .recording-interface .timer {
       font-size: 16px;
       color: #000;
       font-weight: bold;
+      margin-right: 10px;
+    }
+
+    .recording-interface .cancel-btn {
+      display: none;
     }
 
     .emoji-picker {
@@ -524,6 +571,17 @@
         margin: 0 6px;
       }
 
+      .mic-container.recording {
+        width: 50px;
+        height: 50px;
+        right: -8px;
+        animation: pulse 1.5s infinite;
+      }
+
+      .mic-container.recording .fa-microphone {
+        font-size: 25px;
+      }
+
       .mic-container .fa-microphone {
         font-size: 18px;
       }
@@ -537,8 +595,9 @@
       .input-field {
         padding: 8px 12px;
         font-size: 14px;
-        margin: 0 6px;
+        margin: 0 6px 0 4px;
         min-height: 18px;
+        max-width: calc(100% - 70px);
       }
 
       .input-field::placeholder {
@@ -548,18 +607,13 @@
       .recording-interface {
         padding: 8px 12px;
         font-size: 14px;
-        margin: 0 6px;
+        margin: 0 6px 0 4px;
         min-height: 18px;
+        max-width: calc(100% - 70px);
       }
 
-      .recording-interface .cancel-btn {
-        font-size: 14px;
-        margin-right: 8px;
-      }
-
-      .recording-interface .cancel-btn.active {
-        color: #ff0000;
-        animation: shake 0.3s ease-in-out;
+      .recording-interface .cancel-label {
+        font-size: 12px;
       }
 
       .recording-interface .timer {
@@ -699,7 +753,8 @@
         emojiPicker.classList.remove('active');
         smileToggler.classList.remove('fa-keyboard');
         smileToggler.classList.add('fa-smile');
-        inputField.focus();
+        smileToggler.innerHTML = ''; // Clear to prevent duplication
+        smileTogglerState = 'smile';
       } else {
         const containerHeight = inputContainer.offsetHeight;
         const maxPickerHeight = window.innerHeight - containerHeight;
@@ -709,8 +764,10 @@
         chatContainer.style.marginBottom = `${pickerHeight + containerHeight}px`;
         emojiPicker.style.height = `${pickerHeight}px`;
         emojiPicker.classList.add('active');
-        smileToggler.classList.remove('fa-smile');
+        smileToggler.classList.remove('fa-smile', 'red-dot');
         smileToggler.classList.add('fa-keyboard');
+        smileToggler.innerHTML = ''; // Clear to prevent duplication
+        smileTogglerState = 'keyboard';
       }
 
       setTimeout(() => {
@@ -750,6 +807,8 @@
         emojiPicker.classList.remove('active');
         smileToggler.classList.remove('fa-keyboard');
         smileToggler.classList.add('fa-smile');
+        smileToggler.innerHTML = ''; // Clear to prevent duplication
+        smileTogglerState = 'smile';
       }
       this.focus();
     });
@@ -779,6 +838,8 @@
         emojiPicker.classList.remove('active');
         smileToggler.classList.remove('fa-keyboard');
         smileToggler.classList.add('fa-smile');
+        smileToggler.innerHTML = ''; // Clear to prevent duplication
+        smileTogglerState = 'smile';
         inputField.focus();
       }
     });
@@ -867,6 +928,7 @@
     let recordingDiv = null;
     let pauseIcon = null;
     let elapsedTime = 0;
+    let smileTogglerState = 'smile'; // Track state: 'smile', 'keyboard', 'dot', or 'waste'
 
     function createPauseIcon() {
       pauseIcon = document.createElement('i');
@@ -901,8 +963,8 @@
           elapsedTime = elapsed;
           const minutes = Math.floor(elapsed / 60);
           const seconds = elapsed % 60;
-          timerDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-        }, 1000);
+          timerDisplay.textContent = `${minutes}:${(seconds / 10).toFixed(1).padStart(5, '0').slice(0, -1)}`;
+        }, 100);
       } else {
         mediaRecorder.pause();
         isPaused = true;
@@ -934,19 +996,20 @@
       recordingDiv.style.alignItems = 'center';
       recordingDiv.style.justifyContent = 'space-between';
 
-      const cancelBtn = document.createElement('i');
-      cancelBtn.classList.add('fas', 'fa-trash', 'cancel-btn');
-      cancelBtn.id = 'cancelBtn';
-      recordingDiv.appendChild(cancelBtn);
+      const cancelLabel = document.createElement('span');
+      cancelLabel.classList.add('cancel-label');
+      cancelLabel.textContent = 'Slide to cancel';
+      recordingDiv.appendChild(cancelLabel);
 
       const timer = document.createElement('span');
       timer.classList.add('timer');
       timer.id = 'timer';
-      timer.textContent = '0:00';
+      timer.textContent = '0:00.0';
       recordingDiv.appendChild(timer);
 
       inputField.parentNode.replaceChild(recordingDiv, inputField);
       inputField.classList.add('recording');
+      micIcon.classList.add('recording');
     }
 
     function removeRecordingInterface() {
@@ -959,6 +1022,7 @@
         if (emojiPicker.classList.contains('active')) {
           toggleEmojiPicker();
         }
+        micIcon.classList.remove('recording');
       }
     }
 
@@ -985,6 +1049,19 @@
           micIcon.classList.remove('locked');
           micIcon.style.transform = 'translate(0, 0)';
           isLocked = false;
+          const smileToggler = document.getElementById('smileToggler');
+          const emojiPicker = document.getElementById('emojiPicker');
+          if (emojiPicker.classList.contains('active')) {
+            smileToggler.classList.remove('red-dot', 'trash-icon');
+            smileToggler.classList.add('fa-keyboard');
+            smileToggler.innerHTML = '';
+            smileTogglerState = 'keyboard';
+          } else {
+            smileToggler.classList.remove('red-dot', 'trash-icon');
+            smileToggler.classList.add('fa-smile');
+            smileToggler.innerHTML = '';
+            smileTogglerState = 'smile';
+          }
         };
 
         mediaRecorder.onpause = () => {
@@ -1006,8 +1083,8 @@
           elapsedTime = elapsed;
           const minutes = Math.floor(elapsed / 60);
           const seconds = elapsed % 60;
-          timerDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-        }, 1000);
+          timerDisplay.textContent = `${minutes}:${(seconds / 10).toFixed(1).padStart(5, '0').slice(0, -1)}`;
+        }, 100);
       } catch (error) {
         console.error('Error accessing microphone:', error);
         alert('Please allow microphone access to record audio.');
@@ -1033,6 +1110,19 @@
       micIconStartX = micIcon.getBoundingClientRect().left;
       if (!isRecording && !isLocked) {
         startRecording();
+        const smileToggler = document.getElementById('smileToggler');
+        const emojiPicker = document.getElementById('emojiPicker');
+        if (emojiPicker.classList.contains('active')) {
+          smileToggler.classList.remove('fa-keyboard');
+          smileToggler.classList.add('red-dot');
+          smileToggler.innerHTML = '•';
+          smileTogglerState = 'dot';
+        } else {
+          smileToggler.classList.remove('fa-smile');
+          smileToggler.classList.add('red-dot');
+          smileToggler.innerHTML = '•';
+          smileTogglerState = 'dot';
+        }
       }
     });
 
@@ -1044,33 +1134,31 @@
         const deltaY = initialTouchY - currentTouchY;
         const deltaX = currentTouchX - initialTouchX;
 
-        // Only allow vertical movement for lock (upward slide)
-        if (deltaX < 0) {
-          micIcon.style.transform = deltaY > 0 ? `translate(0, ${-deltaY}px)` : `translate(0, 0)`;
-        } else {
-          micIcon.style.transform = deltaY > 0 ? `translate(${deltaX}px, ${-deltaY}px)` : `translate(${deltaX}px, 0)`;
-        }
+        micIcon.style.transform = deltaY > 0 ? `translate(0, ${-deltaY}px)` : `translate(0, 0)`;
 
-        const cancelBtn = document.getElementById('cancelBtn');
-        if (deltaX < -50) { // Slide left to activate delete
+        const smileToggler = document.getElementById('smileToggler');
+        if (deltaX < -50) {
           isDeleteActive = true;
-          if (cancelBtn) {
-            cancelBtn.classList.add('active');
+          if (smileTogglerState === 'dot') {
+            smileToggler.classList.remove('red-dot');
+            smileToggler.classList.add('red-dot', 'trash-icon');
+            smileToggler.innerHTML = '<i class="bx bxs-trash"></i>';
+            smileTogglerState = 'waste';
           }
         } else {
           isDeleteActive = false;
-          if (cancelBtn) {
-            cancelBtn.classList.remove('active');
+          if (smileTogglerState === 'waste') {
+            smileToggler.classList.remove('trash-icon');
+            smileToggler.classList.add('red-dot');
+            smileToggler.innerHTML = '•';
+            smileTogglerState = 'dot';
           }
         }
 
-        if (deltaY > 50 && !isDeleteActive) { // Slide up to lock
+        if (deltaY > 50 && !isDeleteActive) {
           isLocked = true;
           micIcon.classList.add('locked');
           showPauseIcon();
-          if (cancelBtn) {
-            cancelBtn.classList.remove('active');
-          }
           console.log('Recording locked');
         }
       }
@@ -1078,8 +1166,9 @@
 
     micIcon.addEventListener('touchend', (e) => {
       e.preventDefault();
-      if (isRecording && !isLocked) {
-        if (isDeleteActive) {
+      if (isRecording) {
+        const smileToggler = document.getElementById('smileToggler');
+        if (isDeleteActive && !isLocked) {
           stopRecording();
           console.log('Recording discarded');
           isRecording = false;
@@ -1090,14 +1179,34 @@
           micIcon.style.transform = 'translate(0, 0)';
           hidePauseIcon();
           removeRecordingInterface();
-          const cancelBtn = document.getElementById('cancelBtn');
-          if (cancelBtn) {
-            cancelBtn.classList.remove('active');
+          const emojiPicker = document.getElementById('emojiPicker');
+          if (emojiPicker.classList.contains('active')) {
+            smileToggler.classList.remove('red-dot', 'trash-icon');
+            smileToggler.classList.add('fa-keyboard');
+            smileToggler.innerHTML = '';
+            smileTogglerState = 'keyboard';
+          } else {
+            smileToggler.classList.remove('red-dot', 'trash-icon');
+            smileToggler.classList.add('fa-smile');
+            smileToggler.innerHTML = '';
+            smileTogglerState = 'smile';
           }
         } else {
           stopRecording();
           console.log('Voice note sent on release');
           micIcon.style.transform = 'translate(0, 0)';
+          const emojiPicker = document.getElementById('emojiPicker');
+          if (emojiPicker.classList.contains('active')) {
+            smileToggler.classList.remove('red-dot', 'trash-icon');
+            smileToggler.classList.add('fa-keyboard');
+            smileToggler.innerHTML = '';
+            smileTogglerState = 'keyboard';
+          } else {
+            smileToggler.classList.remove('red-dot', 'trash-icon');
+            smileToggler.classList.add('fa-smile');
+            smileToggler.innerHTML = '';
+            smileTogglerState = 'smile';
+          }
         }
       }
     });
@@ -1109,24 +1218,24 @@
         micIcon.style.transform = 'translate(0, 0)';
         hidePauseIcon();
         isLocked = false;
+        const smileToggler = document.getElementById('smileToggler');
+        const emojiPicker = document.getElementById('emojiPicker');
+        if (emojiPicker.classList.contains('active')) {
+          smileToggler.classList.remove('red-dot', 'trash-icon');
+          smileToggler.classList.add('fa-keyboard');
+          smileToggler.innerHTML = '';
+          smileTogglerState = 'keyboard';
+        } else {
+          smileToggler.classList.remove('red-dot', 'trash-icon');
+          smileToggler.classList.add('fa-smile');
+          smileToggler.innerHTML = '';
+          smileTogglerState = 'smile';
+        }
       }
     });
 
     document.addEventListener('click', (e) => {
-      if (e.target.id === 'cancelBtn' && isRecording) {
-        stopRecording();
-        console.log('Recording discarded');
-        isRecording = false;
-        isLocked = false;
-        isPaused = false;
-        isDeleteActive = false;
-        elapsedTime = 0;
-        micIcon.classList.remove('locked');
-        micIcon.style.transform = 'translate(0, 0)';
-        hidePauseIcon();
-        removeRecordingInterface();
-        e.target.classList.remove('active');
-      } else if (e.target.id === 'pauseIcon' && isRecording && isLocked) {
+      if (e.target.id === 'pauseIcon' && isRecording && isLocked) {
         togglePauseResume();
       }
     });
