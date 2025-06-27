@@ -946,9 +946,9 @@
 
     function showPauseIcon() {
       if (!pauseIcon) {
-      createPauseIcon();
-    }
-    pauseIcon.classList.add('active');
+        createPauseIcon();
+      }
+      pauseIcon.classList.add('active');
     }
 
     function hidePauseIcon() {
@@ -964,14 +964,7 @@
         pauseIcon.classList.remove('fa-play');
         pauseIcon.classList.add('fa-pause');
         startTime = Date.now() - elapsedTime * 1000;
-        timerInterval = setInterval(() => {
-          const timerDisplay = document.getElementById('timer');
-          const elapsed = Math.floor((Date.now() - startTime) / 1000);
-          elapsedTime = elapsed;
-          const minutes = Math.floor(elapsed / 60);
-          const seconds = elapsed % 60;
-          timerDisplay.textContent = `${minutes}:${(seconds / 10).toFixed(1).padStart(5, '0').slice(0, -1)}`;
-        }, 100);
+        timerInterval = setInterval(updateTimer, 100);
       } else {
         mediaRecorder.pause();
         isPaused = true;
@@ -1011,7 +1004,7 @@
       const timer = document.createElement('span');
       timer.classList.add('timer');
       timer.id = 'timer';
-      timer.textContent = '0:00.0';
+      timer.textContent = '0:00.0'; // Initial value
       recordingDiv.appendChild(timer);
 
       inputField.parentNode.replaceChild(recordingDiv, inputField);
@@ -1033,6 +1026,21 @@
       }
     }
 
+    function updateTimer() {
+      const timerDisplay = document.getElementById('timer');
+      if (timerDisplay) {
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        elapsedTime = elapsed;
+        const minutes = Math.floor(elapsed / 60);
+        const seconds = elapsed % 60;
+        const formattedSeconds = seconds < 10 ? `0${seconds}` : seconds;
+        timerDisplay.textContent = `${minutes}:${formattedSeconds}.0`; // Simplified format
+        console.log('Timer updated to:', timerDisplay.textContent); // Debug log
+      } else {
+        console.error('Timer element not found!');
+      }
+    }
+
     async function startRecording() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -1051,6 +1059,7 @@
           isPaused = false;
           isDeleteActive = false;
           elapsedTime = 0;
+          clearInterval(timerInterval);
           removeRecordingInterface();
           hidePauseIcon();
           micIcon.classList.remove('locked');
@@ -1081,22 +1090,13 @@
 
         mediaRecorder.start();
         isRecording = true;
-        startTime = Date.now();
-        createRecordingInterface();
-
-        timerInterval = setInterval(() => {
-          const timerDisplay = document.getElementById('timer');
-          const elapsed = Math.floor((Date.now() - startTime) / 1000);
-          elapsedTime = elapsed;
-          const minutes = Math.floor(elapsed / 60);
-          const seconds = elapsed % 60;
-          timerDisplay.textContent = `${minutes}:${(seconds / 10).toFixed(1).padStart(5, '0').slice(0, -1)}`;
-        }, 100);
       } catch (error) {
         console.error('Error accessing microphone:', error);
         alert('Please allow microphone access to record audio.');
         isRecording = false;
         isDeleteActive = false;
+        elapsedTime = 0;
+        clearInterval(timerInterval);
         removeRecordingInterface();
         hidePauseIcon();
       }
@@ -1105,8 +1105,6 @@
     function stopRecording() {
       if (mediaRecorder && isRecording) {
         mediaRecorder.stop();
-        clearInterval(timerInterval);
-        isDeleteActive = false;
       }
     }
 
@@ -1116,20 +1114,30 @@
       initialTouchX = e.touches[0].clientX;
       micIconStartX = micIcon.getBoundingClientRect().left;
       if (!isRecording && !isLocked) {
-        startRecording();
-        const smileToggler = document.getElementById('smileToggler');
-        const emojiPicker = document.getElementById('emojiPicker');
-        if (emojiPicker.classList.contains('active')) {
-          smileToggler.classList.remove('fa-keyboard');
-          smileToggler.classList.add('red-dot');
-          smileToggler.innerHTML = '•';
-          smileTogglerState = 'dot';
-        } else {
-          smileToggler.classList.remove('fa-smile');
-          smileToggler.classList.add('red-dot');
-          smileToggler.innerHTML = '•';
-          smileTogglerState = 'dot';
-        }
+        startTime = Date.now();
+        elapsedTime = 0;
+        createRecordingInterface(); // Create interface immediately
+        timerInterval = setInterval(updateTimer, 100); // Start timer immediately
+        console.log('Timer interval started at:', new Date().toISOString()); // Debug log
+        startRecording().then(() => {
+          const smileToggler = document.getElementById('smileToggler');
+          const emojiPicker = document.getElementById('emojiPicker');
+          if (emojiPicker.classList.contains('active')) {
+            smileToggler.classList.remove('fa-keyboard');
+            smileToggler.classList.add('red-dot');
+            smileToggler.innerHTML = '•';
+            smileTogglerState = 'dot';
+          } else {
+            smileToggler.classList.remove('fa-smile');
+            smileToggler.classList.add('red-dot');
+            smileToggler.innerHTML = '•';
+            smileTogglerState = 'dot';
+          }
+        }).catch((error) => {
+          console.error('Recording setup failed:', error);
+          clearInterval(timerInterval); // Clean up timer on error
+          removeRecordingInterface();
+        });
       }
     });
 
@@ -1182,6 +1190,7 @@
           isDeleteActive = false;
           isPaused = false;
           elapsedTime = 0;
+          clearInterval(timerInterval);
           micIcon.classList.remove('locked');
           micIcon.style.transform = 'translate(0, 0)';
           hidePauseIcon();
@@ -1201,6 +1210,10 @@
         } else {
           stopRecording();
           console.log('Voice note sent on release');
+          isRecording = false;
+          isDeleteActive = false;
+          isPaused = false;
+          clearInterval(timerInterval);
           micIcon.style.transform = 'translate(0, 0)';
           const emojiPicker = document.getElementById('emojiPicker');
           if (emojiPicker.classList.contains('active')) {
@@ -1222,6 +1235,11 @@
       if (isLocked && !micIcon.contains(e.target)) {
         stopRecording();
         console.log('Voice note sent after locked recording');
+        isRecording = false;
+        isPaused = false;
+        isDeleteActive = false;
+        elapsedTime = 0;
+        clearInterval(timerInterval);
         micIcon.style.transform = 'translate(0, 0)';
         hidePauseIcon();
         isLocked = false;
