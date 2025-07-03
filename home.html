@@ -40,7 +40,7 @@
       top: 0;
       z-index: 1001;
       margin: 0;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Added bottom box-shadow */
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
     .chat-header .back-btn {
@@ -227,7 +227,7 @@
 
     .icon.red-dot {
       font-size: 24px;
-      color: #ff0000;
+      color: #749cbf;
       margin: 0 8px;
       cursor: pointer;
       display: inline-flex;
@@ -238,7 +238,7 @@
     }
 
     .icon.red-dot.trash-icon {
-      color: #ff0000;
+      color: #ff3333;
       animation: openClose 0.8s ease-in-out infinite, shake 0.3s ease-in-out infinite;
       font-size: 24px;
     }
@@ -280,15 +280,41 @@
     .mic-container.recording {
       width: 60px;
       height: 60px;
-      background-color: #ff0000;
+      background-color: #749cbf; /* Preserved original color */
       position: absolute;
       right: -10px;
       animation: pulse 1.5s infinite;
     }
 
+    .mic-container.recording .voice-wave {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: rgba(255, 255, 255, 0.7);
+      transform: translate(-50%, -50%);
+      opacity: 0;
+    }
+
+    .mic-container.recording .voice-wave:nth-child(2) {
+      animation: wave 1.5s ease-out infinite 0.3s;
+    }
+
+    .mic-container.recording .voice-wave:nth-child(3) {
+      animation: wave 1.5s ease-out infinite 0.6s;
+    }
+
+    .mic-container.recording .voice-wave:nth-child(4) {
+      animation: wave 1.5s ease-out infinite 0.9s;
+    }
+
     .mic-container.recording .fa-microphone {
       font-size: 30px;
       color: #fff;
+      position: relative;
+      z-index: 1;
     }
 
     .mic-container.locked {
@@ -304,6 +330,11 @@
       0% { transform: scale(1); }
       50% { transform: scale(1.1); }
       100% { transform: scale(1); }
+    }
+
+    @keyframes wave {
+      0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+      100% { transform: translate(-50%, -50%) scale(3); opacity: 0; }
     }
 
     .pause-icon {
@@ -351,9 +382,9 @@
 
     .recording-interface {
       flex: 1;
-      background-color: #f1f3f5;
+      background-color: #ffffff;
       border: none;
-      border-radius: 24px;
+      border-radius: 0;
       padding: 10px 16px;
       font-size: 16px;
       color: #000;
@@ -373,6 +404,14 @@
       font-size: 14px;
       color: #666;
       margin-right: auto;
+      display: flex;
+      align-items: center;
+    }
+
+    .recording-interface .cancel-label span.arrow {
+      margin-right: 5px;
+      font-size: 16px;
+      color: #666;
     }
 
     .recording-interface .timer {
@@ -495,7 +534,7 @@
       .chat-header {
         padding: 8px 10px;
         margin: 0;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Added bottom box-shadow for mobile */
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       }
 
       .chat-header .back-btn,
@@ -590,6 +629,7 @@
         width: 50px;
         height: 50px;
         right: -8px;
+        background-color: #749cbf; /* Preserved original color */
         animation: pulse 1.5s infinite;
       }
 
@@ -625,6 +665,8 @@
         margin: 0 6px 0 4px;
         min-height: 18px;
         max-width: calc(100% - 70px);
+        background-color: #ffffff;
+        border-radius: 0;
       }
 
       .recording-interface .cancel-label {
@@ -737,6 +779,10 @@
     <i class="fas fa-paperclip icon" id="pinIcon"></i>
     <div class="mic-container" id="micIcon">
       <i class="fas fa-microphone"></i>
+      <div class="voice-wave"></div>
+      <div class="voice-wave"></div>
+      <div class="voice-wave"></div>
+      <div class="voice-wave"></div>
     </div>
   </div>
   <div class="emoji-picker" id="emojiPicker">
@@ -930,6 +976,9 @@
 
     let mediaRecorder;
     let audioChunks = [];
+    let audioContext;
+    let analyser;
+    let dataArray;
     let isRecording = false;
     let isPaused = false;
     let startTime;
@@ -972,12 +1021,14 @@
         pauseIcon.classList.add('fa-pause');
         startTime = Date.now() - elapsedTime * 1000;
         timerInterval = setInterval(updateTimer, 100);
+        startVoiceWave();
       } else {
         mediaRecorder.pause();
         isPaused = true;
         pauseIcon.classList.remove('fa-pause');
         pauseIcon.classList.add('fa-play');
         clearInterval(timerInterval);
+        stopVoiceWave();
       }
     }
 
@@ -990,9 +1041,9 @@
       recordingDiv.classList.add('recording-interface');
       recordingDiv.style.width = width;
       recordingDiv.style.height = height;
-      recordingDiv.style.backgroundColor = inputStyles.backgroundColor;
+      recordingDiv.style.backgroundColor = '#ffffff';
       recordingDiv.style.border = inputStyles.border;
-      recordingDiv.style.borderRadius = inputStyles.borderRadius;
+      recordingDiv.style.borderRadius = '0';
       recordingDiv.style.padding = inputStyles.padding;
       recordingDiv.style.fontSize = inputStyles.fontSize;
       recordingDiv.style.color = inputStyles.color;
@@ -1005,7 +1056,7 @@
 
       const cancelLabel = document.createElement('span');
       cancelLabel.classList.add('cancel-label');
-      cancelLabel.textContent = 'Slide to cancel';
+      cancelLabel.innerHTML = '<span class="arrow"><</span> slide to the left to cancel';
       recordingDiv.appendChild(cancelLabel);
 
       const timer = document.createElement('span');
@@ -1030,6 +1081,7 @@
           toggleEmojiPicker();
         }
         micIcon.classList.remove('recording');
+        stopVoiceWave();
       }
     }
 
@@ -1054,6 +1106,15 @@
         mediaRecorder = new MediaRecorder(stream);
         audioChunks = [];
 
+        // Set up AudioContext for volume analysis
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioContext.createAnalyser();
+        const source = audioContext.createMediaStreamSource(stream);
+        source.connect(analyser);
+        analyser.fftSize = 256;
+        const bufferLength = analyser.frequencyBinCount;
+        dataArray = new Uint8Array(bufferLength);
+
         mediaRecorder.ondataavailable = (event) => {
           audioChunks.push(event.data);
         };
@@ -1061,6 +1122,7 @@
         mediaRecorder.onstop = () => {
           const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
           stream.getTracks().forEach(track => track.stop());
+          audioContext.close();
           console.log('Voice note sent:', audioBlob);
           isRecording = false;
           isPaused = false;
@@ -1089,14 +1151,17 @@
 
         mediaRecorder.onpause = () => {
           console.log('Recording paused');
+          stopVoiceWave();
         };
 
         mediaRecorder.onresume = () => {
           console.log('Recording resumed');
+          startVoiceWave();
         };
 
         mediaRecorder.start();
         isRecording = true;
+        startVoiceWave();
       } catch (error) {
         console.error('Error accessing microphone:', error);
         alert('Please allow microphone access to record audio.');
@@ -1112,7 +1177,42 @@
     function stopRecording() {
       if (mediaRecorder && isRecording) {
         mediaRecorder.stop();
+        stopVoiceWave();
       }
+    }
+
+    function startVoiceWave() {
+      if (!isRecording || isPaused) return;
+
+      const waves = document.querySelectorAll('.mic-container.recording .voice-wave');
+      function animateWave() {
+        if (!isRecording || isPaused) {
+          return;
+        }
+
+        analyser.getByteFrequencyData(dataArray);
+        let sum = 0;
+        for (let i = 0; i < dataArray.length; i++) {
+          sum += dataArray[i];
+        }
+        const average = sum / dataArray.length;
+        const volume = Math.min(average / 128, 1); // Normalize to 0-1
+
+        waves.forEach(wave => {
+          wave.style.animationDuration = `${1.5 / (volume + 0.1)}s`; // Faster with higher volume
+        });
+
+        requestAnimationFrame(animateWave);
+      }
+
+      animateWave();
+    }
+
+    function stopVoiceWave() {
+      const waves = document.querySelectorAll('.mic-container.recording .voice-wave');
+      waves.forEach(wave => {
+        wave.style.animationDuration = '1.5s'; // Reset to default
+      });
     }
 
     micIcon.addEventListener('touchstart', (e) => {
