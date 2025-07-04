@@ -423,12 +423,6 @@
       align-items: center;
     }
 
-    .recording-interface .cancel-label span.arrow {
-      margin-right: 5px;
-      font-size: 16px;
-      color: #666;
-    }
-
     .recording-interface .timer {
       font-size: 16px;
       color: #000;
@@ -496,10 +490,16 @@
       font-weight: bold;
       color: #8696a0;
       cursor: pointer;
-      padding: 5px;
+      padding: 5px 12px; /* Consistent padding to match "Sticker" width */
       text-align: center;
       display: inline-flex;
       justify-content: center;
+    }
+
+    .emoji-picker-navbar .nav-text.active {
+      border-radius: 12px; /* Rounded corners */
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* Increased box-shadow */
+      padding: 5px 12px; /* Consistent padding for uniform width */
     }
 
     .emoji-picker-navbar .drag-line {
@@ -707,7 +707,13 @@
 
       .emoji-picker-navbar .nav-text {
         font-size: 14px;
-        padding: 4px;
+        padding: 4px 10px; /* Consistent padding for mobile */
+      }
+
+      .emoji-picker-navbar .nav-text.active {
+        border-radius: 10px; /* Adjusted for mobile */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* Increased box-shadow */
+        padding: 4px 10px; /* Consistent padding for uniform width */
       }
 
       .emoji-picker-navbar .drag-line {
@@ -806,7 +812,7 @@
     </div>
     <div class="emoji-picker-navbar">
       <div class="drag-line"></div>
-      <i class="fas fa-smile nav-icon active" id="smileyTab" title="Smileys"></i>
+      <span class="nav-text" id="smileyTab" title="Stickers">Sticker</span>
       <span class="nav-text" id="gifTab" title="GIFs">GIF</span>
       <i class="fas fa-cog nav-icon" title="Settings"></i>
     </div>
@@ -1075,7 +1081,7 @@
 
       const cancelLabel = document.createElement('span');
       cancelLabel.classList.add('cancel-label');
-      cancelLabel.innerHTML = 'slide to the left to cancel'; // Removed "<" from the text
+      cancelLabel.innerHTML = 'slide to the left to cancel';
       recordingDiv.appendChild(cancelLabel);
 
       const timer = document.createElement('span');
