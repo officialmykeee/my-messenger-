@@ -446,7 +446,7 @@
       opacity: 0;
       transform: translateY(100%);
       transition: opacity 0.2s ease, transform 0.2s ease;
-      border-top: 4px solid #f2f2f2; /* Updated to light gray border */
+      border-top: 4px solid #f2f2f2; /* Light gray border */
     }
 
     .emoji-picker.active {
@@ -499,8 +499,9 @@
 
     .emoji-picker-navbar .nav-text.active {
       border-radius: 12px; /* Rounded corners */
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* Increased box-shadow */
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Increased blur radius to 12px */
       padding: 5px 12px; /* Consistent padding for uniform width */
+      width: 70px; /* Fixed width for "GIF" tab when active */
     }
 
     .emoji-picker-navbar .drag-line {
@@ -713,8 +714,9 @@
 
       .emoji-picker-navbar .nav-text.active {
         border-radius: 10px; /* Adjusted for mobile */
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* Increased box-shadow */
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Increased blur radius to 12px */
         padding: 4px 10px; /* Consistent padding for uniform width */
+        width: 70px; /* Fixed width for "GIF" tab when active */
       }
 
       .emoji-picker-navbar .drag-line {
@@ -736,7 +738,7 @@
       }
 
       .emoji-picker {
-        border-top: 4px solid #f2f2f2; /* Updated to light gray border */
+        border-top: 4px solid #f2f2f2; /* Light gray border */
       }
     }
   </style>
