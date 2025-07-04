@@ -234,13 +234,21 @@
       align-items: center;
       position: relative;
       transition: transform 0.1s ease, color 0.2s ease;
-      animation: echo 0.5s ease-in-out infinite;
+      animation: dotBlink 1.2s infinite;
     }
 
     .icon.red-dot.trash-icon {
       color: #ff3333;
       animation: openClose 0.8s ease-in-out infinite, shake 0.3s ease-in-out infinite;
       font-size: 24px;
+    }
+
+    @keyframes dotBlink {
+      0% { opacity: 0; }
+      25% { opacity: 1; }
+      50% { opacity: 1; }
+      75% { opacity: 0; }
+      100% { opacity: 0; }
     }
 
     @keyframes echo {
@@ -280,7 +288,7 @@
     .mic-container.recording {
       width: 60px;
       height: 60px;
-      background-color: #749cbf; /* Preserved original color */
+      background-color: #749cbf;
       position: absolute;
       right: -10px;
       animation: pulse 1.5s infinite;
@@ -369,6 +377,13 @@
       resize: none;
       box-sizing: border-box;
       max-width: calc(100% - 80px);
+      transition: none; /* Removed transition since blur is no longer used */
+    }
+
+    .input-field:disabled {
+      pointer-events: none;
+      background-color: #f1f3f5;
+      opacity: 0.7;
     }
 
     .input-field::placeholder {
@@ -629,7 +644,7 @@
         width: 50px;
         height: 50px;
         right: -8px;
-        background-color: #749cbf; /* Preserved original color */
+        background-color: #749cbf;
         animation: pulse 1.5s infinite;
       }
 
@@ -805,7 +820,7 @@
       const inputField = document.getElementById('inputField');
       const isActive = emojiPicker.classList.contains('active');
 
-      if (isActive) {
+      if (isActive && !isRecording) { // Only close if not recording
         const containerHeight = inputContainer.offsetHeight;
         chatContainer.style.height = `calc(100vh - ${containerHeight}px)`;
         chatContainer.style.marginBottom = `${containerHeight}px`;
@@ -815,7 +830,7 @@
         smileToggler.classList.add('fa-smile');
         smileToggler.innerHTML = ''; // Clear to prevent duplication
         smileTogglerState = 'smile';
-      } else {
+      } else if (!isRecording) { // Only open if not recording
         const containerHeight = inputContainer.offsetHeight;
         const maxPickerHeight = window.innerHeight - containerHeight;
         const pickerHeight = Math.min(maxPickerHeight * 0.5, 300);
@@ -859,7 +874,7 @@
       const chatContainer = document.getElementById('chatContainer');
       const inputContainer = document.getElementById('inputContainer');
 
-      if (emojiPicker.classList.contains('active')) {
+      if (emojiPicker.classList.contains('active') && !isRecording) {
         const containerHeight = inputContainer.offsetHeight;
         chatContainer.style.height = `calc(100vh - ${containerHeight}px)`;
         chatContainer.style.marginBottom = `${containerHeight}px`;
@@ -870,6 +885,7 @@
         smileToggler.innerHTML = ''; // Clear to prevent duplication
         smileTogglerState = 'smile';
       }
+      this.disabled = false; // Enable input on click
       this.focus();
     });
 
@@ -889,7 +905,8 @@
       if (
         emojiPicker.classList.contains('active') &&
         !emojiPicker.contains(event.target) &&
-        !inputContainer.contains(event.target)
+        !inputContainer.contains(event.target) &&
+        !isRecording
       ) {
         const containerHeight = inputContainer.offsetHeight;
         chatContainer.style.height = `calc(100vh - ${containerHeight}px)`;
@@ -938,6 +955,7 @@
     const pinIcon = document.getElementById('pinIcon');
     const micIcon = document.getElementById('micIcon');
     const inputContainer = document.getElementById('inputContainer');
+    const smileToggler = document.getElementById('smileToggler');
 
     const smileyContent = `
       <img src="https://i.ibb.co/274qJhs1/2504250629535218541.png" alt="2504250629535218541" class="sticker" />
@@ -983,6 +1001,7 @@
     let isPaused = false;
     let startTime;
     let timerInterval;
+    let dotBlinkInterval;
     let initialTouchY;
     let initialTouchX;
     let isLocked = false;
@@ -1056,7 +1075,7 @@
 
       const cancelLabel = document.createElement('span');
       cancelLabel.classList.add('cancel-label');
-      cancelLabel.innerHTML = '<span class="arrow"><</span> slide to the left to cancel';
+      cancelLabel.innerHTML = 'slide to the left to cancel'; // Removed "<" from the text
       recordingDiv.appendChild(cancelLabel);
 
       const timer = document.createElement('span');
@@ -1077,8 +1096,16 @@
         inputField.classList.remove('recording');
         inputField.focus();
         const emojiPicker = document.getElementById('emojiPicker');
-        if (emojiPicker.classList.contains('active')) {
-          toggleEmojiPicker();
+        if (!emojiPicker.classList.contains('active')) {
+          // Only toggle back to keyboard or smile if emoji picker is not active
+          const emojiPicker = document.getElementById('emojiPicker');
+          if (emojiPicker.classList.contains('active')) {
+            smileToggler.classList.add('fa-keyboard');
+            smileTogglerState = 'keyboard';
+          } else {
+            smileToggler.classList.add('fa-smile');
+            smileTogglerState = 'smile';
+          }
         }
         micIcon.classList.remove('recording');
         stopVoiceWave();
@@ -1129,22 +1156,20 @@
           isDeleteActive = false;
           elapsedTime = 0;
           clearInterval(timerInterval);
+          clearInterval(dotBlinkInterval); // Stop dot blinking on stop
+          smileToggler.classList.remove('red-dot');
+          smileToggler.innerHTML = '';
           removeRecordingInterface();
           hidePauseIcon();
           micIcon.classList.remove('locked');
           micIcon.style.transform = 'translate(0, 0)';
           isLocked = false;
-          const smileToggler = document.getElementById('smileToggler');
           const emojiPicker = document.getElementById('emojiPicker');
           if (emojiPicker.classList.contains('active')) {
-            smileToggler.classList.remove('red-dot', 'trash-icon');
             smileToggler.classList.add('fa-keyboard');
-            smileToggler.innerHTML = '';
             smileTogglerState = 'keyboard';
           } else {
-            smileToggler.classList.remove('red-dot', 'trash-icon');
             smileToggler.classList.add('fa-smile');
-            smileToggler.innerHTML = '';
             smileTogglerState = 'smile';
           }
         };
@@ -1152,16 +1177,19 @@
         mediaRecorder.onpause = () => {
           console.log('Recording paused');
           stopVoiceWave();
+          clearInterval(dotBlinkInterval); // Pause dot blinking
         };
 
         mediaRecorder.onresume = () => {
           console.log('Recording resumed');
           startVoiceWave();
+          startDotBlink(); // Resume dot blinking
         };
 
         mediaRecorder.start();
         isRecording = true;
         startVoiceWave();
+        startDotBlink(); // Start dot blinking
       } catch (error) {
         console.error('Error accessing microphone:', error);
         alert('Please allow microphone access to record audio.');
@@ -1169,6 +1197,7 @@
         isDeleteActive = false;
         elapsedTime = 0;
         clearInterval(timerInterval);
+        clearInterval(dotBlinkInterval); // Clean up dot blinking on error
         removeRecordingInterface();
         hidePauseIcon();
       }
@@ -1178,6 +1207,7 @@
       if (mediaRecorder && isRecording) {
         mediaRecorder.stop();
         stopVoiceWave();
+        clearInterval(dotBlinkInterval); // Stop dot blinking on stop
       }
     }
 
@@ -1215,6 +1245,15 @@
       });
     }
 
+    function startDotBlink() {
+      if (dotBlinkInterval) clearInterval(dotBlinkInterval); // Clear existing interval
+      dotBlinkInterval = setInterval(() => {
+        if (smileToggler.classList.contains('red-dot') && !smileToggler.classList.contains('trash-icon')) {
+          smileToggler.innerHTML = smileToggler.innerHTML === '•' ? '' : '•';
+        }
+      }, 300); // Adjust timing for hide/show cycle (300ms per phase = 1.2s full cycle)
+    }
+
     micIcon.addEventListener('touchstart', (e) => {
       e.preventDefault();
       initialTouchY = e.touches[0].clientY;
@@ -1227,22 +1266,20 @@
         timerInterval = setInterval(updateTimer, 100); // Start timer immediately
         console.log('Timer interval started at:', new Date().toISOString()); // Debug log
         startRecording().then(() => {
-          const smileToggler = document.getElementById('smileToggler');
           const emojiPicker = document.getElementById('emojiPicker');
           if (emojiPicker.classList.contains('active')) {
             smileToggler.classList.remove('fa-keyboard');
             smileToggler.classList.add('red-dot');
-            smileToggler.innerHTML = '•';
             smileTogglerState = 'dot';
           } else {
             smileToggler.classList.remove('fa-smile');
             smileToggler.classList.add('red-dot');
-            smileToggler.innerHTML = '•';
             smileTogglerState = 'dot';
           }
         }).catch((error) => {
           console.error('Recording setup failed:', error);
           clearInterval(timerInterval); // Clean up timer on error
+          clearInterval(dotBlinkInterval); // Clean up dot blinking on error
           removeRecordingInterface();
         });
       }
@@ -1258,23 +1295,47 @@
 
         micIcon.style.transform = deltaY > 0 ? `translate(0, ${-deltaY}px)` : `translate(0, 0)`;
 
-        const smileToggler = document.getElementById('smileToggler');
         if (deltaX < -50) {
           isDeleteActive = true;
-          if (smileTogglerState === 'dot') {
-            smileToggler.classList.remove('red-dot');
-            smileToggler.classList.add('red-dot', 'trash-icon');
-            smileToggler.innerHTML = '<i class="bx bxs-trash"></i>';
-            smileTogglerState = 'waste';
-          }
-        } else {
+          smileToggler.classList.remove('red-dot');
+          smileToggler.classList.add('red-dot', 'trash-icon');
+          smileToggler.innerHTML = '<i class="bx bxs-trash"></i>';
+          smileTogglerState = 'waste';
+          clearInterval(dotBlinkInterval); // Stop blinking when sliding to delete
+          // Instantly delete and stop recording
+          stopRecording();
+          console.log('Recording deleted instantly');
+          isRecording = false;
           isDeleteActive = false;
-          if (smileTogglerState === 'waste') {
-            smileToggler.classList.remove('trash-icon');
-            smileToggler.classList.add('red-dot');
-            smileToggler.innerHTML = '•';
-            smileTogglerState = 'dot';
+          isPaused = false;
+          elapsedTime = 0;
+          clearInterval(timerInterval);
+          micIcon.classList.remove('recording');
+          micIcon.style.transform = 'translate(0, 0)';
+          hidePauseIcon();
+          removeRecordingInterface();
+          // Disable input after deletion
+          inputField.disabled = true;
+          const emojiPicker = document.getElementById('emojiPicker');
+          if (emojiPicker.classList.contains('active')) {
+            // Keep emoji picker open, update smileToggler state
+            smileToggler.classList.remove('red-dot', 'trash-icon');
+            smileToggler.classList.add('fa-keyboard');
+            smileToggler.innerHTML = '';
+            smileTogglerState = 'keyboard';
+          } else {
+            smileToggler.classList.remove('red-dot', 'trash-icon');
+            smileToggler.classList.add('fa-smile');
+            smileToggler.innerHTML = '';
+            smileTogglerState = 'smile';
           }
+        } else if (deltaX >= -50 && smileTogglerState === 'waste') {
+          isDeleteActive = false;
+          smileToggler.classList.remove('trash-icon');
+          smileToggler.classList.add('red-dot');
+          smileToggler.innerHTML = '•';
+          smileTogglerState = 'dot';
+          startDotBlink(); // Resume blinking if not deleting
         }
 
         if (deltaY > 50 && !isDeleteActive) {
@@ -1288,52 +1349,25 @@
 
     micIcon.addEventListener('touchend', (e) => {
       e.preventDefault();
-      if (isRecording) {
-        const smileToggler = document.getElementById('smileToggler');
-        if (isDeleteActive && !isLocked) {
-          stopRecording();
-          console.log('Recording discarded');
-          isRecording = false;
-          isDeleteActive = false;
-          isPaused = false;
-          elapsedTime = 0;
-          clearInterval(timerInterval);
-          micIcon.classList.remove('locked');
-          micIcon.style.transform = 'translate(0, 0)';
-          hidePauseIcon();
-          removeRecordingInterface();
-          const emojiPicker = document.getElementById('emojiPicker');
-          if (emojiPicker.classList.contains('active')) {
-            smileToggler.classList.remove('red-dot', 'trash-icon');
-            smileToggler.classList.add('fa-keyboard');
-            smileToggler.innerHTML = '';
-            smileTogglerState = 'keyboard';
-          } else {
-            smileToggler.classList.remove('red-dot', 'trash-icon');
-            smileToggler.classList.add('fa-smile');
-            smileToggler.innerHTML = '';
-            smileTogglerState = 'smile';
-          }
+      if (isRecording && !isDeleteActive) {
+        stopRecording();
+        console.log('Voice note sent on release');
+        isRecording = false;
+        isDeleteActive = false;
+        isPaused = false;
+        clearInterval(timerInterval);
+        micIcon.style.transform = 'translate(0, 0)';
+        const emojiPicker = document.getElementById('emojiPicker');
+        if (emojiPicker.classList.contains('active')) {
+          smileToggler.classList.remove('red-dot', 'trash-icon');
+          smileToggler.classList.add('fa-keyboard');
+          smileToggler.innerHTML = '';
+          smileTogglerState = 'keyboard';
         } else {
-          stopRecording();
-          console.log('Voice note sent on release');
-          isRecording = false;
-          isDeleteActive = false;
-          isPaused = false;
-          clearInterval(timerInterval);
-          micIcon.style.transform = 'translate(0, 0)';
-          const emojiPicker = document.getElementById('emojiPicker');
-          if (emojiPicker.classList.contains('active')) {
-            smileToggler.classList.remove('red-dot', 'trash-icon');
-            smileToggler.classList.add('fa-keyboard');
-            smileToggler.innerHTML = '';
-            smileTogglerState = 'keyboard';
-          } else {
-            smileToggler.classList.remove('red-dot', 'trash-icon');
-            smileToggler.classList.add('fa-smile');
-            smileToggler.innerHTML = '';
-            smileTogglerState = 'smile';
-          }
+          smileToggler.classList.remove('red-dot', 'trash-icon');
+          smileToggler.classList.add('fa-smile');
+          smileToggler.innerHTML = '';
+          smileTogglerState = 'smile';
         }
       }
     });
@@ -1350,7 +1384,6 @@
         micIcon.style.transform = 'translate(0, 0)';
         hidePauseIcon();
         isLocked = false;
-        const smileToggler = document.getElementById('smileToggler');
         const emojiPicker = document.getElementById('emojiPicker');
         if (emojiPicker.classList.contains('active')) {
           smileToggler.classList.remove('red-dot', 'trash-icon');
