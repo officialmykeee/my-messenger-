@@ -409,3 +409,133 @@
     .recording-interface .cancel-link.locked {
       display: flex; /* Show "Cancel" after locking */
     }
+    .recording-interface .timer {
+      font-size: 12px;
+      margin-right: -13px;
+      position: relative;
+      margin-top: 12.5px;
+      color: #91959c;
+    }
+
+    .recording-interface .lock-indicator {
+      display: none;
+    }
+
+    .recording-interface .cancel-btn {
+      display: none;
+    }
+
+    .emoji-picker {
+      position: fixed;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      box-sizing: border-box;
+      z-index: 2000;
+      overflow: hidden;
+      background-color: #fff;
+      opacity: 0;
+      transform: translateY(100%);
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      border-top: 4px solid #f2f2f2;
+    }
+
+    .emoji-picker.active {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .emoji-picker-navbar {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      background-color: #f8f9fa;
+      border-top: 1px solid #e8ecef;
+      padding: 8px 0;
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      z-index: 2010;
+    }
+
+    .emoji-picker-navbar .nav-icon {
+      font-size: 24px;
+      color: #8696a0;
+      cursor: pointer;
+      padding: 5px;
+    }
+
+    .emoji-picker-navbar .nav-icon:hover,
+    .emoji-picker-navbar .nav-text:hover {
+      color: #495057;
+    }
+
+    .emoji-picker-navbar .nav-icon.active,
+    .emoji-picker-navbar .nav-text.active {
+      color: #495057;
+    }
+
+    .emoji-picker-navbar .nav-text {
+      font-size: 18px;
+      font-weight: bold;
+      color: #8696a0;
+      cursor: pointer;
+      padding: 5px 12px;
+      text-align: center;
+      display: inline-flex;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .emoji-picker-navbar .nav-text.active {
+      color: #000;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      padding: 5px 12px;
+    }
+
+    .emoji-picker-navbar .drag-line {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 40px;
+      height: 2px;
+      background-color: #86959c;
+      display: block;
+    }
+
+    .emoji-picker-body {
+      height: calc(100% - 50px);
+      overflow-y: auto;
+      padding: 10px;
+      box-sizing: border-box;
+      position: relative;
+      top: 0;
+    }
+
+    .sticker {
+      width: 70px;
+      height: 70px;
+      margin: 5px;
+      margin-top: 25px;
+      display: inline-block;
+      vertical-align: middle;
+    }
+
+    .gif-placeholder {
+      text-align: center;
+      color: #8696a0;
+      font-size: 16px;
+      margin-top: 25px;
+    }
+
+    @media (max-width: 600px) {
+      .chat-container {
+        padding: 0;
+        margin: 0;
+        height: calc(100vh - 50px);
+        box-sizing: border-box;
+      }
