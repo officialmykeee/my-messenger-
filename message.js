@@ -213,9 +213,9 @@ let isDeleteActive = false;
 let micIconStartX;
 let elapsedTime = 0;
 let smileTogglerState = 'smile';
-let touchTimeout; // To differentiate tap from hold
+let touchTimeout;
+let isHolding = false; // Flag to track if it was a hold
 
-// Remove pre-initialization of audio context and stream
 window.addEventListener('load', () => {
   scrollToLatestMessage();
   inputField.blur();
@@ -444,7 +444,7 @@ function hideRecordingInterface() {
     smileTogglerState = 'smile';
   }
   smileToggler.classList.remove('red-dot', 'trash-icon');
-  micIcon.innerHTML = '<i class="fas fa-microphone"></i>'; // Reset to microphone after recording
+  micIcon.innerHTML = '<i class="fas fa-microphone"></i>'; // Reset to microphone
 }
 
 function updateTimer() {
@@ -462,8 +462,9 @@ function updateTimer() {
 micIcon.addEventListener('touchstart', (e) => {
   e.preventDefault();
   if (e.touches.length === 1 && !isRecording && micIcon.innerHTML.includes('fa-microphone')) {
-    // Start a timeout to detect hold (e.g., 300ms)
+    isHolding = false; // Reset for new touch
     touchTimeout = setTimeout(() => {
+      isHolding = true; // Mark as a hold
       startRecording();
       initialTouchY = e.touches[0].clientY;
       initialTouchX = e.touches[0].clientX;
@@ -472,14 +473,14 @@ micIcon.addEventListener('touchstart', (e) => {
       elapsedTime = 0;
       timerInterval = setInterval(updateTimer, 100);
       startDotBlink();
-    }, 300); // 300ms delay to distinguish tap from hold
+    }, 300);
   }
 });
 
 micIcon.addEventListener('touchmove', (e) => {
   e.preventDefault();
   if (isRecording && !isLocked) {
-    clearTimeout(touchTimeout); // Cancel tap timeout if movement occurs
+    clearTimeout(touchTimeout);
     const currentTouchY = e.touches[0].clientY;
     const currentTouchX = e.touches[0].clientX;
     const deltaY = initialTouchY - currentTouchY;
@@ -539,8 +540,16 @@ micIcon.addEventListener('touchmove', (e) => {
 
 micIcon.addEventListener('touchend', (e) => {
   e.preventDefault();
-  clearTimeout(touchTimeout); // Cancel the hold timeout if touch ends quickly (tap)
-  if (isRecording && !isDeleteActive) {
+  clearTimeout(touchTimeout);
+
+  if (!isHolding && !isRecording && !isDeleteActive) {
+    // This was a quick tap, switch icons
+    if (micIcon.querySelector('i').classList.contains('fa-microphone')) {
+      micIcon.innerHTML = '<i class="fas fa-camera"></i>';
+    } else {
+      micIcon.innerHTML = '<i class="fas fa-microphone"></i>';
+    }
+  } else if (isRecording && !isDeleteActive) {
     if (isLocked) {
       // Do nothing, continue recording
     } else {
@@ -570,18 +579,7 @@ micIcon.addEventListener('touchend', (e) => {
       }
     }
   }
-});
-
-micIcon.addEventListener('click', (e) => {
-  e.preventDefault();
-  if (!isRecording && !isDeleteActive) {
-    clearTimeout(touchTimeout); // Ensure no hold is pending
-    if (micIcon.innerHTML.includes('fa-microphone')) {
-      micIcon.innerHTML = '<i class="fas fa-camera"></i>'; // Switch to camera
-    } else {
-      micIcon.innerHTML = '<i class="fas fa-microphone"></i>'; // Switch back to microphone
-    }
-  }
+  isHolding = false; // Reset flag
 });
 
 document.addEventListener('touchend', (e) => {
