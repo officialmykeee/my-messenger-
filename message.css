@@ -281,7 +281,8 @@ body {
   display: none;
 }
 
-.mic-container.recording .fa-microphone {
+.mic-container.recording .fa-microphone,
+.mic-container.recording .fa-camera {
   font-size: 30px;
   color: #fff;
   position: relative;
@@ -297,7 +298,8 @@ body {
   margin-right: 8px;
 }
 
-.mic-container.locked .fa-microphone {
+.mic-container.locked .fa-microphone,
+.mic-container.locked .fa-camera {
   display: none;
 }
 
@@ -306,7 +308,8 @@ body {
   color: #fff;
 }
 
-.mic-container .fa-microphone {
+.mic-container .fa-microphone,
+.mic-container .fa-camera {
   font-size: 20px;
   color: #fff;
 }
@@ -359,7 +362,7 @@ body {
   line-height: 1.5;
   margin: 0;
   box-sizing: border-box;
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   position: absolute;
@@ -413,10 +416,27 @@ body {
 
 .recording-interface .timer {
   font-size: 12px;
-  margin-right: -13px;
+  margin-left: -13px;
   position: relative;
   margin-top: 12.5px;
   color: #91959c;
+}
+
+.recording-interface .dot {
+  font-size: 24px;
+  margin-right: 31px;
+  position: relative;
+  top: 6px;
+  color: #749cbf;
+  opacity: 0.8;
+  white-space: nowrap;
+  display: none;
+  align-items: center;
+  animation: dotBlink 1.2s infinite;
+}
+
+.recording-interface .dot.active {
+  display: flex;
 }
 
 .recording-interface .lock-indicator {
@@ -645,7 +665,8 @@ body {
     z-index: 1002;
   }
 
-  .mic-container.recording .fa-microphone {
+  .mic-container.recording .fa-microphone,
+  .mic-container.recording .fa-camera {
     font-size: 28px;
   }
 
@@ -655,7 +676,8 @@ body {
     margin: 0 6px;
   }
 
-  .mic-container.locked .fa-microphone {
+  .mic-container.locked .fa-microphone,
+  .mic-container.locked .fa-camera {
     display: none;
   }
 
@@ -663,7 +685,8 @@ body {
     font-size: 18px;
   }
 
-  .mic-container .fa-microphone {
+  .mic-container .fa-microphone,
+  .mic-container .fa-camera {
     font-size: 18px;
   }
 
@@ -692,6 +715,7 @@ body {
     max-width: 100%;
     height: 100%;
     border: none;
+    display: none;
   }
 
   .recording-interface .cancel-label {
@@ -734,14 +758,27 @@ body {
 
   .recording-interface .timer {
     font-size: 12px;
-    margin-right: -13px;
+    margin-left: -13px;
     position: relative;
     margin-top: 12.5px;
     color: #91959c;
   }
 
-  .recording-interface .lock-indicator {
+  .recording-interface .dot {
+    font-size: 20px;
+    margin-right: 31px;
+    position: relative;
+    top: 6px;
+    color: #749cbf;
+    opacity: 0.8;
+    white-space: nowrap;
     display: none;
+    align-items: center;
+    animation: dotBlink 1.2s infinite;
+  }
+
+  .recording-interface .dot.active {
+    display: flex;
   }
 
   .emoji-picker-body {
