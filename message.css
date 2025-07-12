@@ -281,8 +281,7 @@ body {
   display: none;
 }
 
-.mic-container.recording .fa-microphone,
-.mic-container.recording .fa-camera {
+.mic-container.recording i {
   font-size: 30px;
   color: #fff;
   position: relative;
@@ -298,18 +297,17 @@ body {
   margin-right: 8px;
 }
 
-.mic-container.locked .fa-microphone,
-.mic-container.locked .fa-camera {
+.mic-container.locked i {
   display: none;
 }
 
 .mic-container.locked .fa-paper-plane {
   font-size: 20px;
   color: #fff;
+  display: inline-flex;
 }
 
-.mic-container .fa-microphone,
-.mic-container .fa-camera {
+.mic-container i {
   font-size: 20px;
   color: #fff;
 }
@@ -665,8 +663,7 @@ body {
     z-index: 1002;
   }
 
-  .mic-container.recording .fa-microphone,
-  .mic-container.recording .fa-camera {
+  .mic-container.recording i {
     font-size: 28px;
   }
 
@@ -676,17 +673,16 @@ body {
     margin: 0 6px;
   }
 
-  .mic-container.locked .fa-microphone,
-  .mic-container.locked .fa-camera {
+  .mic-container.locked i {
     display: none;
   }
 
   .mic-container.locked .fa-paper-plane {
     font-size: 18px;
+    display: inline-flex;
   }
 
-  .mic-container .fa-microphone,
-  .mic-container .fa-camera {
+  .mic-container i {
     font-size: 18px;
   }
 
