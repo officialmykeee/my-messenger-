@@ -214,7 +214,7 @@ let micIconStartX;
 let elapsedTime = 0;
 let smileTogglerState = 'smile';
 let touchTimeout;
-let isHolding = false; // Flag to track if it was a hold
+let isHolding = false;
 
 window.addEventListener('load', () => {
   scrollToLatestMessage();
@@ -544,9 +544,9 @@ micIcon.addEventListener('touchend', (e) => {
 
   if (!isHolding && !isRecording && !isDeleteActive) {
     // This was a quick tap, switch icons
-    if (micIcon.querySelector('i').classList.contains('fa-microphone')) {
-      micIcon.innerHTML = '<i class="fas fa-camera"></i>';
-    } else {
+    if (micIcon.querySelector('i') && micIcon.querySelector('i').classList.contains('fa-microphone')) {
+      micIcon.innerHTML = '<span class="material-icons" style="color: white;">photo_camera</span>';
+    } else if (micIcon.querySelector('span') && micIcon.querySelector('span').textContent === 'photo_camera') {
       micIcon.innerHTML = '<i class="fas fa-microphone"></i>';
     }
   } else if (isRecording && !isDeleteActive) {
