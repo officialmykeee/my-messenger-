@@ -8,6 +8,37 @@ body {
   overflow-x: hidden;
 }
 
+.video-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: calc(100% - var(--input-container-height, 50px));
+  background: white;
+  z-index: 1002;
+}
+.video-overlay.active {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.video-overlay video {
+  position: relative;
+  width: 240px;
+  height: 240px;
+  object-fit: cover;
+  border-radius: 50%;
+  z-index: 1003;
+}
+.chat-input-container {
+  position: relative;
+  z-index: 1004;
+}
+.emoji-picker {
+  position: relative;
+  z-index: 1005;
+}
 .chat-container {
   padding: 0;
   max-width: 100%;
