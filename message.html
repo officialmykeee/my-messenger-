@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link rel="stylesheet" href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"> <!-- Google CDN for Material Icons -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -73,8 +73,9 @@
     <textarea class="input-field" placeholder="Message" id="inputField" rows="1"></textarea>
     <i class="fas fa-paperclip icon" id="pinIcon"></i>
     <div class="mic-container" id="micIcon">
-      <i class="fas fa-microphone"></i> <!-- Start with microphone icon -->
+      <i class="fas fa-microphone"></i>
     </div>
+    <div class="recording-interface" id="recordingInterface"></div>
   </div>
   <div class="emoji-picker" id="emojiPicker">
     <div class="emoji-picker-body" id="emojiPickerBody">
@@ -86,6 +87,9 @@
       <span class="nav-text" id="gifTab" title="GIFs">GIFs</span>
       <i class="fas fa-cog nav-icon" title="Settings"></i>
     </div>
+  </div>
+  <div class="video-overlay" id="videoOverlay">
+    <video id="videoPreview" autoplay playsinline muted></video>
   </div>
   <script src="script.js"></script>
 </body>
