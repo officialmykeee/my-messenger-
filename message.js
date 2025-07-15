@@ -130,6 +130,7 @@ window.addEventListener('resize', () => {
     inputContainer.style.bottom = `${pickerHeight}px`;
     chatContainer.style.height = `calc(100vh - ${pickerHeight + containerHeight}px)`;
     chatContainer.style.marginBottom = `${pickerHeight + containerHeight}px`;
+    document.documentElement.style.setProperty('--input-container-height', `${containerHeight + pickerHeight}px`);
     setTimeout(() => {
       scrollToLatestMessage();
     }, 50);
@@ -138,6 +139,7 @@ window.addEventListener('resize', () => {
     chatContainer.style.height = `calc(100vh - ${containerHeight}px)`;
     chatContainer.style.marginBottom = `${containerHeight}px`;
     inputContainer.style.bottom = '0';
+    document.documentElement.style.setProperty('--input-container-height', `${containerHeight}px`);
     setTimeout(() => {
       scrollToLatestMessage();
     }, 50);
@@ -151,7 +153,6 @@ const inputField = document.getElementById('inputField');
 const pinIcon = document.getElementById('pinIcon');
 const micIcon = document.getElementById('micIcon');
 const inputContainer = document.getElementById('inputContainer');
-const smileToggler = document.getElementById('smileToggler');
 const recordingInterface = document.getElementById('recordingInterface') || document.createElement('div');
 if (!document.getElementById('recordingInterface')) {
   recordingInterface.id = 'recordingInterface';
@@ -198,6 +199,7 @@ inputField.addEventListener('keydown', function (e) {
 
 let mediaRecorder;
 let audioChunks = [];
+let videoChunks = [];
 let audioContext;
 let analyser;
 let dataArray;
@@ -215,38 +217,51 @@ let elapsedTime = 0;
 let smileTogglerState = 'smile';
 let touchTimeout;
 let isHolding = false;
+let recordingType = 'audio';
 
 window.addEventListener('load', () => {
   scrollToLatestMessage();
   inputField.blur();
+  const inputContainer = document.getElementById('inputContainer');
+  const containerHeight = inputContainer.offsetHeight;
+  document.documentElement.style.setProperty('--input-container-height', `${containerHeight}px`);
 });
 
-function initializeRecorder() {
-  if (!audioContext) {
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-  }
+function initializeRecorder(type) {
   if (stream) {
     stream.getTracks().forEach(track => track.stop());
     stream = null;
   }
-  return navigator.mediaDevices.getUserMedia({ audio: true })
+  return navigator.mediaDevices.getUserMedia(type === 'audio' ? { audio: true } : { video: true, audio: true })
     .then(s => {
       stream = s;
       mediaRecorder = new MediaRecorder(stream);
-      analyser = audioContext.createAnalyser();
-      const source = audioContext.createMediaStreamSource(stream);
-      source.connect(analyser);
-      analyser.fftSize = 256;
-      const bufferLength = analyser.frequencyBinCount;
-      dataArray = new Uint8Array(bufferLength);
-
-      mediaRecorder.ondataavailable = (event) => {
-        audioChunks.push(event.data);
-      };
-
+      if (type === 'audio') {
+        if (!audioContext) {
+          audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        analyser = audioContext.createAnalyser();
+        const source = audioContext.createMediaStreamSource(stream);
+        source.connect(analyser);
+        analyser.fftSize = 256;
+        const bufferLength = analyser.frequencyBinCount;
+        dataArray = new Uint8Array(bufferLength);
+        mediaRecorder.ondataavailable = (event) => {
+          audioChunks.push(event.data);
+        };
+      } else {
+        mediaRecorder.ondataavailable = (event) => {
+          videoChunks.push(event.data);
+        };
+      }
       mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-        console.log('Voice note sent:', audioBlob);
+        if (recordingType === 'audio') {
+          const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+          console.log('Voice note sent:', audioBlob);
+        } else {
+          const videoBlob = new Blob(videoChunks, { type: 'video/mp4' });
+          console.log('Video note sent:', videoBlob);
+        }
         isRecording = false;
         isLocked = false;
         isDeleteActive = false;
@@ -259,19 +274,34 @@ function initializeRecorder() {
           stream = null;
         }
       };
-      return true;
+      return stream;
     })
     .catch(err => {
-      console.error('Error accessing microphone:', err);
-      return false;
+      console.error('Error accessing media device:', err);
+      alert('Failed to access microphone or camera. Please check permissions.');
+      return null;
     });
 }
 
+function setupVideoPreview() {
+  const videoPreview = document.getElementById('videoPreview');
+  if (recordingType === 'video' && stream && videoPreview) {
+    videoPreview.srcObject = stream;
+    videoPreview.play().catch(err => {
+      console.error('Error playing video preview:', err);
+    });
+  }
+}
+
 function startRecording() {
-  if (!isRecording && micIcon.innerHTML.includes('fa-microphone')) {
-    initializeRecorder().then(success => {
-      if (success) {
+  const currentIcon = micIcon.querySelector('i');
+  if (!isRecording && currentIcon) {
+    recordingType = currentIcon.classList.contains('fa-video') ? 'video' : 'audio';
+    initializeRecorder(recordingType).then(s => {
+      if (s) {
+        stream = s;
         audioChunks = [];
+        videoChunks = [];
         mediaRecorder.start();
         isRecording = true;
         startTime = Date.now();
@@ -304,18 +334,23 @@ function cancelRecording() {
   if (mediaRecorder && isRecording) {
     mediaRecorder.stop();
     audioChunks = [];
+    videoChunks = [];
     isRecording = false;
     isLocked = false;
     isDeleteActive = false;
     elapsedTime = 0;
     clearInterval(timerInterval);
     clearInterval(dotBlinkInterval);
+    const videoOverlay = document.getElementById('videoOverlay');
+    const videoPreview = document.getElementById('videoPreview');
+    if (videoOverlay) videoOverlay.classList.remove('active');
+    if (videoPreview) videoPreview.srcObject = null;
     hideRecordingInterface();
     if (stream) {
       stream.getTracks().forEach(track => track.stop());
       stream = null;
     }
-    console.log('Voice note recording canceled and deleted.');
+    console.log(`${recordingType === 'audio' ? 'Voice' : 'Video'} note recording canceled and deleted.`);
   }
 }
 
@@ -375,12 +410,12 @@ function updateRecordingInterface() {
   cancelLink.style.display = isLocked ? 'flex' : 'none';
   cancelLink.style.alignItems = 'center';
   cancelLink.style.cursor = 'pointer';
-  cancelLink.addEventListener('click', (e) => {
+  cancelLink.onclick = (e) => {
     if (isRecording && isLocked) {
       e.preventDefault();
       cancelRecording();
     }
-  });
+  };
 
   let timer = recordingInterface.querySelector('.timer');
   if (!timer) {
@@ -420,6 +455,11 @@ function showRecordingInterface() {
     inputField.classList.add('recording');
     micIcon.classList.add('recording');
     pinIcon.style.display = 'none';
+    const videoOverlay = document.getElementById('videoOverlay');
+    if (videoOverlay && recordingType === 'video') {
+      videoOverlay.classList.add('active');
+      setupVideoPreview();
+    }
   }
 }
 
@@ -436,6 +476,10 @@ function hideRecordingInterface() {
   pinIcon.style.display = 'inline-flex';
   inputField.disabled = false;
   const emojiPicker = document.getElementById('emojiPicker');
+  const videoOverlay = document.getElementById('videoOverlay');
+  const videoPreview = document.getElementById('videoPreview');
+  if (videoOverlay) videoOverlay.classList.remove('active');
+  if (videoPreview) videoPreview.srcObject = null;
   if (emojiPicker.classList.contains('active')) {
     smileToggler.classList.add('fa-keyboard');
     smileTogglerState = 'keyboard';
@@ -444,7 +488,7 @@ function hideRecordingInterface() {
     smileTogglerState = 'smile';
   }
   smileToggler.classList.remove('red-dot', 'trash-icon');
-  micIcon.innerHTML = '<i class="fas fa-microphone"></i>'; // Reset to microphone
+  micIcon.innerHTML = micIcon.innerHTML.includes('fa-video') ? '<i class="fas fa-video"></i>' : '<i class="fas fa-microphone"></i>';
 }
 
 function updateTimer() {
@@ -461,10 +505,11 @@ function updateTimer() {
 
 micIcon.addEventListener('touchstart', (e) => {
   e.preventDefault();
-  if (e.touches.length === 1 && !isRecording && micIcon.innerHTML.includes('fa-microphone')) {
-    isHolding = false; // Reset for new touch
+  const currentIcon = micIcon.querySelector('i');
+  if (e.touches.length === 1 && !isRecording && currentIcon && (currentIcon.classList.contains('fa-microphone') || currentIcon.classList.contains('fa-video'))) {
+    isHolding = false;
     touchTimeout = setTimeout(() => {
-      isHolding = true; // Mark as a hold
+      isHolding = true;
       startRecording();
       initialTouchY = e.touches[0].clientY;
       initialTouchX = e.touches[0].clientX;
@@ -487,7 +532,18 @@ micIcon.addEventListener('touchmove', (e) => {
     const deltaX = currentTouchX - initialTouchX;
 
     micIcon.classList.add('dragging');
-    micIcon.style.transform = `translate(0, ${-deltaY}px)`;
+
+    // Only allow upward movement (deltaY > 0) for locking; ignore downward movement
+    let transformValue = '';
+    if (deltaY > 0) {
+      transformValue = `translate(0, ${-deltaY}px)`;
+    }
+    // Apply small leftward movement for cancellation (capped at 30px)
+    if (deltaX < 0) {
+      const cappedDeltaX = Math.max(deltaX, -30); // Cap left movement at 30px
+      transformValue = `translate(${cappedDeltaX}px, ${deltaY > 0 ? -deltaY : 0}px)`;
+    }
+    micIcon.style.transform = transformValue || 'translate(0, 0)';
 
     if (deltaX < -50) {
       isDeleteActive = true;
@@ -541,17 +597,16 @@ micIcon.addEventListener('touchmove', (e) => {
 micIcon.addEventListener('touchend', (e) => {
   e.preventDefault();
   clearTimeout(touchTimeout);
-
   if (!isHolding && !isRecording && !isDeleteActive) {
-    // This was a quick tap, switch icons
-    if (micIcon.querySelector('i') && micIcon.querySelector('i').classList.contains('fa-microphone')) {
-      micIcon.innerHTML = '<span class="material-icons" style="color: white;">photo_camera</span>';
-    } else if (micIcon.querySelector('span') && micIcon.querySelector('span').textContent === 'photo_camera') {
+    const currentIcon = micIcon.querySelector('i');
+    if (currentIcon && currentIcon.classList.contains('fa-microphone')) {
+      micIcon.innerHTML = '<i class="fas fa-video"></i>';
+    } else if (currentIcon && currentIcon.classList.contains('fa-video')) {
       micIcon.innerHTML = '<i class="fas fa-microphone"></i>';
     }
   } else if (isRecording && !isDeleteActive) {
     if (isLocked) {
-      // Do nothing, continue recording
+      // Do nothing; wait for tap outside micIcon to stop
     } else {
       stopRecording();
       isRecording = false;
@@ -579,11 +634,11 @@ micIcon.addEventListener('touchend', (e) => {
       }
     }
   }
-  isHolding = false; // Reset flag
+  isHolding = false;
 });
 
 document.addEventListener('touchend', (e) => {
-  if (isLocked && !micIcon.contains(e.target) && isRecording) {
+  if (isRecording && isLocked && !micIcon.contains(e.target)) {
     stopRecording();
     isRecording = false;
     isLocked = false;
