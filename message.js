@@ -538,9 +538,9 @@ micIcon.addEventListener('touchmove', (e) => {
     if (deltaY > 0) {
       transformValue = `translate(0, ${-deltaY}px)`;
     }
-    // Apply small leftward movement for cancellation (capped at 30px)
+    // Apply larger leftward movement for cancellation (capped at 100px)
     if (deltaX < 0) {
-      const cappedDeltaX = Math.max(deltaX, -30); // Cap left movement at 30px
+      const cappedDeltaX = Math.max(deltaX, -100); // Cap left movement at 100px
       transformValue = `translate(${cappedDeltaX}px, ${deltaY > 0 ? -deltaY : 0}px)`;
     }
     micIcon.style.transform = transformValue || 'translate(0, 0)';
