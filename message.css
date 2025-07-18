@@ -7,7 +7,28 @@ body {
   background-color: #fff;
   overflow-x: hidden;
 }
-
+.send-btn {
+  font-family: 'Material Symbols Outlined';
+  font-size: 22px;
+  color: #749cbf;
+  margin: 0 8px;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  position: relative;
+}
+.send-btn.active {
+  display: inline-flex;
+}
+.send-btn::before {
+  content: ''; /* Prevent raw text display */
+}
+@media (max-width: 600px) {
+  .send-btn {
+    font-size: 20px;
+    margin: 0 6px;
+  }
+}
 .video-overlay {
   display: none;
   position: fixed;
