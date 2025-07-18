@@ -1,3 +1,25 @@
+let isRecording = false;
+let isLocked = false;
+let isDeleteActive = false;
+let smileTogglerState = 'smile';
+let mediaRecorder;
+let audioChunks = [];
+let videoChunks = [];
+let audioContext;
+let analyser;
+let dataArray;
+let stream = null;
+let startTime;
+let timerInterval;
+let dotBlinkInterval;
+let initialTouchY;
+let initialTouchX;
+let micIconStartX;
+let elapsedTime = 0;
+let touchTimeout;
+let isHolding = false;
+let recordingType = 'audio';
+
 function toggleEmojiPicker() {
   const emojiPicker = document.getElementById('emojiPicker');
   const smileToggler = document.getElementById('smileToggler');
@@ -38,20 +60,37 @@ function toggleEmojiPicker() {
 
 function scrollToLatestMessage() {
   const chatContainer = document.getElementById('chatContainer');
-  const inputContainer = document.getElementById('inputContainer');
-  const messages = chatContainer.querySelectorAll('.message');
-  const latestMessage = messages[messages.length - 1];
+  chatContainer.scrollTo({
+    top: chatContainer.scrollHeight,
+    behavior: 'smooth'
+  });
+}
 
-  if (latestMessage) {
-    const containerHeight = inputContainer.offsetHeight;
-    const latestMessageRect = latestMessage.getBoundingClientRect();
-    const chatContainerRect = chatContainer.getBoundingClientRect();
-    const offset = latestMessageRect.top - chatContainerRect.top + chatContainer.scrollTop;
-    chatContainer.scrollTo({
-      top: offset - chatContainer.clientHeight + latestMessageRect.height + containerHeight + 10,
-      behavior: 'smooth'
-    });
-  }
+function getCurrentTimestamp() {
+  const now = new Date();
+  const hours = now.getHours() % 12 || 12;
+  const minutes = now.getMinutes().toString().padStart(2, '0');
+  const ampm = now.getHours() >= 12 ? 'PM' : 'AM';
+  return `${hours}:${minutes} ${ampm}`;
+}
+
+function sendMessage(messageText) {
+  if (!messageText.trim()) return;
+
+  const chatContainer = document.getElementById('chatContainer');
+  const messageDiv = document.createElement('div');
+  messageDiv.classList.add('message', 'sent');
+  messageDiv.innerHTML = `
+    <div class="bubble-container">
+      <div class="bubble">${messageText}</div>
+    </div>
+    <div class="profile">
+      <span class="timestamp">${getCurrentTimestamp()}</span>
+      <span class="check">✓</span>
+    </div>
+  `;
+  chatContainer.appendChild(messageDiv);
+  scrollToLatestMessage();
 }
 
 document.getElementById('inputField').addEventListener('click', function () {
@@ -79,6 +118,63 @@ document.getElementById('inputField').addEventListener('focus', function () {
   setTimeout(() => {
     scrollToLatestMessage();
   }, 300);
+});
+
+document.getElementById('inputField').addEventListener('input', function () {
+  this.focus();
+  const sendBtn = document.getElementById('sendBtn');
+  const micIcon = document.getElementById('micIcon');
+  const pinIcon = document.getElementById('pinIcon');
+  
+  if (this.value.trim()) {
+    sendBtn.classList.add('active');
+    sendBtn.style.display = 'inline-flex';
+    sendBtn.style.color = '#749cbf'; // Ensure color is set
+    micIcon.style.display = 'none';
+    pinIcon.style.display = 'none';
+  } else {
+    sendBtn.classList.remove('active');
+    sendBtn.style.display = 'none';
+    micIcon.style.display = 'inline-flex';
+    pinIcon.style.display = 'inline-flex';
+  }
+});
+
+document.getElementById('inputField').addEventListener('keydown', function (e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    const message = this.value.trim();
+    const sendBtn = document.getElementById('sendBtn');
+    const micIcon = document.getElementById('micIcon');
+    const pinIcon = document.getElementById('pinIcon');
+    
+    if (message) {
+      sendMessage(message);
+      this.value = '';
+      sendBtn.classList.remove('active');
+      sendBtn.style.display = 'none';
+      micIcon.style.display = 'inline-flex';
+      pinIcon.style.display = 'inline-flex';
+      this.focus();
+    }
+  }
+});
+
+document.getElementById('sendBtn').addEventListener('click', function () {
+  const inputField = document.getElementById('inputField');
+  const message = inputField.value.trim();
+  const micIcon = document.getElementById('micIcon');
+  const pinIcon = document.getElementById('pinIcon');
+  
+  if (message) {
+    sendMessage(message);
+    inputField.value = '';
+    this.classList.remove('active');
+    this.style.display = 'none';
+    micIcon.style.display = 'inline-flex';
+    pinIcon.style.display = 'inline-flex';
+    inputField.focus();
+  }
 });
 
 document.addEventListener('click', function (event) {
@@ -152,6 +248,7 @@ const emojiPickerBody = document.getElementById('emojiPickerBody');
 const inputField = document.getElementById('inputField');
 const pinIcon = document.getElementById('pinIcon');
 const micIcon = document.getElementById('micIcon');
+const sendBtn = document.getElementById('sendBtn');
 const inputContainer = document.getElementById('inputContainer');
 const recordingInterface = document.getElementById('recordingInterface') || document.createElement('div');
 if (!document.getElementById('recordingInterface')) {
@@ -181,50 +278,26 @@ gifTab.addEventListener('click', () => {
   emojiPickerBody.innerHTML = gifContent;
 });
 
-inputField.addEventListener('input', function () {
-  this.focus();
-});
-
-inputField.addEventListener('keydown', function (e) {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    const message = this.value.trim();
-    if (message) {
-      console.log('Message sent:', message);
-      this.value = '';
-      this.focus();
-    }
-  }
-});
-
-let mediaRecorder;
-let audioChunks = [];
-let videoChunks = [];
-let audioContext;
-let analyser;
-let dataArray;
-let stream = null;
-let isRecording = false;
-let startTime;
-let timerInterval;
-let dotBlinkInterval;
-let initialTouchY;
-let initialTouchX;
-let isLocked = false;
-let isDeleteActive = false;
-let micIconStartX;
-let elapsedTime = 0;
-let smileTogglerState = 'smile';
-let touchTimeout;
-let isHolding = false;
-let recordingType = 'audio';
-
 window.addEventListener('load', () => {
   scrollToLatestMessage();
   inputField.blur();
   const inputContainer = document.getElementById('inputContainer');
   const containerHeight = inputContainer.offsetHeight;
   document.documentElement.style.setProperty('--input-container-height', `${containerHeight}px`);
+  sendBtn.classList.remove('active');
+  sendBtn.style.display = 'none';
+  sendBtn.style.color = '#749cbf'; // Ensure color is set
+  micIcon.style.display = 'inline-flex';
+  pinIcon.style.display = 'inline-flex';
+  // Check if Material Symbols font is loaded
+  const fontLoaded = document.fonts.check('1em Material Symbols Outlined');
+  if (!fontLoaded) {
+    console.warn('Material Symbols Outlined font not loaded. Using fallback.');
+    // Optional: Replace sendBtn with Font Awesome fallback
+    // sendBtn.innerHTML = '<i class="fas fa-paper-plane" style="color: #749cbf;"></i>';
+    // sendBtn.classList.remove('material-symbols-outlined');
+    // sendBtn.classList.add('fas');
+  }
 });
 
 function initializeRecorder(type) {
@@ -455,6 +528,8 @@ function showRecordingInterface() {
     inputField.classList.add('recording');
     micIcon.classList.add('recording');
     pinIcon.style.display = 'none';
+    sendBtn.classList.remove('active');
+    sendBtn.style.display = 'none';
     const videoOverlay = document.getElementById('videoOverlay');
     if (videoOverlay && recordingType === 'video') {
       videoOverlay.classList.add('active');
@@ -473,7 +548,7 @@ function hideRecordingInterface() {
   micIcon.style.position = 'relative';
   micIcon.style.right = 'auto';
   micIcon.style.marginRight = '8px';
-  pinIcon.style.display = 'inline-flex';
+  pinIcon.style.display = inputField.value.trim() ? 'none' : 'inline-flex';
   inputField.disabled = false;
   const emojiPicker = document.getElementById('emojiPicker');
   const videoOverlay = document.getElementById('videoOverlay');
@@ -489,6 +564,10 @@ function hideRecordingInterface() {
   }
   smileToggler.classList.remove('red-dot', 'trash-icon');
   micIcon.innerHTML = micIcon.innerHTML.includes('fa-video') ? '<i class="fas fa-video"></i>' : '<i class="fas fa-microphone"></i>';
+  sendBtn.classList.remove('active');
+  sendBtn.style.display = inputField.value.trim() ? 'inline-flex' : 'none';
+  sendBtn.style.color = '#749cbf'; // Ensure color is set
+  micIcon.style.display = inputField.value.trim() ? 'none' : 'inline-flex';
 }
 
 function updateTimer() {
@@ -533,14 +612,12 @@ micIcon.addEventListener('touchmove', (e) => {
 
     micIcon.classList.add('dragging');
 
-    // Only allow upward movement (deltaY > 0) for locking; ignore downward movement
     let transformValue = '';
     if (deltaY > 0) {
       transformValue = `translate(0, ${-deltaY}px)`;
     }
-    // Apply larger leftward movement for cancellation (capped at 100px)
     if (deltaX < 0) {
-      const cappedDeltaX = Math.max(deltaX, -100); // Cap left movement at 100px
+      const cappedDeltaX = Math.max(deltaX, -100);
       transformValue = `translate(${cappedDeltaX}px, ${deltaY > 0 ? -deltaY : 0}px)`;
     }
     micIcon.style.transform = transformValue || 'translate(0, 0)';
@@ -632,6 +709,10 @@ micIcon.addEventListener('touchend', (e) => {
         smileToggler.innerHTML = '';
         smileTogglerState = 'smile';
       }
+      sendBtn.classList.remove('active');
+      sendBtn.style.display = inputField.value.trim() ? 'inline-flex' : 'none';
+      sendBtn.style.color = '#749cbf'; // Ensure color is set
+      micIcon.style.display = inputField.value.trim() ? 'none' : 'inline-flex';
     }
   }
   isHolding = false;
