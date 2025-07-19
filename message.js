@@ -20,12 +20,40 @@ let touchTimeout;
 let isHolding = false;
 let recordingType = 'audio';
 
+// --- New variables for Slide to Reply ---
+let activeMessageElement = null;
+let startX = 0;
+let currentX = 0;
+let isSliding = false;
+const replyThreshold = 40; // Pixels to slide to trigger reply
+let repliedToMessageId = null;
+let repliedToMessageText = '';
+let repliedToMessageSender = '';
+let isReplyActive = false;
+
+// DOM Elements for Reply Preview (Ensuring they are available)
+const replyPreviewContainer = document.getElementById('replyPreviewContainer');
+const replySenderName = document.getElementById('replySenderName');
+const replyMessageText = document.getElementById('replyMessageText');
+const closeReplyBtn = document.getElementById('closeReplyBtn');
+const chatContainer = document.getElementById('chatContainer');
+const inputContainer = document.getElementById('inputContainer');
+const inputField = document.getElementById('inputField');
+const micIcon = document.getElementById('micIcon');
+const pinIcon = document.getElementById('pinIcon');
+const sendBtn = document.getElementById('sendBtn');
+const smileToggler = document.getElementById('smileToggler');
+const emojiPicker = document.getElementById('emojiPicker');
+// Ensure recordingInterface exists or is created
+const recordingInterface = document.getElementById('recordingInterface') || document.createElement('div');
+if (!document.getElementById('recordingInterface')) {
+  recordingInterface.id = 'recordingInterface';
+  recordingInterface.classList.add('recording-interface');
+  inputContainer.appendChild(recordingInterface); // Append it to inputContainer or another suitable parent
+}
+
+
 function toggleEmojiPicker() {
-  const emojiPicker = document.getElementById('emojiPicker');
-  const smileToggler = document.getElementById('smileToggler');
-  const chatContainer = document.getElementById('chatContainer');
-  const inputContainer = document.getElementById('inputContainer');
-  const inputField = document.getElementById('inputField');
   const isActive = emojiPicker.classList.contains('active');
 
   if (isActive && !isRecording) {
@@ -59,7 +87,6 @@ function toggleEmojiPicker() {
 }
 
 function scrollToLatestMessage() {
-  const chatContainer = document.getElementById('chatContainer');
   chatContainer.scrollTo({
     top: chatContainer.scrollHeight,
     behavior: 'smooth'
@@ -77,11 +104,30 @@ function getCurrentTimestamp() {
 function sendMessage(messageText) {
   if (!messageText.trim()) return;
 
-  const chatContainer = document.getElementById('chatContainer');
   const messageDiv = document.createElement('div');
   messageDiv.classList.add('message', 'sent');
+  // Assign a unique ID for new messages as well
+  messageDiv.setAttribute('data-message-id', `msg${Date.now()}`);
+
+  let replyHtml = '';
+  if (isReplyActive) {
+    const senderClass = repliedToMessageSender === 'You' ? 'reply-sent' : 'reply-received';
+    const barColor = repliedToMessageSender === 'You' ? '#7c3aed' : '#749cbf';
+    replyHtml = `
+      <div class="replied-message-preview ${senderClass}">
+        <div class="reply-bar" style="background-color: ${barColor};"></div>
+        <div class="reply-content">
+          <p class="reply-sender">${repliedToMessageSender}</p>
+          <p class="reply-text">${repliedToMessageText}</p>
+        </div>
+      </div>
+    `;
+  }
+
   messageDiv.innerHTML = `
     <div class="bubble-container">
+      <div class="reply-indicator"></div>
+      ${replyHtml}
       <div class="bubble">${messageText}</div>
     </div>
     <div class="profile">
@@ -91,14 +137,14 @@ function sendMessage(messageText) {
   `;
   chatContainer.appendChild(messageDiv);
   scrollToLatestMessage();
+
+  // If we were replying, clear the reply state
+  if (isReplyActive) {
+    closeReply();
+  }
 }
 
 document.getElementById('inputField').addEventListener('click', function () {
-  const emojiPicker = document.getElementById('emojiPicker');
-  const smileToggler = document.getElementById('smileToggler');
-  const chatContainer = document.getElementById('chatContainer');
-  const inputContainer = document.getElementById('inputContainer');
-
   if (emojiPicker.classList.contains('active') && !isRecording) {
     const containerHeight = inputContainer.offsetHeight;
     chatContainer.style.height = `calc(100vh - ${containerHeight}px)`;
@@ -122,10 +168,6 @@ document.getElementById('inputField').addEventListener('focus', function () {
 
 document.getElementById('inputField').addEventListener('input', function () {
   this.focus();
-  const sendBtn = document.getElementById('sendBtn');
-  const micIcon = document.getElementById('micIcon');
-  const pinIcon = document.getElementById('pinIcon');
-  
   if (this.value.trim()) {
     sendBtn.classList.add('active');
     sendBtn.style.display = 'inline-flex';
@@ -144,10 +186,7 @@ document.getElementById('inputField').addEventListener('keydown', function (e) {
   if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault();
     const message = this.value.trim();
-    const sendBtn = document.getElementById('sendBtn');
-    const micIcon = document.getElementById('micIcon');
-    const pinIcon = document.getElementById('pinIcon');
-    
+
     if (message) {
       sendMessage(message);
       this.value = '';
@@ -161,11 +200,8 @@ document.getElementById('inputField').addEventListener('keydown', function (e) {
 });
 
 document.getElementById('sendBtn').addEventListener('click', function () {
-  const inputField = document.getElementById('inputField');
   const message = inputField.value.trim();
-  const micIcon = document.getElementById('micIcon');
-  const pinIcon = document.getElementById('pinIcon');
-  
+
   if (message) {
     sendMessage(message);
     inputField.value = '';
@@ -178,14 +214,6 @@ document.getElementById('sendBtn').addEventListener('click', function () {
 });
 
 document.addEventListener('click', function (event) {
-  const emojiPicker = document.getElementById('emojiPicker');
-  const inputContainer = document.getElementById('inputContainer');
-  const smileToggler = document.getElementById('smileToggler');
-  const chatContainer = document.getElementById('chatContainer');
-  const inputField = document.getElementById('inputField');
-  const pinIcon = document.getElementById('pinIcon');
-  const micIcon = document.getElementById('micIcon');
-
   if (
     emojiPicker.classList.contains('active') &&
     !emojiPicker.contains(event.target) &&
@@ -214,48 +242,39 @@ document.addEventListener('click', function (event) {
 });
 
 window.addEventListener('resize', () => {
-  const emojiPicker = document.getElementById('emojiPicker');
-  const chatContainer = document.getElementById('chatContainer');
-  const inputContainer = document.getElementById('inputContainer');
+  // Recalculate heights for responsiveness
+  const currentInputContainerHeight = inputContainer.offsetHeight;
 
   if (emojiPicker.classList.contains('active')) {
-    const containerHeight = inputContainer.offsetHeight;
-    const maxPickerHeight = window.innerHeight - containerHeight;
+    const maxPickerHeight = window.innerHeight - currentInputContainerHeight;
     const pickerHeight = Math.min(maxPickerHeight * 0.5, 300);
     emojiPicker.style.height = `${pickerHeight}px`;
+    // The inputContainer's bottom position is now determined by the emoji picker's height
     inputContainer.style.bottom = `${pickerHeight}px`;
-    chatContainer.style.height = `calc(100vh - ${pickerHeight + containerHeight}px)`;
-    chatContainer.style.marginBottom = `${pickerHeight + containerHeight}px`;
-    document.documentElement.style.setProperty('--input-container-height', `${containerHeight + pickerHeight}px`);
-    setTimeout(() => {
-      scrollToLatestMessage();
-    }, 50);
+
+    // chatContainer needs to shrink by both inputContainer's height AND emoji picker's height
+    chatContainer.style.height = `calc(100vh - ${pickerHeight + currentInputContainerHeight}px)`;
+    chatContainer.style.marginBottom = `${pickerHeight + currentInputContainerHeight}px`;
+
   } else {
-    const containerHeight = inputContainer.offsetHeight;
-    chatContainer.style.height = `calc(100vh - ${containerHeight}px)`;
-    chatContainer.style.marginBottom = `${containerHeight}px`;
+    // When emoji picker is not active, inputContainer is at the bottom: 0
     inputContainer.style.bottom = '0';
-    document.documentElement.style.setProperty('--input-container-height', `${containerHeight}px`);
-    setTimeout(() => {
-      scrollToLatestMessage();
-    }, 50);
+
+    // chatContainer height is simply 100vh minus the current inputContainer height
+    chatContainer.style.height = `calc(100vh - ${currentInputContainerHeight}px)`;
+    chatContainer.style.marginBottom = `${currentInputContainerHeight}px`;
   }
+
+  // Always update the CSS variable for other elements that might depend on it
+  document.documentElement.style.setProperty('--input-container-height', `${currentInputContainerHeight}px`);
+  setTimeout(() => {
+    scrollToLatestMessage();
+  }, 50);
 });
 
 const smileyTab = document.getElementById('smileyTab');
 const gifTab = document.getElementById('gifTab');
 const emojiPickerBody = document.getElementById('emojiPickerBody');
-const inputField = document.getElementById('inputField');
-const pinIcon = document.getElementById('pinIcon');
-const micIcon = document.getElementById('micIcon');
-const sendBtn = document.getElementById('sendBtn');
-const inputContainer = document.getElementById('inputContainer');
-const recordingInterface = document.getElementById('recordingInterface') || document.createElement('div');
-if (!document.getElementById('recordingInterface')) {
-  recordingInterface.id = 'recordingInterface';
-  recordingInterface.classList.add('recording-interface');
-  inputContainer.appendChild(recordingInterface);
-}
 
 smileyTab.classList.add('active');
 
@@ -281,22 +300,23 @@ gifTab.addEventListener('click', () => {
 window.addEventListener('load', () => {
   scrollToLatestMessage();
   inputField.blur();
-  const inputContainer = document.getElementById('inputContainer');
-  const containerHeight = inputContainer.offsetHeight;
-  document.documentElement.style.setProperty('--input-container-height', `${containerHeight}px`);
+  // Calculate and set initial input container height, which now includes the reply preview space
+  const currentInputContainerHeight = inputContainer.offsetHeight;
+  document.documentElement.style.setProperty('--input-container-height', `${currentInputContainerHeight}px`);
+
+  // Ensure chatContainer respects the inputContainer's initial height
+  chatContainer.style.height = `calc(100vh - ${currentInputContainerHeight}px)`;
+  chatContainer.style.marginBottom = `${currentInputContainerHeight}px`;
+
   sendBtn.classList.remove('active');
   sendBtn.style.display = 'none';
-  sendBtn.style.color = '#749cbf'; // Ensure color is set
+  sendBtn.style.color = '#749cbf';
   micIcon.style.display = 'inline-flex';
   pinIcon.style.display = 'inline-flex';
   // Check if Material Symbols font is loaded
   const fontLoaded = document.fonts.check('1em Material Symbols Outlined');
   if (!fontLoaded) {
     console.warn('Material Symbols Outlined font not loaded. Using fallback.');
-    // Optional: Replace sendBtn with Font Awesome fallback
-    // sendBtn.innerHTML = '<i class="fas fa-paper-plane" style="color: #749cbf;"></i>';
-    // sendBtn.classList.remove('material-symbols-outlined');
-    // sendBtn.classList.add('fas');
   }
 });
 
@@ -550,7 +570,6 @@ function hideRecordingInterface() {
   micIcon.style.marginRight = '8px';
   pinIcon.style.display = inputField.value.trim() ? 'none' : 'inline-flex';
   inputField.disabled = false;
-  const emojiPicker = document.getElementById('emojiPicker');
   const videoOverlay = document.getElementById('videoOverlay');
   const videoPreview = document.getElementById('videoPreview');
   if (videoOverlay) videoOverlay.classList.remove('active');
@@ -635,7 +654,6 @@ micIcon.addEventListener('touchmove', (e) => {
       clearInterval(timerInterval);
       micIcon.classList.remove('recording', 'dragging');
       hideRecordingInterface();
-      const emojiPicker = document.getElementById('emojiPicker');
       if (emojiPicker.classList.contains('active')) {
         smileToggler.classList.remove('red-dot', 'trash-icon');
         smileToggler.classList.add('fa-keyboard');
@@ -674,6 +692,15 @@ micIcon.addEventListener('touchmove', (e) => {
 micIcon.addEventListener('touchend', (e) => {
   e.preventDefault();
   clearTimeout(touchTimeout);
+
+  // ADDED: Ensure the touch ended on the micIcon itself or one of its children
+  if (e.target !== micIcon && !micIcon.contains(e.target) && !isRecording) {
+      // If the touch ended outside the micIcon and we are not recording,
+      // it means the user was probably sliding a message.
+      // Do not proceed with mic/video toggle or recording stop logic.
+      return;
+  }
+
   if (!isHolding && !isRecording && !isDeleteActive) {
     const currentIcon = micIcon.querySelector('i');
     if (currentIcon && currentIcon.classList.contains('fa-microphone')) {
@@ -697,7 +724,6 @@ micIcon.addEventListener('touchend', (e) => {
       micIcon.style.right = 'auto';
       micIcon.style.marginRight = '8px';
       hideRecordingInterface();
-      const emojiPicker = document.getElementById('emojiPicker');
       if (emojiPicker.classList.contains('active')) {
         smileToggler.classList.remove('red-dot', 'trash-icon');
         smileToggler.classList.add('fa-keyboard');
@@ -734,3 +760,251 @@ pinIcon.addEventListener('click', (e) => {
   e.preventDefault();
   inputField.blur();
 });
+
+// --- New functions for Slide to Reply ---
+
+function activateReply(messageElement) {
+  isReplyActive = true;
+  repliedToMessageId = messageElement.getAttribute('data-message-id');
+  repliedToMessageText = messageElement.querySelector('.bubble').textContent;
+
+  if (messageElement.classList.contains('received')) {
+    repliedToMessageSender = 'Sarah Johnson'; // Assuming default sender for received
+    replyPreviewContainer.classList.remove('sent-reply');
+  } else {
+    repliedToMessageSender = 'You';
+    replyPreviewContainer.classList.add('sent-reply');
+  }
+
+  replySenderName.textContent = repliedToMessageSender;
+  replyMessageText.textContent = repliedToMessageText;
+
+  replyPreviewContainer.style.display = 'flex'; // Make sure it's flex for layout
+  replyPreviewContainer.classList.add('active');
+
+  // Adjust chat container height to make space for the reply preview
+  // inputContainer.offsetHeight now dynamically includes replyPreviewContainer's height when active
+  const currentInputContainerHeight = inputContainer.offsetHeight;
+  chatContainer.style.height = `calc(100vh - ${currentInputContainerHeight}px)`;
+  chatContainer.style.marginBottom = `${currentInputContainerHeight}px`;
+
+  inputField.focus(); // Focus input field after reply is active
+  scrollToLatestMessage();
+}
+
+function closeReply() {
+  isReplyActive = false;
+  repliedToMessageId = null;
+  repliedToMessageText = '';
+  repliedToMessageSender = '';
+
+  replyPreviewContainer.classList.remove('active');
+  // Hide after transition
+  setTimeout(() => {
+    replyPreviewContainer.style.display = 'none';
+  }, 200); // Match CSS transition duration
+
+  // Reset chat container height based on inputContainer's new height (without reply preview)
+  const currentInputContainerHeight = inputContainer.offsetHeight;
+  chatContainer.style.height = `calc(100vh - ${currentInputContainerHeight}px)`;
+  chatContainer.style.marginBottom = `${currentInputContainerHeight}px`;
+
+  inputField.value = ''; // Clear input field
+  sendBtn.classList.remove('active');
+  sendBtn.style.display = 'none';
+  micIcon.style.display = 'inline-flex';
+  pinIcon.style.display = 'inline-flex';
+  inputField.blur(); // Remove focus
+}
+
+closeReplyBtn.addEventListener('click', closeReply);
+
+
+// --- Touch/Mouse event handling for Message Sliding (Delegated) ---
+
+document.addEventListener('touchstart', handleTouchStart, { passive: false });
+document.addEventListener('touchmove', handleTouchMove, { passive: false });
+document.addEventListener('touchend', handleTouchEnd);
+document.addEventListener('mousedown', handleMouseDown);
+document.addEventListener('mousemove', handleMouseMove);
+document.addEventListener('mouseup', handleMouseUp);
+
+
+function handleTouchStart(e) {
+  // Check if the target is a message bubble or its container
+  let targetMessage = e.target.closest('.message');
+  if (targetMessage && !isRecording) { // Prevent sliding messages during voice recording
+    activeMessageElement = targetMessage;
+    startX = e.touches[0].clientX;
+    initialTouchY = e.touches[0].clientY; // Capture for dominance check
+    isSliding = true;
+  }
+}
+
+function handleTouchMove(e) {
+  if (!isSliding || !activeMessageElement) return;
+
+  currentX = e.touches[0].clientX;
+  let deltaX = currentX - startX;
+
+  // Prevent vertical scrolling if horizontal slide is dominant
+  const deltaY = Math.abs(e.touches[0].clientY - initialTouchY);
+
+  if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 5) {
+    e.preventDefault(); // Prevent default only if it's a horizontal slide
+  } else if (activeMessageElement.classList.contains('sliding')) {
+      e.preventDefault();
+  }
+
+
+  const bubbleContainer = activeMessageElement.querySelector('.bubble-container');
+  const replyIndicator = activeMessageElement.querySelector('.reply-indicator');
+
+  if (activeMessageElement.classList.contains('received')) {
+    // For received messages (slide right to left)
+    if (deltaX > 0) { // Sliding right
+      const cappedDeltaX = Math.min(deltaX, 70); // Cap slide distance
+      bubbleContainer.style.transform = `translateX(${cappedDeltaX}px)`;
+      replyIndicator.style.transform = `translateY(-50%) translateX(${cappedDeltaX - 30}px)`; // Adjust indicator position
+      replyIndicator.style.opacity = Math.min(cappedDeltaX / replyThreshold, 1);
+      activeMessageElement.classList.add('sliding');
+    } else {
+      // Snap back if sliding left
+      bubbleContainer.style.transform = 'translateX(0)';
+      replyIndicator.style.transform = 'translateY(-50%) translateX(0)';
+      replyIndicator.style.opacity = 0;
+      activeMessageElement.classList.remove('sliding');
+    }
+  } else { // For sent messages (slide left to right)
+    if (deltaX < 0) { // Sliding left
+      const cappedDeltaX = Math.max(deltaX, -70); // Cap slide distance
+      bubbleContainer.style.transform = `translateX(${cappedDeltaX}px)`;
+      replyIndicator.style.transform = `translateY(-50%) translateX(${cappedDeltaX + 30}px)`; // Adjust indicator position
+      replyIndicator.style.opacity = Math.min(Math.abs(cappedDeltaX) / replyThreshold, 1);
+      activeMessageElement.classList.add('sliding', 'sent'); // Add 'sent' for correct indicator positioning
+    } else {
+      // Snap back if sliding right
+      bubbleContainer.style.transform = 'translateX(0)';
+      replyIndicator.style.transform = 'translateY(-50%) translateX(0)';
+      replyIndicator.style.opacity = 0;
+      activeMessageElement.classList.remove('sliding', 'sent');
+    }
+  }
+}
+
+
+function handleTouchEnd(e) {
+  if (!isSliding || !activeMessageElement) return;
+
+  const deltaX = currentX - startX;
+  const bubbleContainer = activeMessageElement.querySelector('.bubble-container');
+  const replyIndicator = activeMessageElement.querySelector('.reply-indicator');
+
+  if (activeMessageElement.classList.contains('received')) {
+    if (deltaX > replyThreshold) {
+      activateReply(activeMessageElement);
+    }
+  } else { // Sent messages
+    if (deltaX < -replyThreshold) {
+      activateReply(activeMessageElement);
+    }
+  }
+
+  // Snap back the message bubble and hide indicator
+  bubbleContainer.style.transform = 'translateX(0)';
+  replyIndicator.style.transform = 'translateY(-50%) translateX(0)';
+  replyIndicator.style.opacity = 0;
+  activeMessageElement.classList.remove('sliding', 'sent'); // Remove 'sent' class as well
+
+  isSliding = false;
+  activeMessageElement = null;
+  startX = 0;
+  currentX = 0;
+}
+
+// Mouse event handlers for desktop support
+function handleMouseDown(e) {
+  if (e.button !== 0) return; // Only left-click
+  let targetMessage = e.target.closest('.message');
+  if (targetMessage && !isRecording) {
+    activeMessageElement = targetMessage;
+    startX = e.clientX;
+    initialTouchY = e.clientY; // Capture for dominance check
+    isSliding = true;
+    e.preventDefault(); // Prevent text selection
+  }
+}
+
+function handleMouseMove(e) {
+  if (!isSliding || !activeMessageElement) return;
+
+  currentX = e.clientX;
+  let deltaX = currentX - startX;
+
+  const deltaY = Math.abs(e.clientY - initialTouchY);
+  if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 5) {
+      e.preventDefault(); // Prevent default only if horizontal slide is dominant
+  } else if (activeMessageElement.classList.contains('sliding')) {
+      e.preventDefault();
+  }
+
+  const bubbleContainer = activeMessageElement.querySelector('.bubble-container');
+  const replyIndicator = activeMessageElement.querySelector('.reply-indicator');
+
+  if (activeMessageElement.classList.contains('received')) {
+    if (deltaX > 0) { // Sliding right
+      const cappedDeltaX = Math.min(deltaX, 70);
+      bubbleContainer.style.transform = `translateX(${cappedDeltaX}px)`;
+      replyIndicator.style.transform = `translateY(-50%) translateX(${cappedDeltaX - 30}px)`;
+      replyIndicator.style.opacity = Math.min(cappedDeltaX / replyThreshold, 1);
+      activeMessageElement.classList.add('sliding');
+    } else {
+      bubbleContainer.style.transform = 'translateX(0)';
+      replyIndicator.style.transform = 'translateY(-50%) translateX(0)';
+      replyIndicator.style.opacity = 0;
+      activeMessageElement.classList.remove('sliding');
+    }
+  } else { // Sent messages
+    if (deltaX < 0) { // Sliding left
+      const cappedDeltaX = Math.max(deltaX, -70);
+      bubbleContainer.style.transform = `translateX(${cappedDeltaX}px)`;
+      replyIndicator.style.transform = `translateY(-50%) translateX(${cappedDeltaX + 30}px)`;
+      replyIndicator.style.opacity = Math.min(Math.abs(cappedDeltaX) / replyThreshold, 1);
+      activeMessageElement.classList.add('sliding', 'sent');
+    } else {
+      bubbleContainer.style.transform = 'translateX(0)';
+      replyIndicator.style.transform = 'translateY(-50%) translateX(0)';
+      replyIndicator.style.opacity = 0;
+      activeMessageElement.classList.remove('sliding', 'sent');
+    }
+  }
+}
+
+function handleMouseUp(e) {
+  if (!isSliding || !activeMessageElement) return;
+
+  const deltaX = currentX - startX;
+  const bubbleContainer = activeMessageElement.querySelector('.bubble-container');
+  const replyIndicator = activeMessageElement.querySelector('.reply-indicator');
+
+  if (activeMessageElement.classList.contains('received')) {
+    if (deltaX > replyThreshold) {
+      activateReply(activeMessageElement);
+    }
+  } else { // Sent messages
+    if (deltaX < -replyThreshold) {
+      activateReply(activeMessageElement);
+    }
+  }
+
+  // Snap back the message bubble and hide indicator
+  bubbleContainer.style.transform = 'translateX(0)';
+  replyIndicator.style.transform = 'translateY(-50%) translateX(0)';
+  replyIndicator.style.opacity = 0;
+  activeMessageElement.classList.remove('sliding', 'sent');
+
+  isSliding = false;
+  activeMessageElement = null;
+  startX = 0;
+  currentX = 0;
+}
