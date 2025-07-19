@@ -104,13 +104,12 @@ function sendMessage(messageText) {
   if (isReplyActive) {
     const senderClass = repliedToMessageSender === 'You' ? 'reply-sent' : 'reply-received';
     const barColor = repliedToMessageSender === 'You' ? '#7c3aed' : '#749cbf';
-    const truncatedReplyText = repliedToMessageText.length > 35 ? repliedToMessageText.substring(0, 32) + '...' : repliedToMessageText;
     replyHtml = `
       <div class="replied-message-preview ${senderClass}">
         <div class="reply-bar" style="background-color: ${barColor};"></div>
         <div class="reply-content">
           <p class="reply-sender">${repliedToMessageSender}</p>
-          <p class="reply-text">${truncatedReplyText}</p>
+          <p class="reply-text">${repliedToMessageText}</p>
         </div>
       </div>
     `;
@@ -738,7 +737,7 @@ function activateReply(messageElement) {
     replyPreviewContainer.classList.add('sent-reply');
   }
   replySenderName.textContent = repliedToMessageSender;
-  replyMessageText.textContent = repliedToMessageText.length > 35 ? repliedToMessageText.substring(0, 32) + '...' : repliedToMessageText;
+  replyMessageText.textContent = repliedToMessageText;
   replyPreviewContainer.style.display = 'flex';
   replyPreviewContainer.classList.add('active');
   document.querySelectorAll('.message').forEach(msg => msg.classList.remove('highlighted'));
