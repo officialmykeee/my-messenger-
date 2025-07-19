@@ -20,18 +20,16 @@ let touchTimeout;
 let isHolding = false;
 let recordingType = 'audio';
 
-// --- New variables for Slide to Reply ---
 let activeMessageElement = null;
 let startX = 0;
 let currentX = 0;
 let isSliding = false;
-const replyThreshold = 40; // Pixels to slide to trigger reply
+const replyThreshold = 40;
 let repliedToMessageId = null;
 let repliedToMessageText = '';
 let repliedToMessageSender = '';
 let isReplyActive = false;
 
-// DOM Elements for Reply Preview (Ensuring they are available)
 const replyPreviewContainer = document.getElementById('replyPreviewContainer');
 const replySenderName = document.getElementById('replySenderName');
 const replyMessageText = document.getElementById('replyMessageText');
@@ -44,18 +42,15 @@ const pinIcon = document.getElementById('pinIcon');
 const sendBtn = document.getElementById('sendBtn');
 const smileToggler = document.getElementById('smileToggler');
 const emojiPicker = document.getElementById('emojiPicker');
-// Ensure recordingInterface exists or is created
 const recordingInterface = document.getElementById('recordingInterface') || document.createElement('div');
 if (!document.getElementById('recordingInterface')) {
   recordingInterface.id = 'recordingInterface';
   recordingInterface.classList.add('recording-interface');
-  inputContainer.appendChild(recordingInterface); // Append it to inputContainer or another suitable parent
+  inputContainer.appendChild(recordingInterface);
 }
-
 
 function toggleEmojiPicker() {
   const isActive = emojiPicker.classList.contains('active');
-
   if (isActive && !isRecording) {
     const containerHeight = inputContainer.offsetHeight;
     chatContainer.style.height = `calc(100vh - ${containerHeight}px)`;
@@ -80,7 +75,6 @@ function toggleEmojiPicker() {
     smileToggler.innerHTML = '';
     smileTogglerState = 'keyboard';
   }
-
   setTimeout(() => {
     scrollToLatestMessage();
   }, 50);
@@ -103,27 +97,24 @@ function getCurrentTimestamp() {
 
 function sendMessage(messageText) {
   if (!messageText.trim()) return;
-
   const messageDiv = document.createElement('div');
   messageDiv.classList.add('message', 'sent');
-  // Assign a unique ID for new messages as well
   messageDiv.setAttribute('data-message-id', `msg${Date.now()}`);
-
   let replyHtml = '';
   if (isReplyActive) {
     const senderClass = repliedToMessageSender === 'You' ? 'reply-sent' : 'reply-received';
     const barColor = repliedToMessageSender === 'You' ? '#7c3aed' : '#749cbf';
+    const truncatedReplyText = repliedToMessageText.length > 35 ? repliedToMessageText.substring(0, 32) + '...' : repliedToMessageText;
     replyHtml = `
       <div class="replied-message-preview ${senderClass}">
         <div class="reply-bar" style="background-color: ${barColor};"></div>
         <div class="reply-content">
           <p class="reply-sender">${repliedToMessageSender}</p>
-          <p class="reply-text">${repliedToMessageText}</p>
+          <p class="reply-text">${truncatedReplyText}</p>
         </div>
       </div>
     `;
   }
-
   messageDiv.innerHTML = `
     <div class="bubble-container">
       <div class="reply-indicator"></div>
@@ -137,8 +128,6 @@ function sendMessage(messageText) {
   `;
   chatContainer.appendChild(messageDiv);
   scrollToLatestMessage();
-
-  // If we were replying, clear the reply state
   if (isReplyActive) {
     closeReply();
   }
@@ -171,7 +160,7 @@ document.getElementById('inputField').addEventListener('input', function () {
   if (this.value.trim()) {
     sendBtn.classList.add('active');
     sendBtn.style.display = 'inline-flex';
-    sendBtn.style.color = '#749cbf'; // Ensure color is set
+    sendBtn.style.color = '#749cbf';
     micIcon.style.display = 'none';
     pinIcon.style.display = 'none';
   } else {
@@ -186,7 +175,6 @@ document.getElementById('inputField').addEventListener('keydown', function (e) {
   if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault();
     const message = this.value.trim();
-
     if (message) {
       sendMessage(message);
       this.value = '';
@@ -201,7 +189,6 @@ document.getElementById('inputField').addEventListener('keydown', function (e) {
 
 document.getElementById('sendBtn').addEventListener('click', function () {
   const message = inputField.value.trim();
-
   if (message) {
     sendMessage(message);
     inputField.value = '';
@@ -242,30 +229,19 @@ document.addEventListener('click', function (event) {
 });
 
 window.addEventListener('resize', () => {
-  // Recalculate heights for responsiveness
   const currentInputContainerHeight = inputContainer.offsetHeight;
-
   if (emojiPicker.classList.contains('active')) {
     const maxPickerHeight = window.innerHeight - currentInputContainerHeight;
     const pickerHeight = Math.min(maxPickerHeight * 0.5, 300);
     emojiPicker.style.height = `${pickerHeight}px`;
-    // The inputContainer's bottom position is now determined by the emoji picker's height
     inputContainer.style.bottom = `${pickerHeight}px`;
-
-    // chatContainer needs to shrink by both inputContainer's height AND emoji picker's height
     chatContainer.style.height = `calc(100vh - ${pickerHeight + currentInputContainerHeight}px)`;
     chatContainer.style.marginBottom = `${pickerHeight + currentInputContainerHeight}px`;
-
   } else {
-    // When emoji picker is not active, inputContainer is at the bottom: 0
     inputContainer.style.bottom = '0';
-
-    // chatContainer height is simply 100vh minus the current inputContainer height
     chatContainer.style.height = `calc(100vh - ${currentInputContainerHeight}px)`;
     chatContainer.style.marginBottom = `${currentInputContainerHeight}px`;
   }
-
-  // Always update the CSS variable for other elements that might depend on it
   document.documentElement.style.setProperty('--input-container-height', `${currentInputContainerHeight}px`);
   setTimeout(() => {
     scrollToLatestMessage();
@@ -300,20 +276,15 @@ gifTab.addEventListener('click', () => {
 window.addEventListener('load', () => {
   scrollToLatestMessage();
   inputField.blur();
-  // Calculate and set initial input container height, which now includes the reply preview space
   const currentInputContainerHeight = inputContainer.offsetHeight;
   document.documentElement.style.setProperty('--input-container-height', `${currentInputContainerHeight}px`);
-
-  // Ensure chatContainer respects the inputContainer's initial height
   chatContainer.style.height = `calc(100vh - ${currentInputContainerHeight}px)`;
   chatContainer.style.marginBottom = `${currentInputContainerHeight}px`;
-
   sendBtn.classList.remove('active');
   sendBtn.style.display = 'none';
   sendBtn.style.color = '#749cbf';
   micIcon.style.display = 'inline-flex';
   pinIcon.style.display = 'inline-flex';
-  // Check if Material Symbols font is loaded
   const fontLoaded = document.fonts.check('1em Material Symbols Outlined');
   if (!fontLoaded) {
     console.warn('Material Symbols Outlined font not loaded. Using fallback.');
@@ -348,7 +319,7 @@ function initializeRecorder(type) {
         };
       }
       mediaRecorder.onstop = () => {
-        if (recordingType === 'audio') {
+        if (type === 'audio') {
           const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
           console.log('Voice note sent:', audioBlob);
         } else {
@@ -585,7 +556,7 @@ function hideRecordingInterface() {
   micIcon.innerHTML = micIcon.innerHTML.includes('fa-video') ? '<i class="fas fa-video"></i>' : '<i class="fas fa-microphone"></i>';
   sendBtn.classList.remove('active');
   sendBtn.style.display = inputField.value.trim() ? 'inline-flex' : 'none';
-  sendBtn.style.color = '#749cbf'; // Ensure color is set
+  sendBtn.style.color = '#749cbf';
   micIcon.style.display = inputField.value.trim() ? 'none' : 'inline-flex';
 }
 
@@ -692,15 +663,9 @@ micIcon.addEventListener('touchmove', (e) => {
 micIcon.addEventListener('touchend', (e) => {
   e.preventDefault();
   clearTimeout(touchTimeout);
-
-  // ADDED: Ensure the touch ended on the micIcon itself or one of its children
   if (e.target !== micIcon && !micIcon.contains(e.target) && !isRecording) {
-      // If the touch ended outside the micIcon and we are not recording,
-      // it means the user was probably sliding a message.
-      // Do not proceed with mic/video toggle or recording stop logic.
-      return;
+    return;
   }
-
   if (!isHolding && !isRecording && !isDeleteActive) {
     const currentIcon = micIcon.querySelector('i');
     if (currentIcon && currentIcon.classList.contains('fa-microphone')) {
@@ -710,7 +675,7 @@ micIcon.addEventListener('touchend', (e) => {
     }
   } else if (isRecording && !isDeleteActive) {
     if (isLocked) {
-      // Do nothing; wait for tap outside micIcon to stop
+      // Do nothing; wait for tap outside
     } else {
       stopRecording();
       isRecording = false;
@@ -737,7 +702,7 @@ micIcon.addEventListener('touchend', (e) => {
       }
       sendBtn.classList.remove('active');
       sendBtn.style.display = inputField.value.trim() ? 'inline-flex' : 'none';
-      sendBtn.style.color = '#749cbf'; // Ensure color is set
+      sendBtn.style.color = '#749cbf';
       micIcon.style.display = inputField.value.trim() ? 'none' : 'inline-flex';
     }
   }
@@ -761,34 +726,27 @@ pinIcon.addEventListener('click', (e) => {
   inputField.blur();
 });
 
-// --- New functions for Slide to Reply ---
-
 function activateReply(messageElement) {
   isReplyActive = true;
   repliedToMessageId = messageElement.getAttribute('data-message-id');
   repliedToMessageText = messageElement.querySelector('.bubble').textContent;
-
   if (messageElement.classList.contains('received')) {
-    repliedToMessageSender = 'Sarah Johnson'; // Assuming default sender for received
+    repliedToMessageSender = 'Sarah Johnson';
     replyPreviewContainer.classList.remove('sent-reply');
   } else {
     repliedToMessageSender = 'You';
     replyPreviewContainer.classList.add('sent-reply');
   }
-
   replySenderName.textContent = repliedToMessageSender;
-  replyMessageText.textContent = repliedToMessageText;
-
-  replyPreviewContainer.style.display = 'flex'; // Make sure it's flex for layout
+  replyMessageText.textContent = repliedToMessageText.length > 35 ? repliedToMessageText.substring(0, 32) + '...' : repliedToMessageText;
+  replyPreviewContainer.style.display = 'flex';
   replyPreviewContainer.classList.add('active');
-
-  // Adjust chat container height to make space for the reply preview
-  // inputContainer.offsetHeight now dynamically includes replyPreviewContainer's height when active
+  document.querySelectorAll('.message').forEach(msg => msg.classList.remove('highlighted'));
+  messageElement.classList.add('highlighted');
   const currentInputContainerHeight = inputContainer.offsetHeight;
   chatContainer.style.height = `calc(100vh - ${currentInputContainerHeight}px)`;
   chatContainer.style.marginBottom = `${currentInputContainerHeight}px`;
-
-  inputField.focus(); // Focus input field after reply is active
+  inputField.focus();
   scrollToLatestMessage();
 }
 
@@ -797,46 +755,34 @@ function closeReply() {
   repliedToMessageId = null;
   repliedToMessageText = '';
   repliedToMessageSender = '';
-
   replyPreviewContainer.classList.remove('active');
-  // Hide after transition
   setTimeout(() => {
     replyPreviewContainer.style.display = 'none';
-  }, 200); // Match CSS transition duration
-
-  // Reset chat container height based on inputContainer's new height (without reply preview)
+  }, 200);
+  document.querySelectorAll('.message').forEach(msg => msg.classList.remove('highlighted'));
   const currentInputContainerHeight = inputContainer.offsetHeight;
   chatContainer.style.height = `calc(100vh - ${currentInputContainerHeight}px)`;
   chatContainer.style.marginBottom = `${currentInputContainerHeight}px`;
-
-  inputField.value = ''; // Clear input field
+  inputField.value = '';
   sendBtn.classList.remove('active');
   sendBtn.style.display = 'none';
   micIcon.style.display = 'inline-flex';
   pinIcon.style.display = 'inline-flex';
-  inputField.blur(); // Remove focus
+  inputField.blur();
 }
 
 closeReplyBtn.addEventListener('click', closeReply);
 
-
-// --- Touch/Mouse event handling for Message Sliding (Delegated) ---
-
 document.addEventListener('touchstart', handleTouchStart, { passive: false });
 document.addEventListener('touchmove', handleTouchMove, { passive: false });
 document.addEventListener('touchend', handleTouchEnd);
-document.addEventListener('mousedown', handleMouseDown);
-document.addEventListener('mousemove', handleMouseMove);
-document.addEventListener('mouseup', handleMouseUp);
-
 
 function handleTouchStart(e) {
-  // Check if the target is a message bubble or its container
   let targetMessage = e.target.closest('.message');
-  if (targetMessage && !isRecording) { // Prevent sliding messages during voice recording
+  if (targetMessage && !isRecording) {
     activeMessageElement = targetMessage;
     startX = e.touches[0].clientX;
-    initialTouchY = e.touches[0].clientY; // Capture for dominance check
+    initialTouchY = e.touches[0].clientY;
     isSliding = true;
   }
 }
@@ -847,112 +793,18 @@ function handleTouchMove(e) {
   currentX = e.touches[0].clientX;
   let deltaX = currentX - startX;
 
-  // Prevent vertical scrolling if horizontal slide is dominant
   const deltaY = Math.abs(e.touches[0].clientY - initialTouchY);
-
   if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 5) {
-    e.preventDefault(); // Prevent default only if it's a horizontal slide
+    e.preventDefault();
   } else if (activeMessageElement.classList.contains('sliding')) {
-      e.preventDefault();
-  }
-
-
-  const bubbleContainer = activeMessageElement.querySelector('.bubble-container');
-  const replyIndicator = activeMessageElement.querySelector('.reply-indicator');
-
-  if (activeMessageElement.classList.contains('received')) {
-    // For received messages (slide right to left)
-    if (deltaX > 0) { // Sliding right
-      const cappedDeltaX = Math.min(deltaX, 70); // Cap slide distance
-      bubbleContainer.style.transform = `translateX(${cappedDeltaX}px)`;
-      replyIndicator.style.transform = `translateY(-50%) translateX(${cappedDeltaX - 30}px)`; // Adjust indicator position
-      replyIndicator.style.opacity = Math.min(cappedDeltaX / replyThreshold, 1);
-      activeMessageElement.classList.add('sliding');
-    } else {
-      // Snap back if sliding left
-      bubbleContainer.style.transform = 'translateX(0)';
-      replyIndicator.style.transform = 'translateY(-50%) translateX(0)';
-      replyIndicator.style.opacity = 0;
-      activeMessageElement.classList.remove('sliding');
-    }
-  } else { // For sent messages (slide left to right)
-    if (deltaX < 0) { // Sliding left
-      const cappedDeltaX = Math.max(deltaX, -70); // Cap slide distance
-      bubbleContainer.style.transform = `translateX(${cappedDeltaX}px)`;
-      replyIndicator.style.transform = `translateY(-50%) translateX(${cappedDeltaX + 30}px)`; // Adjust indicator position
-      replyIndicator.style.opacity = Math.min(Math.abs(cappedDeltaX) / replyThreshold, 1);
-      activeMessageElement.classList.add('sliding', 'sent'); // Add 'sent' for correct indicator positioning
-    } else {
-      // Snap back if sliding right
-      bubbleContainer.style.transform = 'translateX(0)';
-      replyIndicator.style.transform = 'translateY(-50%) translateX(0)';
-      replyIndicator.style.opacity = 0;
-      activeMessageElement.classList.remove('sliding', 'sent');
-    }
-  }
-}
-
-
-function handleTouchEnd(e) {
-  if (!isSliding || !activeMessageElement) return;
-
-  const deltaX = currentX - startX;
-  const bubbleContainer = activeMessageElement.querySelector('.bubble-container');
-  const replyIndicator = activeMessageElement.querySelector('.reply-indicator');
-
-  if (activeMessageElement.classList.contains('received')) {
-    if (deltaX > replyThreshold) {
-      activateReply(activeMessageElement);
-    }
-  } else { // Sent messages
-    if (deltaX < -replyThreshold) {
-      activateReply(activeMessageElement);
-    }
-  }
-
-  // Snap back the message bubble and hide indicator
-  bubbleContainer.style.transform = 'translateX(0)';
-  replyIndicator.style.transform = 'translateY(-50%) translateX(0)';
-  replyIndicator.style.opacity = 0;
-  activeMessageElement.classList.remove('sliding', 'sent'); // Remove 'sent' class as well
-
-  isSliding = false;
-  activeMessageElement = null;
-  startX = 0;
-  currentX = 0;
-}
-
-// Mouse event handlers for desktop support
-function handleMouseDown(e) {
-  if (e.button !== 0) return; // Only left-click
-  let targetMessage = e.target.closest('.message');
-  if (targetMessage && !isRecording) {
-    activeMessageElement = targetMessage;
-    startX = e.clientX;
-    initialTouchY = e.clientY; // Capture for dominance check
-    isSliding = true;
-    e.preventDefault(); // Prevent text selection
-  }
-}
-
-function handleMouseMove(e) {
-  if (!isSliding || !activeMessageElement) return;
-
-  currentX = e.clientX;
-  let deltaX = currentX - startX;
-
-  const deltaY = Math.abs(e.clientY - initialTouchY);
-  if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 5) {
-      e.preventDefault(); // Prevent default only if horizontal slide is dominant
-  } else if (activeMessageElement.classList.contains('sliding')) {
-      e.preventDefault();
+    e.preventDefault();
   }
 
   const bubbleContainer = activeMessageElement.querySelector('.bubble-container');
   const replyIndicator = activeMessageElement.querySelector('.reply-indicator');
 
   if (activeMessageElement.classList.contains('received')) {
-    if (deltaX > 0) { // Sliding right
+    if (deltaX > 0) {
       const cappedDeltaX = Math.min(deltaX, 70);
       bubbleContainer.style.transform = `translateX(${cappedDeltaX}px)`;
       replyIndicator.style.transform = `translateY(-50%) translateX(${cappedDeltaX - 30}px)`;
@@ -964,8 +816,8 @@ function handleMouseMove(e) {
       replyIndicator.style.opacity = 0;
       activeMessageElement.classList.remove('sliding');
     }
-  } else { // Sent messages
-    if (deltaX < 0) { // Sliding left
+  } else {
+    if (deltaX < 0) {
       const cappedDeltaX = Math.max(deltaX, -70);
       bubbleContainer.style.transform = `translateX(${cappedDeltaX}px)`;
       replyIndicator.style.transform = `translateY(-50%) translateX(${cappedDeltaX + 30}px)`;
@@ -980,7 +832,7 @@ function handleMouseMove(e) {
   }
 }
 
-function handleMouseUp(e) {
+function handleTouchEnd(e) {
   if (!isSliding || !activeMessageElement) return;
 
   const deltaX = currentX - startX;
@@ -991,13 +843,12 @@ function handleMouseUp(e) {
     if (deltaX > replyThreshold) {
       activateReply(activeMessageElement);
     }
-  } else { // Sent messages
+  } else {
     if (deltaX < -replyThreshold) {
       activateReply(activeMessageElement);
     }
   }
 
-  // Snap back the message bubble and hide indicator
   bubbleContainer.style.transform = 'translateX(0)';
   replyIndicator.style.transform = 'translateY(-50%) translateX(0)';
   replyIndicator.style.opacity = 0;
