@@ -69,7 +69,8 @@ body {
   max-width: 100%;
   margin: 0;
   overflow-y: auto;
-  height: calc(100vh - 60px);
+  /* Adjust height to accommodate the reply-preview-container when visible */
+  height: calc(100vh - 60px); /* Initial height, will be adjusted by JS */
   box-sizing: border-box;
   transition: height 0s, margin 0s;
   position: relative;
@@ -140,12 +141,15 @@ body {
   cursor: pointer;
 }
 
+/* --- Message Styling for Reply Feature --- */
 .message {
   margin: 15px 0;
   max-width: 80%;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  position: relative; /* Added for reply-indicator positioning */
+  overflow: hidden; /* Added to clip the reply-indicator */
 }
 
 .message.received {
@@ -161,6 +165,8 @@ body {
 .message .bubble-container {
   position: relative;
   display: inline-block;
+  /* Add transition for bubble when sliding */
+  transition: transform 0.2s ease-out;
 }
 
 .message .bubble {
@@ -226,6 +232,135 @@ body {
   color: #1a73e8;
   margin-left: 2px;
 }
+
+/* Reply Indicator Styles */
+.reply-indicator {
+  position: absolute;
+  top: 50%;
+  left: -40px; /* Hidden off-screen by default */
+  transform: translateY(-50%) translateX(0);
+  font-family: "Font Awesome 5 Free"; /* Or whatever font-awesome needs */
+  font-weight: 900; /* For solid icons */
+  font-size: 24px;
+  color: #b0b0b0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px; /* Width of the indicator icon */
+  height: 100%; /* Cover the height of the bubble */
+  opacity: 0;
+  transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+  pointer-events: none; /* Ensure it doesn't interfere with clicks */
+  z-index: 1; /* Ensure it's above the bubble */
+}
+
+/* Change icon based on message type */
+.message.received .reply-indicator::before {
+  content: "\f3e5"; /* Font Awesome reply icon */
+}
+
+.message.sent .reply-indicator::before {
+  content: "\f3e5"; /* Font Awesome reply icon */
+}
+
+/* When a message is sliding (JS adds this class) */
+.message.sliding .bubble-container {
+  transform: translateX(50px); /* Move bubble to the right */
+}
+
+.message.sliding.sent .bubble-container {
+  transform: translateX(-50px); /* Move bubble to the left for sent messages */
+}
+
+.message.sliding .reply-indicator {
+  opacity: 1;
+  transform: translateY(-50%) translateX(80px); /* Move indicator into view */
+}
+
+.message.sliding.sent .reply-indicator {
+  opacity: 1;
+  transform: translateY(-50%) translateX(-80px); /* Move indicator into view from right for sent messages */
+}
+
+/* Reply Preview Container */
+.reply-preview-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+  background-color: #f8f9fa; /* Light background for preview */
+  border-top: 1px solid #e8ecef;
+  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05);
+  position: absolute;
+  bottom: 56px; /* Adjust based on chat-input-container height */
+  left: 0;
+  width: 100%;
+  box-sizing: border-box;
+  z-index: 999; /* Below chat-input-container but above chat content */
+  transform: translateY(100%); /* Start off-screen */
+  opacity: 0;
+  transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+}
+
+.reply-preview-container.active {
+  transform: translateY(0); /* Slide into view */
+  opacity: 1;
+}
+
+.reply-preview-content {
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
+}
+
+.reply-preview-bar {
+  width: 4px;
+  height: 40px; /* Adjust height as needed */
+  border-radius: 2px;
+  margin-right: 10px;
+  background-color: #749cbf; /* Default for received messages */
+}
+
+.reply-preview-container.sent-reply .reply-preview-bar {
+  background-color: #7c3aed; /* Color for sent message replies */
+}
+
+.reply-details {
+  flex-grow: 1;
+  overflow: hidden; /* For text truncation */
+}
+
+.reply-sender-name {
+  font-size: 14px;
+  font-weight: bold;
+  color: #749cbf; /* Default for received messages */
+  margin: 0 0 4px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.reply-preview-container.sent-reply .reply-sender-name {
+  color: #7c3aed; /* Color for sent message replies */
+}
+
+.reply-message-text {
+  font-size: 14px;
+  color: #555;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.close-reply-btn {
+  font-size: 20px;
+  color: #888;
+  cursor: pointer;
+  margin-left: 15px;
+}
+/* End Reply Preview Container */
+
 
 .chat-input-container {
   display: flex;
