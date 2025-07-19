@@ -784,6 +784,8 @@ function handleTouchStart(e) {
     startX = e.touches[0].clientX;
     initialTouchY = e.touches[0].clientY;
     isSliding = true;
+    const replyIndicator = activeMessageElement.querySelector('.reply-indicator');
+    replyIndicator.style.opacity = '0';
   }
 }
 
@@ -803,32 +805,17 @@ function handleTouchMove(e) {
   const bubbleContainer = activeMessageElement.querySelector('.bubble-container');
   const replyIndicator = activeMessageElement.querySelector('.reply-indicator');
 
-  if (activeMessageElement.classList.contains('received')) {
-    if (deltaX > 0) {
-      const cappedDeltaX = Math.min(deltaX, 70);
-      bubbleContainer.style.transform = `translateX(${cappedDeltaX}px)`;
-      replyIndicator.style.transform = `translateY(-50%) translateX(${cappedDeltaX - 30}px)`;
-      replyIndicator.style.opacity = Math.min(cappedDeltaX / replyThreshold, 1);
-      activeMessageElement.classList.add('sliding');
-    } else {
-      bubbleContainer.style.transform = 'translateX(0)';
-      replyIndicator.style.transform = 'translateY(-50%) translateX(0)';
-      replyIndicator.style.opacity = 0;
-      activeMessageElement.classList.remove('sliding');
-    }
+  if (deltaX > 0) {
+    const cappedDeltaX = Math.min(deltaX, 50);
+    bubbleContainer.style.transform = `translateX(${cappedDeltaX}px)`;
+    replyIndicator.style.transform = `translateY(-50%) translateX(${cappedDeltaX - 30}px)`;
+    replyIndicator.style.opacity = Math.min(cappedDeltaX / replyThreshold, 1);
+    activeMessageElement.classList.add('sliding');
   } else {
-    if (deltaX < 0) {
-      const cappedDeltaX = Math.max(deltaX, -70);
-      bubbleContainer.style.transform = `translateX(${cappedDeltaX}px)`;
-      replyIndicator.style.transform = `translateY(-50%) translateX(${cappedDeltaX + 30}px)`;
-      replyIndicator.style.opacity = Math.min(Math.abs(cappedDeltaX) / replyThreshold, 1);
-      activeMessageElement.classList.add('sliding', 'sent');
-    } else {
-      bubbleContainer.style.transform = 'translateX(0)';
-      replyIndicator.style.transform = 'translateY(-50%) translateX(0)';
-      replyIndicator.style.opacity = 0;
-      activeMessageElement.classList.remove('sliding', 'sent');
-    }
+    bubbleContainer.style.transform = 'translateX(0)';
+    replyIndicator.style.transform = 'translateY(-50%) translateX(0)';
+    replyIndicator.style.opacity = '0';
+    activeMessageElement.classList.remove('sliding');
   }
 }
 
@@ -839,20 +826,14 @@ function handleTouchEnd(e) {
   const bubbleContainer = activeMessageElement.querySelector('.bubble-container');
   const replyIndicator = activeMessageElement.querySelector('.reply-indicator');
 
-  if (activeMessageElement.classList.contains('received')) {
-    if (deltaX > replyThreshold) {
-      activateReply(activeMessageElement);
-    }
-  } else {
-    if (deltaX < -replyThreshold) {
-      activateReply(activeMessageElement);
-    }
+  if (deltaX > replyThreshold) {
+    activateReply(activeMessageElement);
   }
 
   bubbleContainer.style.transform = 'translateX(0)';
   replyIndicator.style.transform = 'translateY(-50%) translateX(0)';
-  replyIndicator.style.opacity = 0;
-  activeMessageElement.classList.remove('sliding', 'sent');
+  replyIndicator.style.opacity = '0';
+  activeMessageElement.classList.remove('sliding');
 
   isSliding = false;
   activeMessageElement = null;
