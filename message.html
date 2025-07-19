@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+This is my HTML: <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -24,16 +24,18 @@
         <i class="fas fa-ellipsis-v action-btn"></i>
       </div>
     </div>
-    <div class="message received">
+    <div class="message received" data-message-id="msg1">
       <div class="bubble-container">
+        <div class="reply-indicator"></div>
         <div class="bubble">Hey, how are you doing?</div>
       </div>
       <div class="profile">
         <span class="timestamp">10:30 AM</span>
       </div>
     </div>
-    <div class="message sent">
+    <div class="message sent" data-message-id="msg2">
       <div class="bubble-container">
+        <div class="reply-indicator"></div>
         <div class="bubble">I'm good, thanks! Just saw your story. That food looks amazing!</div>
       </div>
       <div class="profile">
@@ -41,16 +43,18 @@
         <span class="check">✓</span>
       </div>
     </div>
-    <div class="message received">
+    <div class="message received" data-message-id="msg3">
       <div class="bubble-container">
+        <div class="reply-indicator"></div>
         <div class="bubble">Yeah, the restaurant was incredible. We should go there sometime!</div>
       </div>
       <div class="profile">
         <span class="timestamp">10:33 AM</span>
       </div>
     </div>
-    <div class="message sent">
+    <div class="message sent" data-message-id="msg4">
       <div class="bubble-container">
+        <div class="reply-indicator"></div>
         <div class="bubble">Definitely! Are you free this weekend?</div>
       </div>
       <div class="profile">
@@ -58,8 +62,9 @@
         <span class="check">✓</span>
       </div>
     </div>
-    <div class="message received">
+    <div class="message received" data-message-id="msg5">
       <div class="bubble-container">
+        <div class="reply-indicator"></div>
         <div class="bubble">Saturday works for me. Should we invite the others too?</div>
       </div>
       <div class="profile">
@@ -67,6 +72,18 @@
       </div>
     </div>
   </div>
+
+  <div class="reply-preview-container" id="replyPreviewContainer" style="display: none;">
+    <div class="reply-preview-content">
+      <div class="reply-preview-bar"></div>
+      <div class="reply-details">
+        <p class="reply-sender-name" id="replySenderName"></p>
+        <p class="reply-message-text" id="replyMessageText"></p>
+      </div>
+    </div>
+    <i class="fas fa-times close-reply-btn" id="closeReplyBtn"></i>
+  </div>
+
   <div class="chat-input-container" id="inputContainer">
     <i class="fas fa-smile icon" id="smileToggler" onclick="toggleEmojiPicker()"></i>
     <textarea class="input-field" placeholder="Message" id="inputField" rows="1"></textarea>
