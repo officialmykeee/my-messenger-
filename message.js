@@ -42,6 +42,7 @@ const pinIcon = document.getElementById('pinIcon');
 const sendBtn = document.getElementById('sendBtn');
 const smileToggler = document.getElementById('smileToggler');
 const emojiPicker = document.getElementById('emojiPicker');
+const videoOverlay = document.getElementById('videoOverlay');
 const recordingInterface = document.getElementById('recordingInterface') || document.createElement('div');
 if (!document.getElementById('recordingInterface')) {
   recordingInterface.id = 'recordingInterface';
@@ -51,25 +52,29 @@ if (!document.getElementById('recordingInterface')) {
 
 function toggleEmojiPicker() {
   const isActive = emojiPicker.classList.contains('active');
+  const containerHeight = inputContainer.offsetHeight;
+  const maxPickerHeight = window.innerHeight - containerHeight;
+  const pickerHeight = Math.min(maxPickerHeight * 0.5, 300);
+  
   if (isActive && !isRecording) {
-    const containerHeight = inputContainer.offsetHeight;
     chatContainer.style.height = `calc(100vh - ${containerHeight}px)`;
     chatContainer.style.marginBottom = `${containerHeight}px`;
     inputContainer.style.bottom = '0';
     emojiPicker.classList.remove('active');
+    videoOverlay.classList.remove('emoji-picker-active');
+    document.documentElement.style.removeProperty('--emoji-picker-height');
     smileToggler.classList.remove('fa-keyboard');
     smileToggler.classList.add('fa-smile');
     smileToggler.innerHTML = '';
     smileTogglerState = 'smile';
   } else if (!isRecording) {
-    const containerHeight = inputContainer.offsetHeight;
-    const maxPickerHeight = window.innerHeight - containerHeight;
-    const pickerHeight = Math.min(maxPickerHeight * 0.5, 300);
+    emojiPicker.style.height = `${pickerHeight}px`;
     inputContainer.style.bottom = `${pickerHeight}px`;
     chatContainer.style.height = `calc(100vh - ${pickerHeight + containerHeight}px)`;
     chatContainer.style.marginBottom = `${pickerHeight + containerHeight}px`;
-    emojiPicker.style.height = `${pickerHeight}px`;
     emojiPicker.classList.add('active');
+    videoOverlay.classList.add('emoji-picker-active');
+    document.documentElement.style.setProperty('--emoji-picker-height', `${pickerHeight}px`);
     smileToggler.classList.remove('fa-smile', 'red-dot');
     smileToggler.classList.add('fa-keyboard');
     smileToggler.innerHTML = '';
@@ -139,6 +144,8 @@ document.getElementById('inputField').addEventListener('click', function () {
     chatContainer.style.marginBottom = `${containerHeight}px`;
     inputContainer.style.bottom = '0';
     emojiPicker.classList.remove('active');
+    videoOverlay.classList.remove('emoji-picker-active');
+    document.documentElement.style.removeProperty('--emoji-picker-height');
     smileToggler.classList.remove('fa-keyboard');
     smileToggler.classList.add('fa-smile');
     smileToggler.innerHTML = '';
@@ -211,6 +218,8 @@ document.addEventListener('click', function (event) {
     chatContainer.style.marginBottom = `${containerHeight}px`;
     inputContainer.style.bottom = '0';
     emojiPicker.classList.remove('active');
+    videoOverlay.classList.remove('emoji-picker-active');
+    document.documentElement.style.removeProperty('--emoji-picker-height');
     smileToggler.classList.remove('fa-keyboard');
     smileToggler.classList.add('fa-smile');
     smileToggler.innerHTML = '';
@@ -236,10 +245,16 @@ window.addEventListener('resize', () => {
     inputContainer.style.bottom = `${pickerHeight}px`;
     chatContainer.style.height = `calc(100vh - ${pickerHeight + currentInputContainerHeight}px)`;
     chatContainer.style.marginBottom = `${pickerHeight + currentInputContainerHeight}px`;
+    document.documentElement.style.setProperty('--emoji-picker-height', `${pickerHeight}px`);
+    if (videoOverlay.classList.contains('active')) {
+      videoOverlay.classList.add('emoji-picker-active');
+    }
   } else {
     inputContainer.style.bottom = '0';
     chatContainer.style.height = `calc(100vh - ${currentInputContainerHeight}px)`;
     chatContainer.style.marginBottom = `${currentInputContainerHeight}px`;
+    videoOverlay.classList.remove('emoji-picker-active');
+    document.documentElement.style.removeProperty('--emoji-picker-height');
   }
   document.documentElement.style.setProperty('--input-container-height', `${currentInputContainerHeight}px`);
   setTimeout(() => {
@@ -429,6 +444,60 @@ function startDotBlink() {
   }
 }
 
+function showRecordingInterface() {
+  if (isRecording) {
+    recordingInterface.style.display = 'flex';
+    updateRecordingInterface();
+    inputField.classList.add('recording');
+    micIcon.classList.add('recording');
+    pinIcon.style.display = 'none';
+    sendBtn.classList.remove('active');
+    sendBtn.style.display = 'none';
+    const videoOverlay = document.getElementById('videoOverlay');
+    if (videoOverlay && recordingType === 'video') {
+      videoOverlay.classList.add('active');
+      if (emojiPicker.classList.contains('active')) {
+        videoOverlay.classList.add('emoji-picker-active');
+        const pickerHeight = emojiPicker.offsetHeight;
+        document.documentElement.style.setProperty('--emoji-picker-height', `${pickerHeight}px`);
+      }
+      setupVideoPreview();
+    }
+  }
+}
+
+function hideRecordingInterface() {
+  recordingInterface.style.display = 'none';
+  inputField.classList.remove('recording');
+  micIcon.classList.remove('recording', 'dragging', 'locked');
+  micIcon.style.width = '36px';
+  micIcon.style.height = '36px';
+  micIcon.style.transform = 'translate(0, 0)';
+  micIcon.style.position = 'relative';
+  micIcon.style.right = 'auto';
+  micIcon.style.marginRight = '8px';
+  pinIcon.style.display = inputField.value.trim() ? 'none' : 'inline-flex';
+  inputField.disabled = false;
+  const videoOverlay = document.getElementById('videoOverlay');
+  const videoPreview = document.getElementById('videoPreview');
+  if (videoOverlay) videoOverlay.classList.remove('active', 'emoji-picker-active');
+  if (videoPreview) videoPreview.srcObject = null;
+  document.documentElement.style.removeProperty('--emoji-picker-height');
+  if (emojiPicker.classList.contains('active')) {
+    smileToggler.classList.add('fa-keyboard');
+    smileTogglerState = 'keyboard';
+  } else {
+    smileToggler.classList.add('fa-smile');
+    smileTogglerState = 'smile';
+  }
+  smileToggler.classList.remove('red-dot', 'trash-icon');
+  micIcon.innerHTML = micIcon.innerHTML.includes('fa-video') ? '<i class="fas fa-video"></i>' : '<i class="fas fa-microphone"></i>';
+  sendBtn.classList.remove('active');
+  sendBtn.style.display = inputField.value.trim() ? 'inline-flex' : 'none';
+  sendBtn.style.color = '#749cbf';
+  micIcon.style.display = inputField.value.trim() ? 'none' : 'inline-flex';
+}
+
 function updateRecordingInterface() {
   const inputStyles = window.getComputedStyle(inputField);
   recordingInterface.style.width = inputStyles.width;
@@ -509,54 +578,6 @@ function updateRecordingInterface() {
   dot.style.whiteSpace = 'nowrap';
   dot.style.display = isRecording ? 'flex' : 'none';
   dot.classList.toggle('active', isRecording && !isDeleteActive);
-}
-
-function showRecordingInterface() {
-  if (isRecording) {
-    recordingInterface.style.display = 'flex';
-    updateRecordingInterface();
-    inputField.classList.add('recording');
-    micIcon.classList.add('recording');
-    pinIcon.style.display = 'none';
-    sendBtn.classList.remove('active');
-    sendBtn.style.display = 'none';
-    const videoOverlay = document.getElementById('videoOverlay');
-    if (videoOverlay && recordingType === 'video') {
-      videoOverlay.classList.add('active');
-      setupVideoPreview();
-    }
-  }
-}
-
-function hideRecordingInterface() {
-  recordingInterface.style.display = 'none';
-  inputField.classList.remove('recording');
-  micIcon.classList.remove('recording', 'dragging', 'locked');
-  micIcon.style.width = '36px';
-  micIcon.style.height = '36px';
-  micIcon.style.transform = 'translate(0, 0)';
-  micIcon.style.position = 'relative';
-  micIcon.style.right = 'auto';
-  micIcon.style.marginRight = '8px';
-  pinIcon.style.display = inputField.value.trim() ? 'none' : 'inline-flex';
-  inputField.disabled = false;
-  const videoOverlay = document.getElementById('videoOverlay');
-  const videoPreview = document.getElementById('videoPreview');
-  if (videoOverlay) videoOverlay.classList.remove('active');
-  if (videoPreview) videoPreview.srcObject = null;
-  if (emojiPicker.classList.contains('active')) {
-    smileToggler.classList.add('fa-keyboard');
-    smileTogglerState = 'keyboard';
-  } else {
-    smileToggler.classList.add('fa-smile');
-    smileTogglerState = 'smile';
-  }
-  smileToggler.classList.remove('red-dot', 'trash-icon');
-  micIcon.innerHTML = micIcon.innerHTML.includes('fa-video') ? '<i class="fas fa-video"></i>' : '<i class="fas fa-microphone"></i>';
-  sendBtn.classList.remove('active');
-  sendBtn.style.display = inputField.value.trim() ? 'inline-flex' : 'none';
-  sendBtn.style.color = '#749cbf';
-  micIcon.style.display = inputField.value.trim() ? 'none' : 'inline-flex';
 }
 
 function updateTimer() {
