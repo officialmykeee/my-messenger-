@@ -27,12 +27,6 @@ body {
 .send-btn::before {
   content: '';
 }
-@media (max-width: 600px) {
-  .send-btn {
-    font-size: 20px;
-    margin: 0 6px;
-  }
-}
 .video-overlay {
   display: none;
   position: fixed;
@@ -42,6 +36,7 @@ body {
   height: calc(100% - var(--input-container-height, 50px));
   background: white;
   z-index: 1002;
+  transition: transform 0.2s ease;
 }
 .video-overlay.active {
   display: flex;
@@ -55,14 +50,54 @@ body {
   object-fit: cover;
   border-radius: 50%;
   z-index: 1003;
+  transition: width 0.2s ease, height 0.2s ease;
+}
+.video-overlay.emoji-picker-active {
+  transform: translateY(calc(-1 * var(--emoji-picker-height, 250px)));
+}
+.video-overlay.emoji-picker-active video {
+  width: 180px;
+  height: 180px;
 }
 .chat-input-container {
-  position: relative;
-  z-index: 1004;
+  display: flex;
+  align-items: center;
+  background: #fff;
+  padding: 8px 12px;
+  border-top: 1px solid #e8ecef;
+  width: 100%;
+  box-sizing: border-box;
+  box-shadow: none !important;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  z-index: 1000;
+  transition-property: bottom;
+  transition-duration: 0.2s;
+  will-change: bottom;
+  transform: translate3d(0, 0, 0);
+  transform-style: preserve-3d;
+  perspective: 1000px;
+  backface-visibility: hidden;
 }
 .emoji-picker {
-  position: relative;
-  z-index: 1005;
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  box-sizing: border-box;
+  z-index: 2000;
+  overflow: hidden;
+  background-color: #fff;
+  opacity: 0;
+  transform: translateY(100%);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  border-top: 4px solid #f2f2f2;
+}
+.emoji-picker.active {
+  display: block;
+  opacity: 1;
+  transform: translateY(0);
 }
 .chat-container {
   padding: 0;
@@ -392,27 +427,6 @@ body {
 .close-reply-btn:hover {
   color: #374151;
 }
-.chat-input-container {
-  display: flex;
-  align-items: center;
-  background: #fff;
-  padding: 8px 12px;
-  border-top: 1px solid #e8ecef;
-  width: 100%;
-  box-sizing: border-box;
-  box-shadow: none !important;
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  z-index: 1000;
-  transition-property: bottom;
-  transition-duration: 0.2s;
-  will-change: bottom;
-  transform: translate3d(0, 0, 0);
-  transform-style: preserve-3d;
-  perspective: 1000px;
-  backface-visibility: hidden;
-}
 .icon {
   font-size: 22px;
   color: #749cbf;
@@ -444,7 +458,6 @@ body {
 .icon.red-dot.trash-icon {
   color: #ff3333;
   animation: openClose 0.8s ease-in-out infinite, shake 0.3s ease-in-out infinite;
-  font-size: 24px;
 }
 @keyframes dotBlink {
   0% { opacity: 0; }
@@ -633,25 +646,6 @@ body {
 .recording-interface .cancel-btn {
   display: none;
 }
-.emoji-picker {
-  position: fixed;
-  left: 0;
-  bottom: 0;
-  width: 100%;
-  box-sizing: border-box;
-  z-index: 2000;
-  overflow: hidden;
-  background-color: #fff;
-  opacity: 0;
-  transform: translateY(100%);
-  transition: opacity 0.2s ease, transform 0.2s ease;
-  border-top: 4px solid #f2f2f2;
-}
-.emoji-picker.active {
-  display: block;
-  opacity: 1;
-  transform: translateY(0);
-}
 .emoji-picker-navbar {
   display: flex;
   justify-content: space-around;
@@ -729,6 +723,21 @@ body {
   margin-top: 25px;
 }
 @media (max-width: 600px) {
+  .send-btn {
+    font-size: 20px;
+    margin: 0 6px;
+  }
+  .video-overlay.active video {
+    width: 200px;
+    height: 200px;
+  }
+  .video-overlay.emoji-picker-active {
+    transform: translateY(calc(-1 * var(--emoji-picker-height, 200px)));
+  }
+  .video-overlay.emoji-picker-active video {
+    width: 150px;
+    height: 150px;
+  }
   .chat-container {
     padding: 0;
     margin: 0;
