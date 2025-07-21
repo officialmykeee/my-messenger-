@@ -734,9 +734,11 @@ body {
   .video-overlay.emoji-picker-active {
     transform: translateY(calc(-1 * var(--emoji-picker-height, 200px)));
   }
-  .video-overlay.emoji-picker-active video {
-    width: 150px;
-    height: 150px;
+.video-overlay.emoji-picker-active video {
+    width: 205px;
+    height: 205px;
+    transform: translateY(106px);
+    margin-top: 9px;
   }
   .chat-container {
     padding: 0;
