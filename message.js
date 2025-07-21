@@ -405,6 +405,10 @@ function stopRecording() {
   if (mediaRecorder && isRecording) {
     mediaRecorder.stop();
     clearInterval(dotBlinkInterval);
+    const micIconElement = recordingInterface.querySelector('.mic-icon');
+    if (micIconElement) {
+      micIconElement.classList.remove('active');
+    }
   }
 }
 
@@ -434,13 +438,9 @@ function cancelRecording() {
 
 function startDotBlink() {
   if (dotBlinkInterval) clearInterval(dotBlinkInterval);
-  const dotElement = recordingInterface.querySelector('.dot');
-  if (dotElement) {
-    dotBlinkInterval = setInterval(() => {
-      if (!smileToggler.classList.contains('trash-icon')) {
-        dotElement.innerHTML = dotElement.innerHTML === '•' ? '' : '•';
-      }
-    }, 300);
+  const micIconElement = recordingInterface.querySelector('.mic-icon');
+  if (micIconElement) {
+    micIconElement.classList.add('active');
   }
 }
 
@@ -496,6 +496,10 @@ function hideRecordingInterface() {
   sendBtn.style.display = inputField.value.trim() ? 'inline-flex' : 'none';
   sendBtn.style.color = '#749cbf';
   micIcon.style.display = inputField.value.trim() ? 'none' : 'inline-flex';
+  const micIconElement = recordingInterface.querySelector('.mic-icon');
+  if (micIconElement) {
+    micIconElement.classList.remove('active');
+  }
 }
 
 function updateRecordingInterface() {
@@ -503,81 +507,55 @@ function updateRecordingInterface() {
   recordingInterface.style.width = inputStyles.width;
   recordingInterface.style.height = inputStyles.height;
 
-  let cancelLabel = recordingInterface.querySelector('.cancel-label');
-  if (!cancelLabel) {
-    cancelLabel = document.createElement('span');
-    cancelLabel.classList.add('cancel-label');
-    const backArrow = document.createElement('i');
-    backArrow.classList.add('fas', 'fa-chevron-left', 'back-arrow');
-    cancelLabel.appendChild(backArrow);
-    cancelLabel.appendChild(document.createTextNode('Slide to cancel'));
-    recordingInterface.appendChild(cancelLabel);
+  const cancelLabel = recordingInterface.querySelector('.cancel-label');
+  if (cancelLabel) {
+    cancelLabel.style.left = '8px';
+    cancelLabel.style.fontSize = '12px';
+    cancelLabel.style.marginRight = '10px';
+    cancelLabel.style.position = 'relative';
+    cancelLabel.style.top = '6px';
+    cancelLabel.style.color = '#666';
+    cancelLabel.style.opacity = '0.8';
+    cancelLabel.style.whiteSpace = 'nowrap';
+    cancelLabel.style.display = isLocked ? 'none' : 'flex';
+    cancelLabel.style.alignItems = 'center';
   }
-  cancelLabel.style.left = '8px';
-  cancelLabel.style.fontSize = '12px';
-  cancelLabel.style.marginRight = '31px';
-  cancelLabel.style.position = 'relative';
-  cancelLabel.style.top = '6px';
-  cancelLabel.style.color = '#666';
-  cancelLabel.style.opacity = '0.8';
-  cancelLabel.style.whiteSpace = 'nowrap';
-  cancelLabel.style.display = isLocked ? 'none' : 'flex';
-  cancelLabel.style.alignItems = 'center';
 
-  let cancelLink = recordingInterface.querySelector('.cancel-link');
-  if (!cancelLink) {
-    cancelLink = document.createElement('span');
-    cancelLink.classList.add('cancel-link');
-    cancelLink.appendChild(document.createTextNode('Cancel'));
-    recordingInterface.appendChild(cancelLink);
+  const cancelLink = recordingInterface.querySelector('.cancel-link');
+  if (cancelLink) {
+    cancelLink.style.left = '8px';
+    cancelLink.style.fontSize = '12px';
+    cancelLink.style.marginRight = '10px';
+    cancelLink.style.position = 'relative';
+    cancelLink.style.top = '6px';
+    cancelLink.style.color = '#749cbf';
+    cancelLink.style.opacity = '0.8';
+    cancelLink.style.whiteSpace = 'nowrap';
+    cancelLink.style.display = isLocked ? 'flex' : 'none';
+    cancelLink.style.alignItems = 'center';
+    cancelLink.style.cursor = 'pointer';
+    cancelLink.onclick = (e) => {
+      if (isRecording && isLocked) {
+        e.preventDefault();
+        cancelRecording();
+      }
+    };
   }
-  cancelLink.style.left = '8px';
-  cancelLink.style.fontSize = '12px';
-  cancelLink.style.marginRight = '31px';
-  cancelLink.style.position = 'relative';
-  cancelLink.style.top = '6px';
-  cancelLink.style.color = '#749cbf';
-  cancelLink.style.opacity = '0.8';
-  cancelLink.style.whiteSpace = 'nowrap';
-  cancelLink.style.display = isLocked ? 'flex' : 'none';
-  cancelLink.style.alignItems = 'center';
-  cancelLink.style.cursor = 'pointer';
-  cancelLink.onclick = (e) => {
-    if (isRecording && isLocked) {
-      e.preventDefault();
-      cancelRecording();
-    }
-  };
 
-  let timer = recordingInterface.querySelector('.timer');
-  if (!timer) {
-    timer = document.createElement('span');
-    timer.classList.add('timer');
-    timer.id = 'timer';
-    recordingInterface.appendChild(timer);
+  const timer = recordingInterface.querySelector('.timer');
+  if (timer) {
+    timer.textContent = '0:00.0';
+    timer.style.fontSize = '22.5px';
+    timer.style.marginLeft = '-13px';
+    timer.style.position = 'relative';
+    timer.style.marginTop = '12.5px';
+    timer.style.color = '#91959c';
   }
-  timer.textContent = '0:00.0';
-  timer.style.fontSize = '12px';
-  timer.style.marginLeft = '-13px';
-  timer.style.position = 'relative';
-  timer.style.marginTop = '12.5px';
-  timer.style.color = '#91959c';
 
-  let dot = recordingInterface.querySelector('.dot');
-  if (!dot) {
-    dot = document.createElement('span');
-    dot.classList.add('dot');
-    recordingInterface.appendChild(dot);
+  const micIconElement = recordingInterface.querySelector('.mic-icon');
+  if (micIconElement) {
+    micIconElement.classList.toggle('active', isRecording && !isDeleteActive);
   }
-  dot.style.fontSize = '24px';
-  dot.style.marginRight = '31px';
-  dot.style.position = 'relative';
-  dot.style.top = '6px';
-  dot.style.color = '#749cbf';
-  dot.style.opacity = '0.8';
-  dot.style.whiteSpace = 'nowrap';
-  dot.style.display = isRecording ? 'flex' : 'none';
-  dot.classList.toggle('active', isRecording && !isDeleteActive);
 }
 
 function updateTimer() {
@@ -639,6 +617,10 @@ micIcon.addEventListener('touchmove', (e) => {
       smileToggler.innerHTML = '<i class="bx bxs-trash"></i>';
       smileTogglerState = 'waste';
       clearInterval(dotBlinkInterval);
+      const micIconElement = recordingInterface.querySelector('.mic-icon');
+      if (micIconElement) {
+        micIconElement.classList.remove('active');
+      }
       cancelRecording();
       isDeleteActive = false;
       elapsedTime = 0;
