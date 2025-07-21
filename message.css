@@ -586,7 +586,7 @@ body {
 }
 .recording-interface .cancel-label {
   font-size: 12px;
-  margin-right: 31px;
+  margin-right: 10px;
   position: relative;
   top: 6px;
   color: #666;
@@ -605,7 +605,7 @@ body {
 }
 .recording-interface .cancel-link {
   font-size: 12px;
-  margin-right: 31px;
+  margin-right: 10px;
   position: relative;
   top: 6px;
   color: #749cbf;
@@ -619,25 +619,25 @@ body {
   display: flex;
 }
 .recording-interface .timer {
-  font-size: 12px;
+  font-size: 22.5px;
   margin-left: -13px;
-  position: relative;
+  position: Intel;
   margin-top: 12.5px;
   color: #91959c;
 }
-.recording-interface .dot {
-  font-size: 24px;
-  margin-right: 31px;
+.recording-interface .mic-icon {
+  font-size: 22.5px;
+  margin-right: 40px;
   position: relative;
   top: 6px;
-  color: #749cbf;
+  color: #ff0000;
   opacity: 0.8;
   white-space: nowrap;
   display: none;
   align-items: center;
   animation: dotBlink 1.2s infinite;
 }
-.recording-interface .dot.active {
+.recording-interface .mic-icon.active {
   display: flex;
 }
 .recording-interface .lock-indicator {
@@ -734,7 +734,7 @@ body {
   .video-overlay.emoji-picker-active {
     transform: translateY(calc(-1 * var(--emoji-picker-height, 200px)));
   }
-.video-overlay.emoji-picker-active video {
+  .video-overlay.emoji-picker-active video {
     width: 205px;
     height: 205px;
     transform: translateY(106px);
@@ -939,7 +939,7 @@ body {
   }
   .recording-interface .cancel-label {
     font-size: 12px;
-    margin-right: 31px;
+    margin-right: 10px;
     position: relative;
     top: 6px;
     color: #666;
@@ -957,7 +957,7 @@ body {
   }
   .recording-interface .cancel-link {
     font-size: 12px;
-    margin-right: 31px;
+    margin-right: 10px;
     position: relative;
     top: 6px;
     color: #749cbf;
@@ -971,25 +971,25 @@ body {
     display: flex;
   }
   .recording-interface .timer {
-    font-size: 12px;
+    font-size: 22.5px;
     margin-left: -13px;
     position: relative;
     margin-top: 12.5px;
     color: #91959c;
   }
-  .recording-interface .dot {
-    font-size: 20px;
-    margin-right: 31px;
+  .recording-interface .mic-icon {
+    font-size: 22.5px;
+    margin-right: 40px;
     position: relative;
     top: 6px;
-    color: #749cbf;
+    color: #ff0000;
     opacity: 0.8;
     white-space: nowrap;
     display: none;
     align-items: center;
     animation: dotBlink 1.2s infinite;
   }
-  .recording-interface .dot.active {
+  .recording-interface .mic-icon.active {
     display: flex;
   }
   .emoji-picker-body {
