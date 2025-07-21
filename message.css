@@ -34,7 +34,7 @@ body {
   left: 0;
   width: 100%;
   height: calc(100% - var(--input-container-height, 50px));
-  background: white;
+  background: rgba(255, 255, 255, 0.1); /* Changed from white to very light transparent */
   z-index: 1002;
   transition: transform 0.2s ease;
 }
@@ -621,7 +621,7 @@ body {
 .recording-interface .timer {
   font-size: 22.5px;
   margin-left: -13px;
-  position: Intel;
+  position: relative;
   margin-top: 12.5px;
   color: #91959c;
 }
