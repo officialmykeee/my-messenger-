@@ -55,157 +55,21 @@ const gifTab = document.getElementById('gifTab');
 const emojiPickerBody = document.getElementById('emojiPickerBody');
 let voiceWave = document.getElementById('voice-wave');
 
-// Mic icon touchstart handler
-const micIconTouchstartHandler = function (e) {
-    e.preventDefault();
-    const currentIcon = micIcon.querySelector('svg, i'); // Check for SVG or Font Awesome icon
-    if (e.touches.length === 1 && !isRecording && currentIcon) {
-        isHolding = true;
-        touchTimeout = setTimeout(() => {
-            isHolding = true;
-            startRecording();
-            initialTouchY = e.touches[0].clientY;
-            initialTouchX = e.touches[0].clientX;
-            micIconStartX = micIcon.getBoundingClientRect().left;
-            startTime = Date.now();
-            elapsedTime = 0;
-            timerInterval = setInterval(startTimer, 100);
-            startDotBlink();
-        }, 300);
-    }
-};
-
-// Mic icon touchend handler
-const micIconTouchendHandler = function (e) {
-    e.preventDefault();
-    clearTimeout(touchTimeout);
-    if (e.target !== micIcon && !micIcon.contains(e.target) && !isRecording) {
-        return;
-    }
-    if (!isHolding && !isRecording && !isDeleteActive) {
-        const currentIcon = micIcon.querySelector('svg, i');
-        if (currentIcon && currentIcon.tagName === 'svg') {
-            // Toggle to video icon (Font Awesome, since SVG is for microphone)
-            micIcon.innerHTML = '<i class="fas fa-video"></i><div id="voice-wave" style="display: none;"></div>';
-        } else if (currentIcon && currentIcon.classList.contains('fa-video')) {
-            // Toggle back to SVG microphone
-            micIcon.innerHTML = `
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 82.05 122.88" width="21" height="21" fill="white">
-                    <path d="M59.89,20.83V52.3c0,27-37.73,27-37.73,0V20.83c0-27.77,37.73-27.77,37.73,0Zm-14.18,76V118.2a4.69,4.69,0,0,1-9.37,0V96.78a40.71,40.71,0,0,1-12.45-3.51A41.63,41.63,0,0,1,12.05,85L12,84.91A41.31,41.31,0,0,1,3.12,71.68,40.73,40.73,0,0,1,0,56a4.67,4.67,0,0,1,8-3.31l.1.1A4.68,4.68,0,0,1,9.37,56a31.27,31.27,0,0,0,2.4,12.06A32,32,0,0,0,29,85.28a31.41,31.41,0,0,0,24.13,0,31.89,31.89,0,0,0,10.29-6.9l.08-.07a32,32,0,0,0,6.82-10.22A31.27,31.27,0,0,0,72.68,56a4.69,4.69,0,0,1,9.37,0,40.65,40.65,0,0,1-3.12,15.65A41.45,41.45,0,0,1,70,85l-.09.08a41.34,41.34,0,0,1-11.75,8.18,40.86,40.86,0,0,1-12.46,3.51Z"/>
-                </svg>
-                <div id="voice-wave" style="display: none;"></div>
-            `;
-        }
-        voiceWave = document.getElementById('voice-wave');
-    } else if (isRecording && !isDeleteActive) {
-        if (isLocked) {
-            // Do nothing; wait for tap outside
-        } else {
-            stopRecording();
-            isRecording = false;
-            isLocked = false;
-            clearInterval(timerInterval);
-            clearInterval(voiceWaveInterval);
-            voiceWaveInterval = null;
-            if (voiceWave) {
-                voiceWave.style.display = 'none';
-                console.log('Voice wave stopped on touchend');
-            }
-            micIcon.classList.remove('recording', 'dragging');
-            micIcon.style.width = '36px';
-            micIcon.style.height = '36px';
-            micIcon.style.transform = 'translate(0, 0)';
-            micIcon.style.position = 'relative';
-            micIcon.style.right = 'auto';
-            micIcon.style.marginRight = '8px';
-            hideRecordingInterface();
-            if (emojiPicker.classList.contains('active')) {
-                smileToggler.classList.remove('red-dot', 'trash-icon');
-                smileToggler.classList.add('fa-keyboard');
-                smileToggler.innerHTML = '';
-                smileTogglerState = 'keyboard';
-            } else {
-                smileToggler.classList.remove('red-dot', 'trash-icon');
-                smileToggler.classList.add('fa-smile');
-                smileToggler.innerHTML = '';
-                smileTogglerState = 'smile';
-            }
-            sendBtn.classList.remove('active');
-            sendBtn.style.display = isLocked ? 'none' : (inputField.value.trim() ? 'inline-flex' : 'none');
-            sendBtn.style.color = '#749cbf';
-            micIcon.style.display = inputField.value.trim() && !isLocked ? 'none' : 'inline-flex';
-            holdStateDetector();
+// Hold state detector for voice wave
+function holdStateDetector() {
+    if (isRecording && !isLocked && recordingType === 'audio' && voiceWave) {
+        console.log('Hold state detected: Starting voice wave');
+        startVoiceWave();
+    } else {
+        console.log('Hold state ended or not applicable:', { isRecording, isLocked, recordingType, voiceWave: !!voiceWave });
+        clearInterval(voiceWaveInterval);
+        voiceWaveInterval = null;
+        if (voiceWave) {
+            voiceWave.style.display = 'none';
+            console.log('Voice wave stopped by holdStateDetector');
         }
     }
-    isHolding = false;
-};
-
-// Hide recording interface
-function hideRecordingInterface() {
-    recordingInterface.style.display = 'none';
-    inputField.classList.remove('recording');
-    micIcon.classList.remove('recording', 'dragging', 'locked');
-    micIcon.style.width = '36px';
-    micIcon.style.height = '36px';
-    micIcon.style.transform = 'translate(0, 0)';
-    micIcon.style.position = 'relative';
-    micIcon.style.right = 'auto';
-    micIcon.style.marginRight = '8px';
-    pinIcon.style.display = inputField.value.trim() && !isLocked ? 'none' : 'inline-flex';
-    inputField.disabled = false;
-    if (videoOverlay) videoOverlay.classList.remove('active', 'emoji-picker-active', 'keyboard-active');
-    if (videoPreview) videoPreview.srcObject = null;
-    document.documentElement.style.removeProperty('--emoji-picker-height');
-    if (emojiPicker.classList.contains('active')) {
-        smileToggler.classList.remove('fa-smile', 'red-dot', 'trash-icon');
-        smileToggler.classList.add('fa-keyboard');
-        smileToggler.innerHTML = '';
-        smileTogglerState = 'keyboard';
-    } else {
-        smileToggler.classList.remove('fa-keyboard', 'red-dot', 'trash-icon');
-        smileToggler.classList.add('fa-smile');
-        smileToggler.innerHTML = '';
-        smileTogglerState = 'smile';
-    }
-    // Set to SVG microphone if not in video mode
-    if (recordingType === 'video') {
-        micIcon.innerHTML = '<i class="fas fa-video"></i><div id="voice-wave" style="display: none;"></div>';
-    } else {
-        micIcon.innerHTML = `
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 82.05 122.88" width="21" height="21" fill="white">
-                <path d="M59.89,20.83V52.3c0,27-37.73,27-37.73,0V20.83c0-27.77,37.73-27.77,37.73,0Zm-14.18,76V118.2a4.69,4.69,0,0,1-9.37,0V96.78a40.71,40.71,0,0,1-12.45-3.51A41.63,41.63,0,0,1,12.05,85L12,84.91A41.31,41.31,0,0,1,3.12,71.68,40.73,40.73,0,0,1,0,56a4.67,4.67,0,0,1,8-3.31l.1.1A4.68,4.68,0,0,1,9.37,56a31.27,31.27,0,0,0,2.4,12.06A32,32,0,0,0,29,85.28a31.41,31.41,0,0,0,24.13,0,31.89,31.89,0,0,0,10.29-6.9l.08-.07a32,32,0,0,0,6.82-10.22A31.27,31.27,0,0,0,72.68,56a4.69,4.69,0,0,1,9.37,0,40.65,40.65,0,0,1-3.12,15.65A41.45,41.45,0,0,1,70,85l-.09.08a41.34,41.34,0,0,1-11.75,8.18,40.86,40.86,0,0,1-12.46,3.51Z"/>
-            </svg>
-            <div id="voice-wave" style="display: none;"></div>
-        `;
-    }
-    voiceWave = document.getElementById('voice-wave');
-    sendBtn.classList.remove('active');
-    sendBtn.style.display = isLocked ? 'none' : (inputField.value.trim() ? 'inline-flex' : 'none');
-    sendBtn.style.color = '#749cbf';
-    micIcon.style.display = inputField.value.trim() && !isLocked ? 'none' : 'inline-flex';
-    const lockedCircle = recordingInterface.querySelector('.locked-circle');
-    if (lockedCircle) {
-        lockedCircle.classList.remove('locked');
-        lockedCircle.style.display = 'none';
-    }
-    const holdCircle = recordingInterface.querySelector('.hold-circle');
-    if (holdCircle) {
-        holdCircle.classList.remove('active');
-        holdCircle.style.display = 'none';
-    }
-    const cancelLabel = recordingInterface.querySelector('.cancel-label');
-    if (cancelLabel) {
-        cancelLabel.style.left = '8px';
-        cancelLabel.style.opacity = '0.8';
-        cancelLabel.style.transition = '';
-    }
-    lockedTimer.style.display = 'none';
-    if (voiceWave) {
-        voiceWave.style.display = 'none';
-        console.log('Voice wave hidden in hideRecordingInterface');
-    }
-    holdStateDetector();
-};
+}
 
 // Initialize MediaRecorder and AudioContext
 function initializeRecorder(type) {
