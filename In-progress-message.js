@@ -747,12 +747,14 @@ function getCurrentTimestamp() {
     return `${hours}:${minutes} ${ampm}`;
 }
 
-// Send message
+// Send message with link preview support
 function sendMessage(messageText) {
     if (!messageText.trim()) return;
+
     const messageDiv = document.createElement('div');
     messageDiv.classList.add('message', 'sent');
     messageDiv.setAttribute('data-message-id', `msg${Date.now()}`);
+
     let replyHtml = '';
     if (isReplyActive) {
         const senderClass = repliedToMessageSender === 'You' ? 'reply-sent' : 'reply-received';
@@ -767,22 +769,148 @@ function sendMessage(messageText) {
             </div>
         `;
     }
-    messageDiv.innerHTML = `
-        <div class="bubble-container">
-            <div class="reply-indicator"></div>
-            ${replyHtml}
-            <div class="bubble">${messageText}</div>
-        </div>
-        <div class="profile">
-            <span class="timestamp">${getCurrentTimestamp()}</span>
-            <span class="check">✓</span>
-        </div>
-    `;
-    chatContainer.appendChild(messageDiv);
-    scrollToLatestMessage();
-    if (isReplyActive) {
-        closeReply();
+
+    // Check if the message contains a URL
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const urls = messageText.match(urlRegex);
+    if (urls && urls.length > 0) {
+        // Handle URL with preview
+        const url = urls[0]; // Process the first URL for simplicity
+        fetchLinkPreview(url).then(previewData => {
+            let previewHtml = '';
+            if (previewData && previewData.title && previewData.image) {
+                // Truncate title and description to fit typical preview lengths
+                const truncatedTitle = previewData.title.length > 60 ? previewData.title.substring(0, 57) + '...' : previewData.title;
+                const truncatedDescription = previewData.description && previewData.description.length > 80 ? previewData.description.substring(0, 77) + '...' : (previewData.description || '');
+                previewHtml = `
+                    <a href="${url}" target="_blank" class="link-preview">
+                        <div class="link-preview-container">
+                            <img src="${previewData.image}" alt="Link Preview" class="link-preview-image" onerror="this.style.display='none';" />
+                            <div class="link-preview-content">
+                                <p class="link-preview-title">${truncatedTitle}</p>
+                                ${truncatedDescription ? `<p class="link-preview-description">${truncatedDescription}</p>` : ''}
+                                <p class="link-preview-url">${new URL(url).hostname}</p>
+                            </div>
+                        </div>
+                    </a>
+                `;
+            }
+            // Remove the URL from the message text to avoid duplication
+            const displayText = messageText.replace(url, '').trim() || ' ';
+            messageDiv.innerHTML = `
+                <div class="bubble-container">
+                    <div class="reply-indicator"></div>
+                    ${replyHtml}
+                    <div class="bubble">${displayText}${previewHtml}</div>
+                </div>
+                <div class="profile">
+                    <span class="timestamp">${getCurrentTimestamp()}</span>
+                    <span class="check">✓</span>
+                </div>
+            `;
+            chatContainer.appendChild(messageDiv);
+            scrollToLatestMessage();
+            if (isReplyActive) {
+                closeReply();
+            }
+        }).catch(err => {
+            console.error('Error fetching link preview:', err);
+            // Fallback to plain message if preview fails
+            messageDiv.innerHTML = `
+                <div class="bubble-container">
+                    <div class="reply-indicator"></div>
+                    ${replyHtml}
+                    <div class="bubble">${messageText}</div>
+                </div>
+                <div class="profile">
+                    <span class="timestamp">${getCurrentTimestamp()}</span>
+                    <span class="check">✓</span>
+                </div>
+            `;
+            chatContainer.appendChild(messageDiv);
+            scrollToLatestMessage();
+            if (isReplyActive) {
+                closeReply();
+            }
+        });
+    } else {
+        // No URL, send plain message
+        messageDiv.innerHTML = `
+            <div class="bubble-container">
+                <div class="reply-indicator"></div>
+                ${replyHtml}
+                <div class="bubble">${messageText}</div>
+            </div>
+            <div class="profile">
+                <span class="timestamp">${getCurrentTimestamp()}</span>
+                <span class="check">✓</span>
+            </div>
+        `;
+        chatContainer.appendChild(messageDiv);
+        scrollToLatestMessage();
+        if (isReplyActive) {
+            closeReply();
+        }
     }
+}
+
+// Fetch link preview data using a server-side proxy
+async function fetchLinkPreview(url) {
+    try {
+        // Replace with your server-side endpoint
+        const response = await fetch(`https://your-proxy-api.com/get-preview?url=${encodeURIComponent(url)}`, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (compatible; YourChatApp/1.0)'
+            }
+        });
+        if (!response.ok) throw new Error('Failed to fetch preview');
+        const data = await response.json();
+        return {
+            title: data.ogTitle || data.title || 'Untitled',
+            description: data.ogDescription || data.description || '',
+            image: data.ogImage || data.image || ''
+        };
+    } catch (err) {
+        console.error('Error fetching link preview:', err);
+        return null;
+    }
+}
+
+// Get current timestamp
+function getCurrentTimestamp() {
+    const now = new Date();
+    const hours = now.getHours() % 12 || 12;
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    const ampm = now.getHours() >= 12 ? 'PM' : 'AM';
+    return `${hours}:${minutes} ${ampm}`;
+}
+
+// Scroll to latest message
+function scrollToLatestMessage() {
+    chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
+}
+
+// Close reply
+function closeReply() {
+    isReplyActive = false;
+    repliedToMessageId = null;
+    repliedToMessageText = '';
+    repliedToMessageSender = '';
+    replyPreviewContainer.classList.remove('active');
+    setTimeout(() => {
+        replyPreviewContainer.style.display = 'none';
+    }, 200);
+    document.querySelectorAll('.message').forEach(msg => msg.classList.remove('highlighted'));
+    const currentInputContainerHeight = inputContainer.offsetHeight;
+    chatContainer.style.height = `calc(100vh - ${currentInputContainerHeight}px)`;
+    chatContainer.style.marginBottom = `${currentInputContainerHeight}px`;
+    inputField.value = '';
+    sendBtn.classList.remove('active');
+    sendBtn.style.display = isLocked ? 'none' : 'inline-flex';
+    micIcon.style.display = inputField.value.trim() && !isLocked ? 'none' : 'inline-flex';
+    pinIcon.style.display = inputField.value.trim() && !isLocked ? 'none' : 'inline-flex';
+    smileToggler.style.display = 'inline-flex';
+    inputField.blur();
 }
 
 // Activate reply
