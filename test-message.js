@@ -19,7 +19,7 @@ let micIconStartX;
 let elapsedTime = 0;
 let touchTimeout;
 let isHolding = false;
-let recordingType = 'audio';
+let recordingType = 'audio'; // Default to audio
 let activeMessageElement = null;
 let startX = 0;
 let currentX = 0;
@@ -54,6 +54,39 @@ const smileyTab = document.getElementById('smileyTab');
 const gifTab = document.getElementById('gifTab');
 const emojiPickerBody = document.getElementById('emojiPickerBody');
 let voiceWave = document.getElementById('voice-wave');
+
+// Microphone SVG
+const micSvg = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 82.05 122.88" width="21" height="21" fill="white">
+        <path d="M59.89,20.83V52.3c0,27-37.73,27-37.73,0V20.83c0-27.77,37.73-27.77,37.73,0Zm-14.18,76V118.2a4.69,4.69,0,0,1-9.37,0V96.78a40.71,40.71,0,0,1-12.45-3.51A41.63,41.63,0,0,1,12.05,85L12,84.91A41.31,41.31,0,0,1,3.12,71.68,40.73,40.73,0,0,1,0,56a4.67,4.67,0,0,1,8-3.31l.1.1A4.68,4.68,0,0,1,9.37,56a31.27,31.27,0,0,0,2.4,12.06A32,32,0,0,0,29,85.28a31.41,31.41,0,0,0,24.13,0,31.89,31.89,0,0,0,10.29-6.9l.08-.07a32,32,0,0,0,6.82-10.22A31.27,31.27,0,0,0,72.68,56a4.69,4.69,0,0,1,9.37,0,40.65,40.65,0,0,1-3.12,15.65A41.45,41.45,0,0,1,70,85l-.09.08a41.34,41.34,0,0,1-11.75,8.18,40.86,40.86,0,0,1-12.46,3.51Z"/>
+    </svg>
+`;
+
+// Video SVG
+const videoSvg = `
+    <svg width="21px" height="21px" viewBox="0 0 122.88 118.66" xmlns="http://www.w3.org/2000/svg" fill="white">
+        <g>
+            <path d="M16.68,22.2c-1.78,2.21-3.43,4.55-5.06,7.46C5.63,40.31,3.1,52.39,4.13,64.2 
+            c1.01,11.54,5.43,22.83,13.37,32.27c2.85,3.39,5.91,6.38,9.13,8.97
+            c11.11,8.93,24.28,13.34,37.41,13.22c13.13-0.12,26.21-4.78,37.14-13.98 
+            c3.19-2.68,6.18-5.73,8.91-9.13c6.4-7.96,10.51-17.29,12.07-27.14
+            c1.53-9.67,0.59-19.83-3.07-29.66c-3.49-9.35-8.82-17.68-15.78-24.21 
+            C96.7,8.33,88.59,3.76,79.2,1.48c-2.94-0.71-5.94-1.18-8.99-1.37 
+            c-3.06-0.2-6.19-0.13-9.4,0.22c-2.01,0.22-3.46,2.03-3.24,4.04 
+            c0.22,2.01,2.03,3.46,4.04,3.24c2.78-0.31,5.49-0.37,8.14-0.19 
+            c2.65,0.17,5.23,0.57,7.73,1.17c8.11,1.96,15.1,5.91,20.84,11.29 
+            c6.14,5.75,10.85,13.12,13.94,21.43c3.21,8.61,4.04,17.51,2.7,25.96 
+            C113.59,75.85,110,84,104.4,90.96c-2.47,3.07-5.12,5.78-7.91,8.13 
+            c-9.59,8.07-21.03,12.15-32.50,12.26c-11.47,0.11-23-3.76-32.76-11.61 
+            c-2.90-2.33-5.62-4.98-8.13-7.97c-6.92-8.22-10.77-18.09-11.65-28.2 
+            c-0.91-10.38,1.32-20.99,6.57-30.33c1.59-2.82,3.21-5.07,5.01-7.24l0.53,14.7 
+            c0.07,2.02,1.76,3.6,3.78,3.53c2.02-0.07,3.6-1.76,3.53-3.78l-0.85-23.42 
+            c-0.07-2.02-1.76-3.59-3.78-3.52c-0.13,0.01-0.25,0.02-0.37,0.03v0l-22.7,3.19 
+            c-2,0.28-3.4,2.12-3.12,4.13c0.28,2,2.12,3.4,4.13,3.12L16.68,22.2L16.68,22.2L16.68,22.2z 
+            M85.78,58.71L53.11,80.65V37.12L85.78,58.71L85.78,58.71z"/>
+        </g>
+    </svg>
+`;
 
 // Hold state detector for voice wave
 function holdStateDetector() {
@@ -343,7 +376,7 @@ function createAudioPreview() {
     });
 }
 
-// Reset input container to original state
+// Reset input container
 function resetInputContainer() {
     const audioMessage = inputContainer.querySelector('.audio-message');
     if (audioMessage) {
@@ -379,7 +412,7 @@ function resetInputContainer() {
     holdStateDetector();
 }
 
-// Reassign DOM elements after resetting input container
+// Reassign DOM elements
 function assignDOMElements() {
     inputField = document.getElementById('inputField');
     sendBtn = document.getElementById('sendBtn');
@@ -402,7 +435,7 @@ function assignDOMElements() {
     micIcon.addEventListener('touchend', micIconTouchendHandler);
 }
 
-// Format duration for display
+// Format duration
 function formatDuration(seconds) {
     const minutes = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -411,9 +444,7 @@ function formatDuration(seconds) {
 
 // Start recording
 function startRecording() {
-    const currentIcon = micIcon.querySelector('i');
-    if (!isRecording && currentIcon) {
-        recordingType = currentIcon.classList.contains('fa-video') ? 'video' : 'audio';
+    if (!isRecording) {
         initializeRecorder(recordingType).then(s => {
             if (s) {
                 stream = s;
@@ -442,6 +473,9 @@ function startRecording() {
                     } else {
                         console.error('voiceWave element not found in startRecording');
                     }
+                } else if (recordingType === 'video') {
+                    videoOverlay.classList.add('active');
+                    setupVideoPreview();
                 }
             }
         });
@@ -466,7 +500,7 @@ function stopRecording() {
         const holdCircle = recordingInterface.querySelector('.hold-circle');
         if (holdCircle) {
             holdCircle.classList.remove('active');
-            holdCircle.style.display = 'none'; // Explicitly hide in stopRecording
+            holdCircle.style.display = 'none';
         }
         if (recordingType === 'audio') {
             setTimeout(() => {
@@ -523,21 +557,36 @@ function startTimer() {
 // Start dot blink
 function startDotBlink() {
     if (dotBlinkInterval) clearInterval(dotBlinkInterval);
+    const holdCircle = recordingInterface.querySelector('.hold-circle');
     const lockedCircle = recordingInterface.querySelector('.locked-circle');
-    const holdCircle = document.querySelector('.hold-circle');
-    if (holdCircle) {
-        if (isRecording && !isLocked) {
-            holdCircle.classList.add('active');
-            holdCircle.style.display = 'inline-flex'; // Show in hold state
+    const micIconElement = recordingInterface.querySelector('.mic-icon');
+    if (micIconElement) micIconElement.classList.add('active');
+    
+    dotBlinkInterval = setInterval(() => {
+        if (isRecording) {
+            if (holdCircle && !isLocked) {
+                holdCircle.style.opacity = holdCircle.style.opacity === '0.3' ? '1' : '0.3';
+                holdCircle.style.display = 'inline-flex';
+            }
+            if (lockedCircle && isLocked) {
+                lockedCircle.style.opacity = lockedCircle.style.opacity === '0.3' ? '1' : '0.3';
+                lockedCircle.style.display = 'inline-flex';
+            }
         } else {
-            holdCircle.classList.remove('active');
-            holdCircle.style.display = 'none'; // Hide in locked state or not recording
+            if (holdCircle) {
+                holdCircle.classList.remove('active');
+                holdCircle.style.opacity = '1';
+                holdCircle.style.display = 'none';
+            }
+            if (lockedCircle) {
+                lockedCircle.classList.remove('locked');
+                lockedCircle.style.opacity = '1';
+                lockedCircle.style.display = 'none';
+            }
+            if (micIconElement) micIconElement.classList.remove('active');
+            clearInterval(dotBlinkInterval);
         }
-    }
-    if (lockedCircle && isRecording && isLocked) {
-        lockedCircle.classList.add('locked');
-        lockedCircle.style.display = 'inline-flex'; // Ensure locked-circle is visible
-    }
+    }, 500);
 }
 
 // Show recording interface
@@ -596,7 +645,7 @@ function hideRecordingInterface() {
         smileToggler.innerHTML = '';
         smileTogglerState = 'smile';
     }
-    micIcon.innerHTML = recordingType === 'video' ? '<i class="fas fa-video"></i><div id="voice-wave" style="display: none;"></div>' : '<i class="fas fa-microphone"></i><div id="voice-wave" style="display: none;"></div>';
+    micIcon.innerHTML = recordingType === 'video' ? `${videoSvg}<div id="voice-wave" style="display: none;"></div>` : `${micSvg}<div id="voice-wave" style="display: none;"></div>`;
     voiceWave = document.getElementById('voice-wave');
     sendBtn.classList.remove('active');
     sendBtn.style.display = isLocked ? 'none' : (inputField.value.trim() ? 'inline-flex' : 'none');
@@ -605,12 +654,14 @@ function hideRecordingInterface() {
     const lockedCircle = recordingInterface.querySelector('.locked-circle');
     if (lockedCircle) {
         lockedCircle.classList.remove('locked');
-        lockedCircle.style.display = 'none'; // Hide when not recording
+        lockedCircle.style.opacity = '1';
+        lockedCircle.style.display = 'none';
     }
     const holdCircle = recordingInterface.querySelector('.hold-circle');
     if (holdCircle) {
         holdCircle.classList.remove('active');
-        holdCircle.style.display = 'none'; // Hide when not recording
+        holdCircle.style.opacity = '1';
+        holdCircle.style.display = 'none';
     }
     const cancelLabel = recordingInterface.querySelector('.cancel-label');
     if (cancelLabel) {
@@ -661,25 +712,21 @@ function updateRecordingInterface() {
         cancelLink.onclick = (e) => {
             e.preventDefault();
             if (isRecording) {
-                if (recordingType === 'audio') {
-                    stopRecording();
-                } else {
-                    cancelRecording();
-                }
+                cancelRecording();
             }
         };
     }
     const holdCircle = recordingInterface.querySelector('.hold-circle');
     if (holdCircle) {
         holdCircle.classList.toggle('active', isRecording && !isLocked && !isDeleteActive);
-        holdCircle.style.display = isRecording && !isLocked ? 'inline-flex' : 'none'; // Show only in hold state
+        holdCircle.style.display = isRecording && !isLocked ? 'inline-flex' : 'none';
     }
     const lockedCircle = recordingInterface.querySelector('.locked-circle');
     if (lockedCircle) {
         lockedCircle.classList.toggle('locked', isRecording && isLocked);
-        lockedCircle.style.display = isRecording && isLocked ? 'inline-flex' : 'none'; // Show only in locked state
+        lockedCircle.style.display = isRecording && isLocked ? 'inline-flex' : 'none';
         if (isLocked) {
-            sendBtn.style.display = 'none'; // Hide default sendBtn
+            sendBtn.style.display = 'none';
         }
     }
     lockedTimer.style.fontSize = '22.5px';
@@ -790,7 +837,7 @@ function activateReply(messageElement) {
     if (isAudioPreviewActive) return;
     isReplyActive = true;
     repliedToMessageId = messageElement.getAttribute('data-message-id');
-    repliedToMessageText = messageElement.querySelector('.bubble').textContent;
+    repliedToMessageText = messageElement.querySelector('.bubble')?.textContent || '';
     if (messageElement.classList.contains('received')) {
         repliedToMessageSender = 'Sarah Johnson';
         replyPreviewContainer.classList.remove('sent-reply');
@@ -834,7 +881,7 @@ function closeReply() {
     inputField.blur();
 }
 
-// Event handler functions for reattachment
+// Event handler functions
 const inputFieldClickHandler = function () {
     if (isAudioPreviewActive) return;
     if (emojiPicker.classList.contains('active') && !isRecording) {
@@ -935,90 +982,85 @@ const pinIconClickHandler = function (e) {
     inputField.blur();
 };
 
+// Your touchstart handler (unchanged)
 const micIconTouchstartHandler = function (e) {
     e.preventDefault();
-    const currentIcon = micIcon.querySelector('i');
-    if (e.touches.length === 1 && !isRecording && currentIcon && (currentIcon.classList.contains('fa-microphone') || currentIcon.classList.contains('fa-video'))) {
-        isHolding = true;
+    const currentIcon = micIcon.querySelector('svg');
+    if (e.touches.length === 1 && !isRecording && currentIcon) {
+        isHolding = false;
         touchTimeout = setTimeout(() => {
             isHolding = true;
-            startRecording();
-            initialTouchY = e.touches[0].clientY;
-            initialTouchX = e.touches[0].clientX;
-            micIconStartX = micIcon.getBoundingClientRect().left;
-            startTime = Date.now();
-            elapsedTime = 0;
-            timerInterval = setInterval(startTimer, 100);
-            startDotBlink();
+            recordingType = currentIcon.getAttribute('viewBox') === '0 0 122.88 118.66' ? 'video' : 'audio';
+            console.log('Starting recording - recordingType:', recordingType);
+            initializeRecorder(recordingType).then(s => {
+                if (s) {
+                    stream = s;
+                    videoChunks = [];
+                    mediaRecorder.start();
+                    isRecording = true;
+                    initialTouchX = e.touches[0].clientX;
+                    initialTouchY = e.touches[0].clientY;
+                    micIconStartX = micIcon.getBoundingClientRect().left;
+                    startTime = Date.now();
+                    timerInterval = setInterval(startTimer, 100);
+                    startDotBlink();
+                    showRecordingInterface();
+                    micIcon.style.width = '72px';
+                    micIcon.style.height = '72px';
+                    micIcon.style.right = '-20px';
+                    micIcon.style.position = 'absolute';
+                    micIcon.style.marginRight = '0';
+                    micIcon.style.transition = 'none';
+                    smileToggler.classList.remove('fa-smile', 'fa-keyboard');
+                    smileToggler.classList.add('red-dot');
+                    smileToggler.innerHTML = '';
+                    smileTogglerState = 'dot';
+                    if (recordingType === 'video') {
+                        videoOverlay.classList.add('active');
+                        setupVideoPreview();
+                    }
+                }
+            });
         }, 300);
     }
 };
 
+// Your touchmove handler (unchanged except for voice-wave cleanup)
 const micIconTouchmoveHandler = function (e) {
     e.preventDefault();
     if (isRecording && !isLocked) {
         clearTimeout(touchTimeout);
-        const currentTouchY = e.touches[0].clientY;
         const currentTouchX = e.touches[0].clientX;
-        const deltaY = initialTouchY - currentTouchY;
+        const currentTouchY = e.touches[0].clientY;
         const deltaX = currentTouchX - initialTouchX;
+        const deltaY = initialTouchY - currentTouchY;
         micIcon.classList.add('dragging');
-        let transformValue = '';
-        if (deltaY > 0) {
-            transformValue = `translate(0, ${-deltaY}px)`;
-        }
-        if (deltaX < 0) {
-            const cappedDeltaX = Math.max(deltaX, -150);
-            transformValue = `translate(${cappedDeltaX}px, ${deltaY > 0 ? -deltaY : 0}px)`;
-        }
-        micIcon.style.transform = transformValue || 'translate(0, 0)';
-        const cancelLabel = recordingInterface.querySelector('.cancel-label');
-        if (cancelLabel && !isLocked) {
-            if (deltaX <= -60) {
-                cancelLabel.style.left = '-8px';
-                cancelLabel.style.opacity = '0';
-            } else if (deltaX <= -20) {
-                const progress = Math.min((-deltaX - 20) / 40, 1);
-                cancelLabel.style.left = `${8 - progress * 16}px`;
-                cancelLabel.style.opacity = `${0.8 - progress * 0.8}`;
-            } else {
-                cancelLabel.style.left = '8px';
-                cancelLabel.style.opacity = '0.8';
-            }
-        }
-        if (deltaX < -100) {
+        let transformValue = deltaY > 0 ? `translate(${Math.max(deltaX, -100)}px, ${-deltaY}px)` 
+                                        : `translate(${Math.max(deltaX, -100)}px, 0)`;
+        micIcon.style.transform = transformValue;
+        if (deltaX < -80) {
             isDeleteActive = true;
             smileToggler.classList.remove('red-dot');
-            smileToggler.classList.add('red-dot', 'trash-icon');
-            smileToggler.innerHTML = '<i class="bx bxs-trash"></i>';
+            smileToggler.classList.add('red-dot');
+            smileToggler.innerHTML = ''; // No trash icon
             smileTogglerState = 'waste';
             clearInterval(dotBlinkInterval);
-            clearInterval(voiceWaveInterval);
-            voiceWaveInterval = null;
+            clearInterval(voiceWaveInterval); // Added for audio cleanup
+            voiceWaveInterval = null; // Added for audio cleanup
             if (voiceWave) {
-                voiceWave.style.display = 'none';
+                voiceWave.style.display = 'none'; // Added for audio cleanup
                 console.log('Voice wave stopped on cancel (slide left)');
             }
             cancelRecording();
             isDeleteActive = false;
-            elapsedTime = 0;
-            clearInterval(timerInterval);
             micIcon.classList.remove('recording', 'dragging');
             hideRecordingInterface();
-            if (emojiPicker.classList.contains('active')) {
-                smileToggler.classList.remove('red-dot', 'trash-icon');
-                smileToggler.classList.add('fa-keyboard');
-                smileToggler.innerHTML = '';
-                smileTogglerState = 'keyboard';
-            } else {
-                smileToggler.classList.remove('red-dot', 'trash-icon');
-                smileToggler.classList.add('fa-smile');
-                smileToggler.innerHTML = '';
-                smileTogglerState = 'smile';
-            }
-        } else if (deltaX >= -100 && smileTogglerState === 'waste') {
+            smileToggler.classList.remove('red-dot');
+            smileToggler.classList.add(emojiPicker.classList.contains('active') ? 'fa-keyboard' : 'fa-smile');
+            smileToggler.innerHTML = '';
+            smileTogglerState = emojiPicker.classList.contains('active') ? 'keyboard' : 'smile';
+        } else if (deltaX >= -80 && smileTogglerState === 'waste') {
             isDeleteActive = false;
-            smileToggler.classList.remove('trash-icon');
             smileToggler.classList.add('red-dot');
             smileToggler.innerHTML = '';
             smileTogglerState = 'dot';
@@ -1030,25 +1072,23 @@ const micIconTouchmoveHandler = function (e) {
             micIcon.classList.remove('dragging');
             micIcon.classList.add('locked');
             micIcon.style.transform = 'translate(0, 0)';
-            micIcon.style.width = '72px';
-            micIcon.style.height = '72px';
-            micIcon.style.right = '-20px';
-            micIcon.style.position = 'absolute';
-            micIcon.style.marginRight = '0';
-            micIcon.innerHTML = '<i class="fas fa-arrow-up"></i><div id="voice-wave" style="display: none;"></div>';
-            voiceWave = document.getElementById('voice-wave');
-            clearInterval(voiceWaveInterval);
-            voiceWaveInterval = null;
+            micIcon.style.width = '36px';
+            micIcon.style.height = '36px';
+            micIcon.style.right = 'auto';
+            micIcon.style.position = 'relative';
+            micIcon.style.marginRight = '8px';
+            updateRecordingInterface();
+            clearInterval(voiceWaveInterval); // Added for audio cleanup
+            voiceWaveInterval = null; // Added for audio cleanup
             if (voiceWave) {
-                voiceWave.style.display = 'none';
+                voiceWave.style.display = 'none'; // Added for audio cleanup
                 console.log('Voice wave stopped on lock (slide up)');
             }
-            updateRecordingInterface(); // Update to hide hold-circle
-            holdStateDetector();
         }
     }
 };
 
+// Updated touchend handler with fixes
 const micIconTouchendHandler = function (e) {
     e.preventDefault();
     clearTimeout(touchTimeout);
@@ -1056,54 +1096,49 @@ const micIconTouchendHandler = function (e) {
         return;
     }
     if (!isHolding && !isRecording && !isDeleteActive) {
-        const currentIcon = micIcon.querySelector('i');
-        if (currentIcon && currentIcon.classList.contains('fa-microphone')) {
-            micIcon.innerHTML = '<i class="fas fa-video"></i><div id="voice-wave" style="display: none;"></div>';
-        } else if (currentIcon && currentIcon.classList.contains('fa-video')) {
-            micIcon.innerHTML = '<i class="fas fa-microphone"></i><div id="voice-wave" style="display: none;"></div>';
+        if (recordingType === 'audio') {
+            micIcon.innerHTML = `${videoSvg}<div id="voice-wave" style="display: none;"></div>`;
+            recordingType = 'video';
+            console.log('Switched to video recording mode');
+        } else {
+            micIcon.innerHTML = `${micSvg}<div id="voice-wave" style="display: none;"></div>`;
+            recordingType = 'audio';
+            console.log('Switched to audio recording mode');
         }
         voiceWave = document.getElementById('voice-wave');
-    } else if (isRecording && !isDeleteActive) {
-        if (isLocked) {
-            // Do nothing; wait for tap outside
-        } else {
-            stopRecording();
-            isRecording = false;
-            isLocked = false;
-            clearInterval(timerInterval);
-            clearInterval(voiceWaveInterval);
-            voiceWaveInterval = null;
-            if (voiceWave) {
-                voiceWave.style.display = 'none';
-                console.log('Voice wave stopped on touchend');
-            }
-            micIcon.classList.remove('recording', 'dragging');
-            micIcon.style.width = '36px';
-            micIcon.style.height = '36px';
-            micIcon.style.transform = 'translate(0, 0)';
-            micIcon.style.position = 'relative';
-            micIcon.style.right = 'auto';
-            micIcon.style.marginRight = '8px';
-            hideRecordingInterface();
-            if (emojiPicker.classList.contains('active')) {
-                smileToggler.classList.remove('red-dot', 'trash-icon');
-                smileToggler.classList.add('fa-keyboard');
-                smileToggler.innerHTML = '';
-                smileTogglerState = 'keyboard';
-            } else {
-                smileToggler.classList.remove('red-dot', 'trash-icon');
-                smileToggler.classList.add('fa-smile');
-                smileToggler.innerHTML = '';
-                smileTogglerState = 'smile';
-            }
-            sendBtn.classList.remove('active');
-            sendBtn.style.display = isLocked ? 'none' : (inputField.value.trim() ? 'inline-flex' : 'none');
-            sendBtn.style.color = '#749cbf';
-            micIcon.style.display = inputField.value.trim() && !isLocked ? 'none' : 'inline-flex';
-            holdStateDetector();
+        console.log('Tap detected - recordingType:', recordingType, 'micIcon HTML:', micIcon.innerHTML);
+    } else if (isRecording && !isDeleteActive && !isLocked) {
+        stopRecording();
+        isRecording = false;
+        isLocked = false;
+        clearInterval(timerInterval);
+        clearInterval(voiceWaveInterval);
+        voiceWaveInterval = null;
+        if (voiceWave) {
+            voiceWave.style.display = 'none';
+            console.log('Voice wave stopped on touchend');
         }
+        micIcon.classList.remove('recording', 'dragging');
+        micIcon.style.width = '36px';
+        micIcon.style.height = '36px';
+        micIcon.style.transform = 'translate(0, 0)';
+        micIcon.style.position = 'relative';
+        micIcon.style.right = 'auto';
+        micIcon.style.marginRight = '8px';
+        hideRecordingInterface();
+        smileToggler.classList.remove('red-dot');
+        smileToggler.classList.add(emojiPicker.classList.contains('active') ? 'fa-keyboard' : 'fa-smile');
+        smileToggler.innerHTML = '';
+        smileTogglerState = emojiPicker.classList.contains('active') ? 'keyboard' : 'smile';
+        sendBtn.classList.remove('active');
+        sendBtn.style.display = inputField.value.trim() ? 'inline-flex' : 'none';
+        sendBtn.style.color = '#749cbf';
+        micIcon.style.display = inputField.value.trim() ? 'none' : 'inline-flex';
+        holdStateDetector();
+        console.log('Recording stopped - recordingType:', recordingType);
     }
     isHolding = false;
+    console.log('Touchend completed - isHolding:', isHolding, 'isRecording:', isRecording, 'isLocked:', isLocked);
 };
 
 // Document touchend for locked recording
@@ -1114,6 +1149,7 @@ document.addEventListener('touchend', (e) => {
         isLocked = false;
         elapsedTime = 0;
         clearInterval(timerInterval);
+        clearInterval(dotBlinkInterval);
         clearInterval(voiceWaveInterval);
         voiceWaveInterval = null;
         if (voiceWave) {
@@ -1220,7 +1256,7 @@ gifTab.addEventListener('click', () => {
     emojiPickerBody.innerHTML = gifContent;
 });
 
-// Sticker sending to chatContainer
+// Sticker sending
 emojiPickerBody.addEventListener('click', (e) => {
     if (e.target.classList.contains('sticker')) {
         const stickerUrl = e.target.src;
@@ -1245,9 +1281,7 @@ emojiPickerBody.addEventListener('click', (e) => {
             <div class="bubble-container">
                 <div class="reply-indicator"></div>
                 ${replyHtml}
-                <div class="bubble">
-                    <img src="${stickerUrl}" alt="Sticker" class="sticker" style="width: 56px; height: 56px;" />
-                </div>
+                <img src="${stickerUrl}" alt="Sticker" class="sticker" style="width: 56px; height: 56px;" />
             </div>
             <div class="profile">
                 <span class="timestamp">${getCurrentTimestamp()}</span>
