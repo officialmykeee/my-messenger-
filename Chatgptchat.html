@@ -3,40 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Emoji Picker with Floating Input</title>
-  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+  <title>Emoji Picker with Mic Button</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
     body {
-      font-family: sans-serif;
-      background: #f4f4f4;
-      transition: padding-bottom 0.3s ease;
+      margin: 0;
+      font-family: Arial, sans-serif;
     }
 
     #main-content {
-      min-height: 100vh;
       padding: 20px;
-      transition: padding-bottom 0.3s ease;
-    }
-
-    #emoji-button {
-      position: fixed;
-      bottom: 70px;
-      right: 20px;
-      background: #007bff;
-      color: white;
-      border: none;
-      padding: 14px 16px;
-      border-radius: 50%;
-      font-size: 20px;
-      z-index: 20;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      cursor: pointer;
+      padding-bottom: 400px; /* space for input and emoji picker */
+      background: #f2f2f2;
+      min-height: 100vh;
     }
 
     #emoji-picker {
@@ -45,91 +24,76 @@
       left: 0;
       width: 100%;
       height: 300px;
-      background: #ffffff;
+      background: #dde5e8;
       border-top: 1px solid #ccc;
       box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
       transition: bottom 0.3s ease;
       z-index: 5;
     }
 
-    #emoji-picker.show {
-      bottom: 0;
-    }
-
     #input-container {
       position: fixed;
       left: 0;
       bottom: 0;
-      padding: 6px 8px;
+      height: 44px;
       width: 100%;
-      background: red;
+      background: #fff;
       z-index: 15;
       transition: bottom 0.3s ease;
+    }
+
+    #emoji-button {
+      background: none;
+      border: none;
+      font-size: 24px;
+      color: #555;
+      margin: 8px;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
 
   <div id="main-content">
-    <p>This is your main app content.</p>
-    <p>Scroll here to see the effect when emoji picker is opened.</p>
-    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-    <p>More content to demonstrate scroll behavior...</p>
-    <p>👇 Tap the smile icon to toggle the emoji picker</p>
+    <p>This is your main body content.</p>
+    <p>Scroll or tap the emoji icon to show the empty emoji picker panel below.</p>
   </div>
 
-  <!-- Toggle Emoji Button -->
-  <button id="emoji-button">
-    <i class="fas fa-smile"></i>
-  </button>
-
-  <!-- Emoji Picker -->
   <div id="emoji-picker"></div>
 
-  <!-- Red Input Container -->
-  <div id="input-container"></div>
+  <div id="input-container">
+    <button id="emoji-button">
+      <i class="fas fa-smile icon" id="smileToggler"></i>
+    </button>
+  </div>
 
-  <!-- JavaScript -->
   <script>
-    const emojiButton = document.getElementById('emoji-button');
-    const emojiPicker = document.getElementById('emoji-picker');
-    const inputContainer = document.getElementById('input-container');
-    const mainContent = document.getElementById('main-content');
+    const emojiPicker = document.getElementById("emoji-picker");
+    const inputContainer = document.getElementById("input-container");
+    const emojiButton = document.getElementById("emoji-button");
 
-    function getInputHeight() {
-      return inputContainer.offsetHeight;
-    }
+    let pickerVisible = false;
 
-    emojiButton.addEventListener('click', () => {
-      const isOpen = emojiPicker.classList.toggle('show');
-      const inputHeight = getInputHeight();
-
-      if (isOpen) {
-        mainContent.style.paddingBottom = `${300 + inputHeight}px`;
-        inputContainer.style.bottom = '300px';
-      } else {
-        mainContent.style.paddingBottom = `${inputHeight}px`;
-        inputContainer.style.bottom = '0';
-      }
+    emojiButton.addEventListener("click", () => {
+      pickerVisible = !pickerVisible;
+      emojiPicker.style.bottom = pickerVisible ? "0" : "-300px";
+      inputContainer.style.bottom = pickerVisible ? "300px" : "0";
     });
 
-    window.addEventListener('load', () => {
-      mainContent.style.paddingBottom = `${inputContainer.offsetHeight}px`;
-    });
+    // 1. Create the mic ➤ button
+    let button = document.createElement("button");
 
-    // ➤ Microphone-sensitive button
-    const micButton = document.createElement("button");
-
-    Object.assign(micButton.style, {
+    // 2. Set styles for position and appearance
+    Object.assign(button.style, {
       width: "70px",
       height: "70px",
       backgroundColor: "#007bff",
       color: "white",
       border: "none",
       borderRadius: "50%",
-      position: "absolute", // relative to inputContainer
-      bottom: "-9px",
-      right: "-15px",
+      position: "absolute", // relative to input-container
+      bottom: "-9px",       // pushed down slightly
+      right: "-15px",       // right edge
       boxShadow: "0 0 0 0 rgba(0, 123, 255, 0.7)",
       cursor: "pointer",
       fontSize: "30px",
@@ -141,9 +105,13 @@
       transition: "transform 0.1s ease-out, box-shadow 0.1s ease-out"
     });
 
-    micButton.innerHTML = "➤";
-    inputContainer.appendChild(micButton);
+    // 3. Add arrow content
+    button.innerHTML = "➤";
 
+    // 4. Append the button to the red input container
+    inputContainer.appendChild(button);
+
+    // 5. Microphone-based wave and button size effect
     navigator.mediaDevices.getUserMedia({ audio: true })
       .then(stream => {
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -159,12 +127,12 @@
           analyser.getByteFrequencyData(dataArray);
           const volume = dataArray.reduce((a, b) => a + b) / dataArray.length;
 
-          const scale = 1 + Math.min(volume / 150, 0.5);
+          const scale = 1 + Math.min(volume / 150, 0.5); // max 1.5x
           const spread = scale * 15;
           const opacity = 0.6 - (scale - 1);
 
-          micButton.style.boxShadow = `0 0 0 ${spread}px rgba(0, 123, 255, ${opacity})`;
-          micButton.style.transform = `scale(${scale})`;
+          button.style.boxShadow = `0 0 0 ${spread}px rgba(0, 123, 255, ${opacity})`;
+          button.style.transform = `scale(${scale})`;
 
           requestAnimationFrame(animateWave);
         }
