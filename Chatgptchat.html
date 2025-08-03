@@ -6,7 +6,6 @@
   <title>Emoji Picker with Floating Input</title>
   <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
   <style>
-    /* Reset & Base */
     * {
       box-sizing: border-box;
       margin: 0;
@@ -27,7 +26,7 @@
 
     #emoji-button {
       position: fixed;
-      bottom: 70px; /* Moved up so it doesn't overlap input */
+      bottom: 70px;
       right: 20px;
       background: #007bff;
       color: white;
@@ -61,15 +60,11 @@
       position: fixed;
       left: 0;
       bottom: 0;
+      padding: 6px 8px;
       width: 100%;
-      height: 60px;
       background: red;
-      z-index: 15; /* Above emoji picker but below the emoji button */
+      z-index: 15;
       transition: bottom 0.3s ease;
-    }
-
-    #emoji-picker.show + #input-container {
-      bottom: 300px; /* Move input above picker when picker is open */
     }
   </style>
 </head>
@@ -80,38 +75,105 @@
     <p>Scroll here to see the effect when emoji picker is opened.</p>
     <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
     <p>More content to demonstrate scroll behavior...</p>
-    <p>Keep adding lines to test body push...</p>
     <p>👇 Tap the smile icon to toggle the emoji picker</p>
   </div>
 
-  <!-- Toggle Button -->
+  <!-- Toggle Emoji Button -->
   <button id="emoji-button">
     <i class="fas fa-smile"></i>
   </button>
 
-  <!-- Empty Emoji Picker Panel -->
+  <!-- Emoji Picker -->
   <div id="emoji-picker"></div>
 
-  <!-- Empty Red Input Container -->
+  <!-- Red Input Container -->
   <div id="input-container"></div>
 
+  <!-- JavaScript -->
   <script>
     const emojiButton = document.getElementById('emoji-button');
     const emojiPicker = document.getElementById('emoji-picker');
     const inputContainer = document.getElementById('input-container');
     const mainContent = document.getElementById('main-content');
 
+    function getInputHeight() {
+      return inputContainer.offsetHeight;
+    }
+
     emojiButton.addEventListener('click', () => {
       const isOpen = emojiPicker.classList.toggle('show');
+      const inputHeight = getInputHeight();
 
       if (isOpen) {
-        mainContent.style.paddingBottom = '360px'; // 300px for picker + 60px for input
-        inputContainer.style.bottom = '300px'; // move input above picker
+        mainContent.style.paddingBottom = `${300 + inputHeight}px`;
+        inputContainer.style.bottom = '300px';
       } else {
-        mainContent.style.paddingBottom = '60px'; // only input height
+        mainContent.style.paddingBottom = `${inputHeight}px`;
         inputContainer.style.bottom = '0';
       }
     });
+
+    window.addEventListener('load', () => {
+      mainContent.style.paddingBottom = `${inputContainer.offsetHeight}px`;
+    });
+
+    // ➤ Microphone-sensitive button
+    const micButton = document.createElement("button");
+
+    Object.assign(micButton.style, {
+      width: "70px",
+      height: "70px",
+      backgroundColor: "#007bff",
+      color: "white",
+      border: "none",
+      borderRadius: "50%",
+      position: "absolute", // relative to inputContainer
+      bottom: "-9px",
+      right: "-15px",
+      boxShadow: "0 0 0 0 rgba(0, 123, 255, 0.7)",
+      cursor: "pointer",
+      fontSize: "30px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: "9999",
+      overflow: "visible",
+      transition: "transform 0.1s ease-out, box-shadow 0.1s ease-out"
+    });
+
+    micButton.innerHTML = "➤";
+    inputContainer.appendChild(micButton);
+
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(stream => {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const micSource = audioContext.createMediaStreamSource(stream);
+        const analyser = audioContext.createAnalyser();
+        analyser.fftSize = 256;
+
+        micSource.connect(analyser);
+
+        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+        function animateWave() {
+          analyser.getByteFrequencyData(dataArray);
+          const volume = dataArray.reduce((a, b) => a + b) / dataArray.length;
+
+          const scale = 1 + Math.min(volume / 150, 0.5);
+          const spread = scale * 15;
+          const opacity = 0.6 - (scale - 1);
+
+          micButton.style.boxShadow = `0 0 0 ${spread}px rgba(0, 123, 255, ${opacity})`;
+          micButton.style.transform = `scale(${scale})`;
+
+          requestAnimationFrame(animateWave);
+        }
+
+        animateWave();
+      })
+      .catch(error => {
+        console.error("Microphone access denied:", error);
+      });
   </script>
 
 </body>
