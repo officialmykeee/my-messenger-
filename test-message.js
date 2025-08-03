@@ -858,7 +858,7 @@ function activateReply(messageElement) {
     scrollToLatestMessage();
 }
 
-// Close reply
+// Updated close reply function
 function closeReply() {
     isReplyActive = false;
     repliedToMessageId = null;
@@ -872,11 +872,11 @@ function closeReply() {
     const currentInputContainerHeight = inputContainer.offsetHeight;
     chatContainer.style.height = `calc(100vh - ${currentInputContainerHeight}px)`;
     chatContainer.style.marginBottom = `${currentInputContainerHeight}px`;
-    inputField.value = '';
-    sendBtn.classList.remove('active');
-    sendBtn.style.display = isLocked ? 'none' : 'inline-flex';
-    micIcon.style.display = inputField.value.trim() && !isLocked ? 'none' : 'inline-flex';
-    pinIcon.style.display = inputField.value.trim() && !isLocked ? 'none' : 'inline-flex';
+    inputField.value = ''; // Clear input
+    sendBtn.classList.remove('active'); // Deactivate send button
+    sendBtn.style.display = 'none'; // Hide send button
+    micIcon.style.display = isLocked ? 'none' : 'inline-flex';
+    pinIcon.style.display = isLocked ? 'none' : 'inline-flex';
     smileToggler.style.display = 'inline-flex';
     inputField.blur();
 }
@@ -890,7 +890,7 @@ const inputFieldClickHandler = function () {
         chatContainer.style.marginBottom = `${containerHeight}px`;
         inputContainer.style.bottom = '0';
         emojiPicker.classList.remove('active');
-        videoOverlay.classList.remove('emoji-picker-active');
+        videoOverlay.classList.remove('emoji-picker-active', 'keyboard-active');
         document.documentElement.style.removeProperty('--emoji-picker-height');
         smileToggler.classList.remove('fa-keyboard');
         smileToggler.classList.add('fa-smile');
@@ -963,7 +963,8 @@ const inputFieldKeydownHandler = function (e) {
     }
 };
 
-const sendBtnClickHandler = function () {
+const sendBtnClickHandler = function (e) {
+    e.preventDefault(); // Prevent default to ensure controlled behavior
     const message = inputField.value.trim();
     if (message) {
         sendMessage(message);
@@ -982,7 +983,6 @@ const pinIconClickHandler = function (e) {
     inputField.blur();
 };
 
-// Your touchstart handler (unchanged)
 const micIconTouchstartHandler = function (e) {
     e.preventDefault();
     const currentIcon = micIcon.querySelector('svg');
@@ -1025,7 +1025,6 @@ const micIconTouchstartHandler = function (e) {
     }
 };
 
-// Your touchmove handler (unchanged except for voice-wave cleanup)
 const micIconTouchmoveHandler = function (e) {
     e.preventDefault();
     if (isRecording && !isLocked) {
@@ -1042,13 +1041,13 @@ const micIconTouchmoveHandler = function (e) {
             isDeleteActive = true;
             smileToggler.classList.remove('red-dot');
             smileToggler.classList.add('red-dot');
-            smileToggler.innerHTML = ''; // No trash icon
+            smileToggler.innerHTML = '';
             smileTogglerState = 'waste';
             clearInterval(dotBlinkInterval);
-            clearInterval(voiceWaveInterval); // Added for audio cleanup
-            voiceWaveInterval = null; // Added for audio cleanup
+            clearInterval(voiceWaveInterval);
+            voiceWaveInterval = null;
             if (voiceWave) {
-                voiceWave.style.display = 'none'; // Added for audio cleanup
+                voiceWave.style.display = 'none';
                 console.log('Voice wave stopped on cancel (slide left)');
             }
             cancelRecording();
@@ -1078,17 +1077,16 @@ const micIconTouchmoveHandler = function (e) {
             micIcon.style.position = 'relative';
             micIcon.style.marginRight = '8px';
             updateRecordingInterface();
-            clearInterval(voiceWaveInterval); // Added for audio cleanup
-            voiceWaveInterval = null; // Added for audio cleanup
+            clearInterval(voiceWaveInterval);
+            voiceWaveInterval = null;
             if (voiceWave) {
-                voiceWave.style.display = 'none'; // Added for audio cleanup
+                voiceWave.style.display = 'none';
                 console.log('Voice wave stopped on lock (slide up)');
             }
         }
     }
 };
 
-// Updated touchend handler with fixes
 const micIconTouchendHandler = function (e) {
     e.preventDefault();
     clearTimeout(touchTimeout);
@@ -1160,6 +1158,14 @@ document.addEventListener('touchend', (e) => {
         hideRecordingInterface();
         holdStateDetector();
     }
+});
+
+// Updated closeReplyBtn event listener
+closeReplyBtn.addEventListener('click', (e) => {
+    e.preventDefault(); // Prevent default action
+    e.stopPropagation(); // Stop event bubbling to parent elements
+    console.log('Close reply button clicked');
+    closeReply();
 });
 
 // Attach initial event listeners
@@ -1340,6 +1346,3 @@ window.addEventListener('load', () => {
         });
     });
 });
-
-// Close reply button
-closeReplyBtn.addEventListener('click', closeReply);
