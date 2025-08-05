@@ -130,6 +130,19 @@
       font-weight: bold;
     }
 
+    .emoji-tab-content {
+      padding: 10px;
+      overflow-y: auto;
+      height: calc(100% - 40px);
+      display: none;
+    }
+
+    .emoji-tab-content img {
+      width: 40px;
+      height: 40px;
+      cursor: pointer;
+    }
+
     @media (max-width: 600px) {
       .input-field {
         padding: 8px 12px;
@@ -152,10 +165,24 @@
   </div>
 
   <div id="emoji-picker">
+    <!-- Tab Pages -->
+    <div id="emoji-tab" class="emoji-tab-content" style="display: block;">
+      <a href="https://imgbb.com/">
+        <img src="https://i.ibb.co/hQqj8kg/grinning-face-1f600.png" alt="grinning-face-1f600" border="0">
+      </a>
+    </div>
+    <div id="gifs-tab" class="emoji-tab-content">
+      <p>GIFs content will go here.</p>
+    </div>
+    <div id="stickers-tab" class="emoji-tab-content">
+      <p>Stickers content will go here.</p>
+    </div>
+
+    <!-- Tab Navigation -->
     <div class="emoji-picker-navbar">
-      <span>Emoji</span>
-      <span class="active">GIFs</span>
-      <span>Stickers</span>
+      <span class="nav-tab active" data-tab="emoji-tab">Emoji</span>
+      <span class="nav-tab" data-tab="gifs-tab">GIFs</span>
+      <span class="nav-tab" data-tab="stickers-tab">Stickers</span>
     </div>
   </div>
 
@@ -173,7 +200,6 @@
   </div>
 
   <script>
-    //message start: Emoji picker toggle logic
     const emojiPicker = document.getElementById("emoji-picker");
     const inputContainer = document.getElementById("input-container");
     const emojiButton = document.getElementById("emoji-button");
@@ -185,9 +211,7 @@
       emojiPicker.style.bottom = pickerVisible ? "0" : "-300px";
       inputContainer.style.bottom = pickerVisible ? "300px" : "0";
     });
-    //message end: Emoji picker toggle logic
 
-    //switch emoji picker for typing
     inputField.addEventListener("focus", () => {
       if (pickerVisible) {
         emojiPicker.style.bottom = "-300px";
@@ -203,9 +227,22 @@
         pickerVisible = false;
       }
     });
-    //end switch emoji picker for typing
 
-    //message start: Send button creation
+    // Tab Switching Logic
+    const tabs = document.querySelectorAll('.nav-tab');
+    const tabContents = document.querySelectorAll('.emoji-tab-content');
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        tabContents.forEach(content => {
+          content.style.display = content.id === tab.dataset.tab ? 'block' : 'none';
+        });
+      });
+    });
+
+    // Send Button Creation
     let button = document.createElement("button");
     Object.assign(button.style, {
       width: "70px",
@@ -229,7 +266,6 @@
     });
     button.innerHTML = "➤";
     inputContainer.appendChild(button);
-    //message end: Send button creation
   </script>
 </body>
 </html>
