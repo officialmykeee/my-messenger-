@@ -314,23 +314,23 @@
   }
 
   function endGesture(x) {
-    if (!isHolding) return;
-    const deltaX = x - startX;
-    isHolding = false;
-    mic.classList.remove("hold");
-    mic.style.transform = "";
+  if (!isHolding) return;
+  const deltaX = x - startX;
+  isHolding = false;
+  mic.classList.remove("hold");
+  mic.style.transform = "";
 
-    if (!moved) return;
+  if (!moved) return;
 
-    // Gesture detection
-    if (deltaX > 100) {
-      console.log("Swiped Right → Trigger your action");
-      // Call your function here
-    } else if (deltaX < -10 && deltaX > -100) {
-      console.log("Swiped Left < 100px → Delete action");
-      // Call delete action here
-    }
+  // Gesture detection
+  if (deltaX > 100) {
+    console.log("Swiped Right → Trigger your action");
+    // Add your right-swipe action here
+  } else if (deltaX < -57) {
+    console.log("Swiped Left > 57px → Delete action");
+    // Add your delete action here
   }
+}
 
   // Mobile events
   mic.addEventListener("touchstart", e => startGesture(e.touches[0].clientX));
