@@ -286,51 +286,84 @@
 
     //hold microphone state
 
-    
-  const mic = document.getElementById("micIcon");
+    const mic = document.getElementById("micIcon");
+let startX = 0;
+let isHolding = false;
+let moved = false;
 
-  let startX = 0;
-  let isHolding = false;
-  let moved = false;
+function startGesture(x) {
+  startX = x;
+  isHolding = true;
+  moved = false;
+  mic.classList.add("hold");
+  mic.style.transition = "transform 0.1s ease, width 0.1s ease, height 0.1s ease";
+}
 
-  // Mobile + Desktop unified functions
-  function startGesture(x) {
-    startX = x;
-    isHolding = true;
-    moved = false;
-    mic.classList.add("hold");
-  }
-
-  function moveGesture(x) {
-    if (!isHolding) return;
-    const deltaX = x - startX;
-
-    if (Math.abs(deltaX) > 10) {
-      moved = true;
-
-      // You can visually translate the button (optional)
-      mic.style.transform = `translateX(${deltaX}px)`;
-    }
-  }
-
-  function endGesture(x) {
+function moveGesture(x) {
   if (!isHolding) return;
+  const deltaX = x - startX;
+
+  if (Math.abs(deltaX) > 10) {
+    moved = true;
+    // Limit left swipe to -78px
+    const limitedDeltaX = deltaX < 0 ? Math.max(deltaX, -78) : deltaX;
+    mic.style.transform = `translateX(${limitedDeltaX}px)`;
+  }
+}
+
+function endGesture(x) {
+  if (!isHolding) return;
+  console.log("endGesture triggered");
   const deltaX = x - startX;
   isHolding = false;
   mic.classList.remove("hold");
-  mic.style.transform = "";
 
-  if (!moved) return;
+  moved = false;
 
-  // Gesture detection
+  console.log("deltaX:", deltaX);
   if (deltaX > 100) {
     console.log("Swiped Right → Trigger your action");
-    // Add your right-swipe action here
-  } else if (deltaX < -57) {
-    console.log("Swiped Left > 57px → Delete action");
-    // Add your delete action here
+    mic.style.transition = "none";
+    mic.style.transform = "translateX(0px)";
+  } else if (deltaX < -93) {
+    console.log("Swiped Left > 93px → Delete action");
+    mic.style.transition = "none";
+    mic.style.transform = "translateX(0px)";
+  } else {
+    console.log("Swipe too short, bouncing back to default");
+    mic.style.transition = "transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)";
+    mic.style.transform = "translateX(0px)";
   }
 }
+
+// Event listeners
+mic.addEventListener("touchstart", (e) => {
+  e.preventDefault();
+  startGesture(e.touches[0].clientX);
+});
+mic.addEventListener("touchmove", (e) => {
+  e.preventDefault();
+  moveGesture(e.touches[0].clientX);
+});
+mic.addEventListener("touchend", (e) => {
+  endGesture(e.changedTouches[0].clientX);
+});
+mic.addEventListener("mousedown", (e) => {
+  e.preventDefault();
+  startGesture(e.clientX);
+});
+mic.addEventListener("mousemove", (e) => {
+  if (isHolding) moveGesture(e.clientX);
+});
+mic.addEventListener("mouseup", (e) => {
+  endGesture(e.clientX);
+});
+mic.addEventListener("mouseleave", (e) => {
+  if (isHolding) endGesture(e.clientX);
+});
+   //End of microphone gesture
+
+    
 
   // Mobile events
   mic.addEventListener("touchstart", e => startGesture(e.touches[0].clientX));
