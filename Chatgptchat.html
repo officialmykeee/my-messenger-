@@ -98,6 +98,11 @@
       transition: transform 0.1s ease, width 0.1s ease, height 0.1s ease;
     }
 
+    .mic-container.hold {
+     width: 68px;
+     height: 68px;
+   }
+
     .emoji-picker-navbar {
       position: absolute;
       bottom: 0;
@@ -275,6 +280,33 @@
         });
       });
     });
+
+
+    //hold microphone state
+
+    const mic = document.getElementById("micIcon");
+
+  // Desktop press-and-hold
+  mic.addEventListener("mousedown", () => {
+    mic.classList.add("hold");
+  });
+
+  mic.addEventListener("mouseup", () => {
+    mic.classList.remove("hold");
+  });
+
+  mic.addEventListener("mouseleave", () => {
+    mic.classList.remove("hold");
+  });
+
+  // Mobile touch hold
+  mic.addEventListener("touchstart", () => {
+    mic.classList.add("hold");
+  });
+
+  mic.addEventListener("touchend", () => {
+    mic.classList.remove("hold");
+  });
 
     // Send Button Creation
     let button = document.createElement("button");
