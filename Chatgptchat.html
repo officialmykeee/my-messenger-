@@ -137,6 +137,11 @@
       display: none;
     }
 
+      #keyboardIcon {
+     position: relative;
+     top: 3px;
+   }
+
     .emoji-tab-content img {
       width: 40px;
       height: 40px;
@@ -165,7 +170,6 @@
   </div>
 
   <div id="emoji-picker">
-    <!-- Tab Pages -->
     <div id="emoji-tab" class="emoji-tab-content" style="display: block;">
       <a href="https://imgbb.com/">
         <img src="https://i.ibb.co/hQqj8kg/grinning-face-1f600.png" alt="grinning-face-1f600" border="0">
@@ -178,7 +182,6 @@
       <p>Stickers content will go here.</p>
     </div>
 
-    <!-- Tab Navigation -->
     <div class="emoji-picker-navbar">
       <span class="nav-tab active" data-tab="emoji-tab">Emoji</span>
       <span class="nav-tab" data-tab="gifs-tab">GIFs</span>
@@ -188,7 +191,23 @@
 
   <div id="input-container">
     <button id="emoji-button">
-      <i class="fas fa-smile icon" id="smileToggler"></i>
+      <span id="iconToggleWrapper">
+        <i class="fas fa-smile icon" id="smileIcon"></i>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" color="#749cbf" height="24" fill="currentColor" viewBox="0 0 24 24" id="keyboardIcon" style="display: none; cursor: pointer;">
+          <path d="m21,4H3c-1.1,0-2,.9-2,2v12c0,1.1.9,2,2,2h18c1.1,0,2-.9,2-2V6c0-1.1-.9-2-2-2ZM3,18V6h18v12s-18,0-18,0Z"></path>
+          <path d="M5 8H7V10H5z"></path>
+          <path d="M8 8H10V10H8z"></path>
+          <path d="M11 8H13V10H11z"></path>
+          <path d="M14 8H16V10H14z"></path>
+          <path d="M17 8H19V10H17z"></path>
+          <path d="M5 11H7V13H5z"></path>
+          <path d="M8 11H10V13H8z"></path>
+          <path d="M8 14H16V16H8z"></path>
+          <path d="M11 11H13V13H11z"></path>
+          <path d="M14 11H16V13H14z"></path>
+          <path d="M17 11H19V13H17z"></path>
+        </svg>
+      </span>
     </button>
     <textarea class="input-field" placeholder="Message" id="inputField" rows="1"></textarea>
     <i class="fas fa-paperclip icon" id="pinIcon" style="display: inline-flex;"></i>
@@ -204,12 +223,25 @@
     const inputContainer = document.getElementById("input-container");
     const emojiButton = document.getElementById("emoji-button");
     const inputField = document.getElementById("inputField");
+    const smileIcon = document.getElementById("smileIcon");
+    const keyboardIcon = document.getElementById("keyboardIcon");
     let pickerVisible = false;
+
+    function updateIcon() {
+      if (pickerVisible) {
+        smileIcon.style.display = "none";
+        keyboardIcon.style.display = "inline";
+      } else {
+        smileIcon.style.display = "inline";
+        keyboardIcon.style.display = "none";
+      }
+    }
 
     emojiButton.addEventListener("click", () => {
       pickerVisible = !pickerVisible;
       emojiPicker.style.bottom = pickerVisible ? "0" : "-300px";
       inputContainer.style.bottom = pickerVisible ? "300px" : "0";
+      updateIcon();
     });
 
     inputField.addEventListener("focus", () => {
@@ -217,6 +249,7 @@
         emojiPicker.style.bottom = "-300px";
         inputContainer.style.bottom = "0";
         pickerVisible = false;
+        updateIcon();
       }
     });
 
@@ -225,6 +258,7 @@
         emojiPicker.style.bottom = "-300px";
         inputContainer.style.bottom = "0";
         pickerVisible = false;
+        updateIcon();
       }
     });
 
