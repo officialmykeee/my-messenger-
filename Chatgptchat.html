@@ -284,29 +284,61 @@
 
     //hold microphone state
 
-    const mic = document.getElementById("micIcon");
+    
+  const mic = document.getElementById("micIcon");
 
-  // Desktop press-and-hold
-  mic.addEventListener("mousedown", () => {
+  let startX = 0;
+  let isHolding = false;
+  let moved = false;
+
+  // Mobile + Desktop unified functions
+  function startGesture(x) {
+    startX = x;
+    isHolding = true;
+    moved = false;
     mic.classList.add("hold");
-  });
+  }
 
-  mic.addEventListener("mouseup", () => {
+  function moveGesture(x) {
+    if (!isHolding) return;
+    const deltaX = x - startX;
+
+    if (Math.abs(deltaX) > 10) {
+      moved = true;
+
+      // You can visually translate the button (optional)
+      mic.style.transform = `translateX(${deltaX}px)`;
+    }
+  }
+
+  function endGesture(x) {
+    if (!isHolding) return;
+    const deltaX = x - startX;
+    isHolding = false;
     mic.classList.remove("hold");
-  });
+    mic.style.transform = "";
 
-  mic.addEventListener("mouseleave", () => {
-    mic.classList.remove("hold");
-  });
+    if (!moved) return;
 
-  // Mobile touch hold
-  mic.addEventListener("touchstart", () => {
-    mic.classList.add("hold");
-  });
+    // Gesture detection
+    if (deltaX > 100) {
+      console.log("Swiped Right → Trigger your action");
+      // Call your function here
+    } else if (deltaX < -10 && deltaX > -100) {
+      console.log("Swiped Left < 100px → Delete action");
+      // Call delete action here
+    }
+  }
 
-  mic.addEventListener("touchend", () => {
-    mic.classList.remove("hold");
-  });
+  // Mobile events
+  mic.addEventListener("touchstart", e => startGesture(e.touches[0].clientX));
+  mic.addEventListener("touchmove", e => moveGesture(e.touches[0].clientX));
+  mic.addEventListener("touchend", e => endGesture(e.changedTouches[0].clientX));
+
+  // Desktop events
+  mic.addEventListener("mousedown", e => startGesture(e.clientX));
+  document.addEventListener("mousemove", e => moveGesture(e.clientX));
+  document.addEventListener("mouseup", e => endGesture(e.clientX));
 
     // Send Button Creation
     let button = document.createElement("button");
