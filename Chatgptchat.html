@@ -217,12 +217,36 @@
     </button>
     <textarea class="input-field" placeholder="Message" id="inputField" rows="1"></textarea>
     <i class="fas fa-paperclip icon" id="pinIcon" style="display: inline-flex;"></i>
-    <div class="mic-container" id="micIcon" style="display: inline-flex;">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 82.05 122.88" width="21" height="21" fill="white">
-        <path d="M59.89,20.83V52.3c0,27-37.73,27-37.73,0V20.83c0-27.77,37.73-27.77,37.73,0Zm-14.18,76V118.2a4.69,4.69,0,0,1-9.37,0V96.78a40.71,40.71,0,0,1-12.45-3.51A41.63,41.63,0,0,1,12.05,85L12,84.91A41.31,41.31,0,0,1,3.12,71.68,40.73,40.73,0,0,1,0,56a4.67,4.67,0,0,1,8-3.31l.1.1A4.68,4.68,0,0,1,9.37,56a31.27,31.27,0,0,0,2.4,12.06A32,32,0,0,0,29,85.28a31.41,31.41,0,0,0,24.13,0,31.89,31.89,0,0,0,10.29-6.9l.08-.07a32,32,0,0,0,6.82-10.22A31.27,31.27,0,0,0,72.68,56a4.69,4.69,0,0,1,9.37,0,40.65,40.65,0,0,1-3.12,15.65A41.45,41.45,0,0,1,70,85l-.09.08a41.34,41.34,0,0,1-11.75,8.18,40.86,40.86,0,0,1-12.46,3.51Z"/>
-      </svg>
-    </div>
-  </div>
+    <div class="mic-container" id="micIcon" style="display: inline-flex; align-items: center; justify-content: center; cursor: pointer;">
+  
+  <!-- Mic Icon -->
+  <svg id="micSVG" xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="white" style="display: inline;">
+    <path d="M12 14a3.001 3.001 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3.001 3.001 0 0 0 3 3zM19 11a1 1 0 0 0-1 1 6 6 0 0 1-12 0 1 1 0 0 0-2 0 8 8 0 0 0 7 7.938V22a1 1 0 0 0 2 0v-2.062A8.001 8.001 0 0 0 20 12a1 1 0 0 0-1-1z"/>
+  </svg>
+
+  <!-- Video Icon (custom SVG you provided) -->
+  <svg id="videoSVG" width="21px" height="21px" viewBox="0 0 122.88 118.66" xmlns="http://www.w3.org/2000/svg" fill="white" style="display: none;">
+    <path d="M16.68,22.2c-1.78,2.21-3.43,4.55-5.06,7.46C5.63,40.31,3.1,52.39,4.13,64.2 
+    c1.01,11.54,5.43,22.83,13.37,32.27c2.85,3.39,5.91,6.38,9.13,8.97
+    c11.11,8.93,24.28,13.34,37.41,13.22c13.13-0.12,26.21-4.78,37.14-13.98 
+    c3.19-2.68,6.18-5.73,8.91-9.13c6.4-7.96,10.51-17.29,12.07-27.14
+    c1.53-9.67,0.59-19.83-3.07-29.66c-3.49-9.35-8.82-17.68-15.78-24.21 
+    C96.7,8.33,88.59,3.76,79.2,1.48c-2.94-0.71-5.94-1.18-8.99-1.37 
+    c-3.06-0.2-6.19-0.13-9.4,0.22c-2.01,0.22-3.46,2.03-3.24,4.04 
+    c0.22,2.01,2.03,3.46,4.04,3.24c2.78-0.31,5.49-0.37,8.14-0.19 
+    c2.65,0.17,5.23,0.57,7.73,1.17c8.11,1.96,15.1,5.91,20.84,11.29 
+    c6.14,5.75,10.85,13.12,13.94,21.43c3.21,8.61,4.04,17.51,2.7,25.96 
+    C113.59,75.85,110,84,104.4,90.96c-2.47,3.07-5.12,5.78-7.91,8.13 
+    c-9.59,8.07-21.03,12.15-32.5,12.26c-11.47,0.11-23-3.76-32.76-11.61 
+    c-2.9-2.33-5.62-4.98-8.13-7.97c-6.92-8.22-10.77-18.09-11.65-28.2 
+    c-0.91-10.38,1.32-20.99,6.57-30.33c1.59-2.82,3.21-5.07,5.01-7.24l0.53,14.7 
+    c0.07,2.02,1.76,3.6,3.78,3.53c2.02-0.07,3.6-1.76,3.53-3.78l-0.85-23.42 
+    c-0.07-2.02-1.76-3.59-3.78-3.52c-0.13,0.01-0.25,0.02-0.37,0.03v0l-22.7,3.19 
+    c-2,0.28-3.4,2.12-3.12,4.13c0.28,2,2.12,3.4,4.13,3.12L16.68,22.2z 
+    M85.78,58.71L53.11,80.65V37.12L85.78,58.71z"/>
+  </svg>
+</div>
+</div>
 
   <script>
     const emojiPicker = document.getElementById("emoji-picker");
@@ -282,98 +306,122 @@
       });
     });
 
+    //switching microphone to video icon 
 
-    //hold microphone state
+    document.addEventListener("DOMContentLoaded", () => {
+  const micSVG = document.getElementById("micSVG");
+  const videoSVG = document.getElementById("videoSVG");
+  const iconToggle = document.getElementById("micIcon");
+
+  if (!micSVG || !videoSVG || !iconToggle) {
+    console.error("Missing icon elements.");
+    return;
+  }
+
+  iconToggle.addEventListener("click", () => {
+    const micVisible = micSVG.style.display !== "none";
+
+    micSVG.style.display = micVisible ? "none" : "inline";
+    videoSVG.style.display = micVisible ? "inline" : "none";
+  });
+});
+ //End of switching microphone to video icon 
+    
+//hold microphone state and gesture
 
     const mic = document.getElementById("micIcon");
+
 let startX = 0;
 let isHolding = false;
 let moved = false;
+let holdTimer = null;
+const holdDelay = 200; // Time in ms before hold activates
+let holdTriggered = false;
 
 function startGesture(x) {
   startX = x;
-  isHolding = true;
   moved = false;
-  mic.classList.add("hold");
-  mic.style.transition = "transform 0.1s ease, width 0.1s ease, height 0.1s ease";
+  isHolding = true;
+  holdTriggered = false;
+
+  // Start a timer for detecting hold
+  holdTimer = setTimeout(() => {
+    holdTriggered = true;
+    mic.classList.add("hold");
+    mic.style.transition = "transform 0.1s ease, width 0.1s ease, height 0.1s ease";
+    console.log("Hold state activated");
+  }, holdDelay);
 }
 
 function moveGesture(x) {
   if (!isHolding) return;
-  const deltaX = x - startX;
 
+  const deltaX = x - startX;
   if (Math.abs(deltaX) > 10) {
     moved = true;
-    // Limit left swipe to -78px
+  }
+
+  if (holdTriggered) {
+    // Only allow movement if hold is active
     const limitedDeltaX = deltaX < 0 ? Math.max(deltaX, -78) : deltaX;
     mic.style.transform = `translateX(${limitedDeltaX}px)`;
   }
 }
 
 function endGesture(x) {
-  if (!isHolding) return;
-  console.log("endGesture triggered");
-  const deltaX = x - startX;
-  isHolding = false;
-  mic.classList.remove("hold");
+  if (holdTimer) {
+    clearTimeout(holdTimer);
+    holdTimer = null;
+  }
 
-  moved = false;
-
-  console.log("deltaX:", deltaX);
-  if (deltaX > 100) {
-    console.log("Swiped Right → Trigger your action");
+  if (!holdTriggered && !moved) {
+    // Tap occurred (not held, not moved)
+    console.log("Tap detected → Initiate short recording or a different action");
     mic.style.transition = "none";
     mic.style.transform = "translateX(0px)";
-  } else if (deltaX < -93) {
-    console.log("Swiped Left > 93px → Delete action");
-    mic.style.transition = "none";
-    mic.style.transform = "translateX(0px)";
-  } else {
-    console.log("Swipe too short, bouncing back to default");
+  } else if (holdTriggered) {
+    // Handle the hold gesture (swipe)
+    const deltaX = x - startX;
+    mic.classList.remove("hold");
+
+    console.log("Hold ended, deltaX:", deltaX);
+    if (deltaX > 100) {
+      console.log("Swiped Right → Trigger your action");
+    } else if (deltaX < -78) {
+      console.log("Swiped Left > 78px → Delete action");
+    } else {
+      console.log("Swipe too short → Resetting position");
+    }
+
     mic.style.transition = "transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)";
     mic.style.transform = "translateX(0px)";
   }
+
+  isHolding = false;
+  holdTriggered = false;
 }
 
-// Event listeners
-mic.addEventListener("touchstart", (e) => {
-  e.preventDefault();
-  startGesture(e.touches[0].clientX);
-});
-mic.addEventListener("touchmove", (e) => {
-  e.preventDefault();
-  moveGesture(e.touches[0].clientX);
-});
-mic.addEventListener("touchend", (e) => {
-  endGesture(e.changedTouches[0].clientX);
-});
-mic.addEventListener("mousedown", (e) => {
-  e.preventDefault();
-  startGesture(e.clientX);
-});
-mic.addEventListener("mousemove", (e) => {
+// Mobile events
+mic.addEventListener("touchstart", e => startGesture(e.touches[0].clientX));
+mic.addEventListener("touchmove", e => moveGesture(e.touches[0].clientX));
+mic.addEventListener("touchend", e => endGesture(e.changedTouches[0].clientX));
+
+// Desktop events
+mic.addEventListener("mousedown", e => startGesture(e.clientX));
+document.addEventListener("mousemove", e => {
   if (isHolding) moveGesture(e.clientX);
 });
-mic.addEventListener("mouseup", (e) => {
-  endGesture(e.clientX);
-});
-mic.addEventListener("mouseleave", (e) => {
+document.addEventListener("mouseup", e => {
   if (isHolding) endGesture(e.clientX);
 });
-   //End of microphone gesture
+    
+   
+    
+//End of microphone state and gesture
 
     
 
-  // Mobile events
-  mic.addEventListener("touchstart", e => startGesture(e.touches[0].clientX));
-  mic.addEventListener("touchmove", e => moveGesture(e.touches[0].clientX));
-  mic.addEventListener("touchend", e => endGesture(e.changedTouches[0].clientX));
-
-  // Desktop events
-  mic.addEventListener("mousedown", e => startGesture(e.clientX));
-  document.addEventListener("mousemove", e => moveGesture(e.clientX));
-  document.addEventListener("mouseup", e => endGesture(e.clientX));
-
+  
     // Send Button Creation
     let button = document.createElement("button");
     Object.assign(button.style, {
