@@ -249,203 +249,245 @@
 </div>
 
   <script>
-    const emojiPicker = document.getElementById("emoji-picker");
-    const inputContainer = document.getElementById("input-container");
-    const emojiButton = document.getElementById("emoji-button");
-    const inputField = document.getElementById("inputField");
-    const smileIcon = document.getElementById("smileIcon");
-    const keyboardIcon = document.getElementById("keyboardIcon");
-    let pickerVisible = false;
+ 
+      
+ // Get references to key elements
+const emojiPicker = document.getElementById("emoji-picker");
+const inputContainer = document.getElementById("input-container");
+const emojiButton = document.getElementById("emoji-button");
+const inputField = document.getElementById("inputField");
+const smileIcon = document.getElementById("smileIcon");
+const keyboardIcon = document.getElementById("keyboardIcon");
 
-    function updateIcon() {
-      if (pickerVisible) {
-        smileIcon.style.display = "none";
-        keyboardIcon.style.display = "inline";
-      } else {
-        smileIcon.style.display = "inline";
-        keyboardIcon.style.display = "none";
-      }
-    }
+// Tracks if the emoji picker is visible
+let pickerVisible = false;
 
-    emojiButton.addEventListener("click", () => {
-      pickerVisible = !pickerVisible;
-      emojiPicker.style.bottom = pickerVisible ? "0" : "-300px";
-      inputContainer.style.bottom = pickerVisible ? "300px" : "0";
-      updateIcon();
-    });
+// This function shows the keyboard icon and hides the smiley when picker is open, and vice versa
+function updateIcon() {
+  if (pickerVisible) {
+    smileIcon.style.display = "none";       // Hide smile icon
+    keyboardIcon.style.display = "inline";  // Show keyboard icon
+  } else {
+    smileIcon.style.display = "inline";     // Show smile icon
+    keyboardIcon.style.display = "none";    // Hide keyboard icon
+  }
+}
 
-    inputField.addEventListener("focus", () => {
-      if (pickerVisible) {
-        emojiPicker.style.bottom = "-300px";
-        inputContainer.style.bottom = "0";
-        pickerVisible = false;
-        updateIcon();
-      }
-    });
+// Toggles the emoji picker open or closed when the emoji button is clicked
+emojiButton.addEventListener("click", () => {
+  pickerVisible = !pickerVisible;  // Flip the visibility state
+  emojiPicker.style.bottom = pickerVisible ? "0" : "-300px";  // Slide emoji picker
+  inputContainer.style.bottom = pickerVisible ? "300px" : "0"; // Adjust input position
+  updateIcon(); // Update icons
+});
 
-    inputField.addEventListener("input", () => {
-      if (pickerVisible) {
-        emojiPicker.style.bottom = "-300px";
-        inputContainer.style.bottom = "0";
-        pickerVisible = false;
-        updateIcon();
-      }
-    });
-
-    // Tab Switching Logic
-    const tabs = document.querySelectorAll('.nav-tab');
-    const tabContents = document.querySelectorAll('.emoji-tab-content');
-
-    tabs.forEach(tab => {
-      tab.addEventListener('click', () => {
-        tabs.forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        tabContents.forEach(content => {
-          content.style.display = content.id === tab.dataset.tab ? 'block' : 'none';
-        });
-      });
-    });
-
-    //switching microphone to video icon 
-
-    document.addEventListener("DOMContentLoaded", () => {
+// Close emoji picker when user clicks into input field
+inputField.addEventListener("focus", () => {
+  if (pickerVisible) {
+    emojiPicker.style.bottom = "-300px";
+    inputContainer.style.bottom = "0";
+    pickerVisible = false;
+    updateIcon();
+  }
+  // Preserve mic/video state
+  const currentState = localStorage.getItem("micVideoState") || "mic";
   const micSVG = document.getElementById("micSVG");
   const videoSVG = document.getElementById("videoSVG");
-  const iconToggle = document.getElementById("micIcon");
+  micSVG.style.display = currentState === "mic" ? "inline" : "none";
+  videoSVG.style.display = currentState === "video" ? "inline" : "none";
+});
 
+// Close emoji picker when user starts typing
+inputField.addEventListener("input", () => {
+  if (pickerVisible) {
+    emojiPicker.style.bottom = "-300px";
+    inputContainer.style.bottom = "0";
+    pickerVisible = false;
+    updateIcon();
+  }
+  // Preserve mic/video state
+  const currentState = localStorage.getItem("micVideoState") || "mic";
+  const micSVG = document.getElementById("micSVG");
+  const videoSVG = document.getElementById("videoSVG");
+  micSVG.style.display = currentState === "mic" ? "inline" : "none";
+  videoSVG.style.display = currentState === "video" ? "inline" : "none";
+});
+
+// Get all tab buttons and contents for emoji, GIFs, stickers
+const tabs = document.querySelectorAll('.nav-tab');
+const tabContents = document.querySelectorAll('.emoji-tab-content');
+
+// When user clicks a tab, show its content and make it active
+tabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    tabs.forEach(t => t.classList.remove('active')); // Remove 'active' from all
+    tab.classList.add('active'); // Add 'active' to clicked tab
+
+    tabContents.forEach(content => {
+      // Show the content that matches tab, hide others
+      content.style.display = content.id === tab.dataset.tab ? 'block' : 'none';
+    });
+  });
+});
+
+// This section handles mic/video icon switching with localStorage memory
+document.addEventListener("DOMContentLoaded", () => {
+  const micSVG = document.getElementById("micSVG");       // Mic icon SVG
+  const videoSVG = document.getElementById("videoSVG");   // Video icon SVG
+  const iconToggle = document.getElementById("micIcon");  // The button you tap
+
+  // If these don't exist, exit early
   if (!micSVG || !videoSVG || !iconToggle) {
     console.error("Missing icon elements.");
     return;
   }
 
-  iconToggle.addEventListener("click", () => {
-    const micVisible = micSVG.style.display !== "none";
+  // Function to update icon visibility based on state
+  function updateIconState(state) {
+    micSVG.style.display = state === "mic" ? "inline" : "none";
+    videoSVG.style.display = state === "video" ? "inline" : "none";
+    localStorage.setItem("micVideoState", state);
+  }
 
-    micSVG.style.display = micVisible ? "none" : "inline";
-    videoSVG.style.display = micVisible ? "inline" : "none";
+  // Restore saved state from localStorage on page load
+  const savedState = localStorage.getItem("micVideoState") || "mic";
+  updateIconState(savedState);
+
+  // Track if a hold gesture is in progress
+  let isHolding = false;
+  let holdTimer = null;
+  const holdDelay = 200; // 200ms to detect hold
+
+  // Handle pointerdown to start potential hold or tap
+  iconToggle.addEventListener("pointerdown", (e) => {
+    e.preventDefault(); // Prevent default behavior
+    isHolding = true;
+
+    // Start hold timer
+    holdTimer = setTimeout(() => {
+      isHolding = true; // Hold gesture confirmed
+    }, holdDelay);
   });
+
+  // Handle pointerup to toggle only if it was a tap (not a hold)
+  iconToggle.addEventListener("pointerup", () => {
+    clearTimeout(holdTimer);
+    holdTimer = null;
+
+    // Only toggle if it was a quick tap (not a hold)
+    if (!holdTriggered && isHolding) {
+      const currentState = localStorage.getItem("micVideoState") || "mic";
+      const newState = currentState === "mic" ? "video" : "mic";
+      updateIconState(newState);
+    }
+    isHolding = false;
+  });
+
+  // Prevent default click to avoid conflicts
+  iconToggle.addEventListener("click", (e) => e.preventDefault());
 });
- //End of switching microphone to video icon 
-    
-//hold microphone state and gesture
 
-    const mic = document.getElementById("micIcon");
+// Gesture-based mic drag logic
+const mic = document.getElementById("micIcon");
+let startX = 0;             // Touch or mouse start position
+let isHolding = false;      // If holding started
+let moved = false;          // If dragged
+let holdTimer = null;       // Timer for long-press
+const holdDelay = 200;      // 200 milliseconds to trigger hold
+let holdTriggered = false;  // True if hold activated
 
-let startX = 0;
-let isHolding = false;
-let moved = false;
-let holdTimer = null;
-const holdDelay = 200; // Time in ms before hold activates
-let holdTriggered = false;
-
-function startGesture(x) {
+// Start of hold or drag gesture
+function startGesture(e) {
+  e.preventDefault();  // Prevent default scroll or behavior
+  const x = e.touches ? e.touches[0].clientX : e.clientX; // Touch or mouse x
   startX = x;
   moved = false;
   isHolding = true;
   holdTriggered = false;
 
-  // Start a timer for detecting hold
+  // Start a timer to detect long-press hold
   holdTimer = setTimeout(() => {
     holdTriggered = true;
-    mic.classList.add("hold");
+    mic.classList.add("hold"); // Make mic bigger
     mic.style.transition = "transform 0.1s ease, width 0.1s ease, height 0.1s ease";
-    console.log("Hold state activated");
   }, holdDelay);
 }
 
-function moveGesture(x) {
-  if (!isHolding) return;
-
+// Move gesture logic
+function moveGesture(e) {
+  if (!isHolding || !holdTriggered) return;
+  const x = e.touches ? e.touches[0].clientX : e.clientX;
   const deltaX = x - startX;
+
   if (Math.abs(deltaX) > 10) {
-    moved = true;
+    moved = true;  // User moved enough to count as drag
   }
 
-  if (holdTriggered) {
-    // Only allow movement if hold is active
-    const limitedDeltaX = deltaX < 0 ? Math.max(deltaX, -78) : deltaX;
-    mic.style.transform = `translateX(${limitedDeltaX}px)`;
-  }
+  // Limit how far mic can move left
+  const limitedDeltaX = deltaX < 0 ? Math.max(deltaX, -78) : deltaX;
+  mic.style.transform = `translateX(${limitedDeltaX}px)`; // Move mic horizontally
 }
 
-function endGesture(x) {
+// End of gesture: reset everything
+function endGesture(e) {
   if (holdTimer) {
     clearTimeout(holdTimer);
     holdTimer = null;
   }
 
-  if (!holdTriggered && !moved) {
-    // Tap occurred (not held, not moved)
-    console.log("Tap detected → Initiate short recording or a different action");
-    mic.style.transition = "none";
-    mic.style.transform = "translateX(0px)";
-  } else if (holdTriggered) {
-    // Handle the hold gesture (swipe)
-    const deltaX = x - startX;
-    mic.classList.remove("hold");
-
-    console.log("Hold ended, deltaX:", deltaX);
-    if (deltaX > 100) {
-      console.log("Swiped Right → Trigger your action");
-    } else if (deltaX < -78) {
-      console.log("Swiped Left > 78px → Delete action");
-    } else {
-      console.log("Swipe too short → Resetting position");
-    }
-
+  if (holdTriggered) {
+    mic.classList.remove("hold"); // Remove hold style
+    // Bounce back animation
     mic.style.transition = "transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)";
     mic.style.transform = "translateX(0px)";
   }
 
+  // Preserve current icon state
+  const currentState = localStorage.getItem("micVideoState") || "mic";
+  const micSVG = document.getElementById("micSVG");
+  const videoSVG = document.getElementById("videoSVG");
+  micSVG.style.display = currentState === "mic" ? "inline" : "none";
+  videoSVG.style.display = currentState === "video" ? "inline" : "none";
+
   isHolding = false;
   holdTriggered = false;
+  moved = false;
 }
 
-// Mobile events
-mic.addEventListener("touchstart", e => startGesture(e.touches[0].clientX));
-mic.addEventListener("touchmove", e => moveGesture(e.touches[0].clientX));
-mic.addEventListener("touchend", e => endGesture(e.changedTouches[0].clientX));
+// Event listeners for both touch and mouse input
+mic.addEventListener("touchstart", startGesture);
+mic.addEventListener("touchmove", moveGesture);
+mic.addEventListener("touchend", endGesture);
+mic.addEventListener("mousedown", startGesture);
+document.addEventListener("mousemove", (e) => { if (isHolding) moveGesture(e); });
+document.addEventListener("mouseup", (e) => { if (isHolding) endGesture(e); });
 
-// Desktop events
-mic.addEventListener("mousedown", e => startGesture(e.clientX));
-document.addEventListener("mousemove", e => {
-  if (isHolding) moveGesture(e.clientX);
+// Create the circular "send" button (➤) and style it
+let button = document.createElement("button");
+Object.assign(button.style, {
+  width: "70px",
+  height: "70px",
+  backgroundColor: "#749cbf",
+  color: "white",
+  border: "none",
+  borderRadius: "50%",
+  position: "absolute",
+  bottom: "-9px",
+  right: "-15px",
+  boxShadow: "0 0 0 0 rgba(116, 156, 191, 0.7)",
+  cursor: "pointer",
+  fontSize: "30px",
+  display: "none",  // Hidden by default
+  alignItems: "center",
+  justifyContent: "center",
+  zIndex: "9999",
+  overflow: "visible",
+  transition: "transform 0.1s ease-out, box-shadow 0.1s ease-out"
 });
-document.addEventListener("mouseup", e => {
-  if (isHolding) endGesture(e.clientX);
-});
-    
-   
-    
-//End of microphone state and gesture
+button.innerHTML = "➤";  // Arrow symbol inside the button
+inputContainer.appendChild(button);  // Add to the input container
 
-    
 
-  
-    // Send Button Creation
-    let button = document.createElement("button");
-    Object.assign(button.style, {
-      width: "70px",
-      height: "70px",
-      backgroundColor: "#749cbf",
-      color: "white",
-      border: "none",
-      borderRadius: "50%",
-      position: "absolute",
-      bottom: "-9px",
-      right: "-15px",
-      boxShadow: "0 0 0 0 rgba(116, 156, 191, 0.7)",
-      cursor: "pointer",
-      fontSize: "30px",
-      display: "none",
-      alignItems: "center",
-      justifyContent: "center",
-      zIndex: "9999",
-      overflow: "visible",
-      transition: "transform 0.1s ease-out, box-shadow 0.1s ease-out"
-    });
-    button.innerHTML = "➤";
-    inputContainer.appendChild(button);
   </script>
 </body>
 </html>
