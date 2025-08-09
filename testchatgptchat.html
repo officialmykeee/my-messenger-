@@ -168,7 +168,7 @@
       right: 10px;
       top: 84%;
       transform: translateY(-50%);
-      transition: top 0.3s ease, opacity 0.3s ease;
+      transition: top 0.3s ease, opacity 0.6s ease; /* Match emoji picker transition */
       z-index: 20;
     }
     @keyframes float {
@@ -310,14 +310,17 @@
     // Tracks if the emoji picker is visible
     let pickerVisible = false;
 
-    // Function to adjust lock container position
-    function checkLockContainerPosition() {
-      if (lockContainer.style.display === "flex") {
-        if (pickerVisible || inputField === document.activeElement) {
-          lockContainer.style.top = "calc(84% - 300px)"; // Adjust upward when picker or keyboard is active
-        } else {
-          lockContainer.style.top = "84%"; // Default position
-        }
+    // Tracks if the input field is focused
+    let inputFocused = false;
+
+    // Function to update lock container position
+    function updateLockContainerPosition() {
+      if (pickerVisible) {
+        lockContainer.style.top = "calc(84% - 300px)"; // Move up with emoji picker
+      } else if (inputFocused) {
+        lockContainer.style.top = "calc(84% - 50px)"; // Move up slightly when input focused
+      } else {
+        lockContainer.style.top = "84%"; // Default position
       }
     }
 
@@ -330,7 +333,6 @@
         smileIcon.style.display = "inline";
         keyboardIcon.style.display = "none";
       }
-      checkLockContainerPosition(); // Update lock container position
     }
 
     // Toggles the emoji picker open or closed when the emoji button is clicked
@@ -339,19 +341,19 @@
       emojiPicker.style.bottom = pickerVisible ? "0" : "-300px";
       inputContainer.style.bottom = pickerVisible ? "300px" : "0";
       updateIcon();
+      updateLockContainerPosition(); // Adjust lock container position
     });
 
     // Close emoji picker when user clicks into input field
     inputField.addEventListener("focus", () => {
+      inputFocused = true;
       if (pickerVisible) {
         emojiPicker.style.bottom = "-300px";
         inputContainer.style.bottom = "0";
         pickerVisible = false;
         updateIcon();
-      } else {
-        inputContainer.style.bottom = "300px"; // Simulate keyboard push-up
-        checkLockContainerPosition();
       }
+      updateLockContainerPosition(); // Move lock container up
       const currentState = localStorage.getItem("micVideoState") || "mic";
       const micSVG = document.getElementById("micSVG");
       const videoSVG = document.getElementById("videoSVG");
@@ -359,12 +361,10 @@
       videoSVG.style.display = currentState === "video" ? "inline" : "none";
     });
 
-    // Reset input container when focus is lost
+    // Reset input focus state when input field loses focus
     inputField.addEventListener("blur", () => {
-      if (!pickerVisible) {
-        inputContainer.style.bottom = "0";
-        checkLockContainerPosition();
-      }
+      inputFocused = false;
+      updateLockContainerPosition(); // Reset lock container position
     });
 
     // Close emoji picker when user starts typing
@@ -375,6 +375,7 @@
         pickerVisible = false;
         updateIcon();
       }
+      updateLockContainerPosition(); // Update position in case input is focused
       const currentState = localStorage.getItem("micVideoState") || "mic";
       const micSVG = document.getElementById("micSVG");
       const videoSVG = document.getElementById("videoSVG");
@@ -394,7 +395,6 @@
         tabContents.forEach(content => {
           content.style.display = content.id === tab.dataset.tab ? 'block' : 'none';
         });
-        checkLockContainerPosition(); // Update lock container position
       });
     });
 
@@ -472,7 +472,7 @@
         isLocked = true;
         document.getElementById("lock").style.display = "block";
         document.getElementById("unlock").style.display = "none";
-        checkLockContainerPosition();
+        updateLockContainerPosition(); // Adjust position if picker or input is active
       }, holdDelay);
     }
 
@@ -484,6 +484,7 @@
       if (Math.abs(deltaX) > 10) {
         moved = true;
         if (deltaX < -10 && !hasFaded) {
+          // Fade out on left slide
           lockContainer.classList.add("drop-and-fade");
           hasFaded = true;
           setTimeout(() => {
@@ -491,14 +492,17 @@
             lockContainer.classList.remove("drop-and-fade");
           }, 300);
         } else if (deltaX > 10 && hasFaded) {
+          // Reverse display on right slide
           lockContainer.style.display = "flex";
           lockContainer.classList.remove("drop-and-fade");
           hasFaded = false;
-          checkLockContainerPosition();
+          isLocked = true;
+          document.getElementById("lock").style.display = "block";
+          document.getElementById("unlock").style.display = "none";
         }
       }
 
-      const limitedDeltaX = deltaX < 0 ? Math.max(deltaX, -78) : deltaX;
+      const limitedDeltaX = deltaX < 0 ? Math.max(deltaX, -78) : Math.min(deltaX, 78); // Allow right slide
       mic.style.transform = `translateX(${limitedDeltaX}px)`;
     }
 
@@ -575,9 +579,6 @@
         isLocked = !isLocked;
       }
     }, 2000);
-
-    // Update lock container position on window resize
-    window.addEventListener("resize", checkLockContainerPosition);
   </script>
 </body>
 </html>
