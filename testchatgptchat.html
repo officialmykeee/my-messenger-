@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Emoji Picker with Mic Button</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-image: url("https://i.ibb.co/HfvQJj50/Screenshot-20250730-222749.jpg");
+      background-repeat: no-repeat;
+      background-position: center top;
+      background-size: cover;
+      background-color: #f9f9f9;
+      font-family: Arial, sans-serif;
+      height: 100vh;
+    }
+    #emoji-picker {
+      position: fixed;
+      bottom: -300px;
+      left: 0;
+      width: 100%;
+      height: 300px;
+      background: #dde5e8;
+      border-top: 1px solid #ccc;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+      transition: bottom 0.3s ease;
+      z-index: 5;
+    }
+    #input-container {
+      position: fixed;
+      left: 0;
+      bottom: 0;
+      height: 50px;
+      width: 100%;
+      background: #fff;
+      z-index: 15;
+      transition: bottom 0.3s ease;
+      display: flex;
+      align-items: center;
+    }
+    #emoji-button {
+      background: none;
+      border: none;
+      font-size: 24px;
+      color: #555;
+      margin: 8px;
+      cursor: pointer;
+    }
+    .icon {
+      font-size: 22px;
+      color: #749cbf;
+      margin: 0 8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      position: relative;
+    }
+    .input-field {
+      flex: 1;
+      background-color: #ffffff;
+      border: none;
+      border-radius: 24px;
+      padding: 12px 16px 8px 16px;
+      font-size: 16px;
+      color: #000;
+      outline: none;
+      min-height: 30px;
+      line-height: 1.5;
+      margin: 0 15px 0 8px;
+      resize: none;
+      box-sizing: border-box;
+      position: relative;
+      top: 0;
+      max-width: calc(100% - 100px);
+      transition: none;
+      box-shadow: 0 1px 3px rgba(49 49 49 / 9%);
+    }
+    .mic-container {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      background-color: #749cbf;
+      border-radius: 50%;
+      margin: 0 8px;
+      cursor: pointer;
+      position: relative;
+      transition: transform 0.1s ease, width 0.1s ease, height 0.1s ease;
+    }
+    .mic-container.hold {
+      width: 68px;
+      height: 68px;
+    }
+    .emoji-picker-navbar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 40px;
+      background-color: #fff;
+      border-top: 0.5px solid #ccc;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+      padding: 0 15px;
+      box-sizing: border-box;
+      color: #777;
+    }
+    .emoji-picker-navbar span {
+      padding: 6px 12px;
+      border-radius: 18px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: normal;
+      color: #777;
+    }
+    .emoji-picker-navbar span.active {
+      background-color: #f5f5f5;
+      color: #6a6969;
+      font-weight: bold;
+    }
+    .emoji-tab-content {
+      padding: 10px;
+      overflow-y: auto;
+      height: calc(100% - 40px);
+      display: none;
+    }
+    #keyboardIcon {
+      position: relative;
+      top: 3px;
+    }
+    .emoji-tab-content img {
+      width: 34px;
+      height: 34px;
+      cursor: pointer;
+    }
+    @media (max-width: 600px) {
+      .input-field {
+        padding: 8px 12px;
+        font-size: 14px;
+        margin: 0 6px 0 4px;
+        min-height: 18px;
+        max-width: calc(100% - 90px);
+      }
+      .icon {
+        font-size: 20px;
+        margin: 0 6px;
+      }
+    }
+    /* Lock Container Styles */
+    .lock-container {
+      animation: float 3s ease-in-out infinite;
+      width: 40px;
+      height: 50px;
+      border-radius: 50%;
+      background: #f0f0f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      position: fixed;
+      right: 10px;
+      top: 84%;
+      transform: translateY(-50%);
+      transition: top 0.3s ease, opacity 0.3s ease;
+      z-index: 20;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(-50%) translateY(0); }
+      50% { transform: translateY(-50%) translateY(-10px); }
+    }
+    @keyframes dropAndFade {
+      0% {
+        transform: translateY(-50%) translateY(0);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(-50%) translateY(20px);
+        opacity: 0;
+      }
+    }
+    .drop-and-fade {
+      animation: dropAndFade 0.3s ease-in forwards;
+    }
+    #unlock {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="main-content">
+    <p>This is your main body content.</p>
+    <p>Scroll or tap the emoji icon to show the empty emoji picker panel below.</p>
+  </div>
+  <div id="emoji-picker">
+    <div id="emoji-tab" class="emoji-tab-content" style="display: block;">
+      <img src="https://i.ibb.co/fY9nFM3Z/file-00000000ddd061f4babffd7c53b6b1ff.png" alt="emoji1" border="0">
+      <img src="https://i.ibb.co/pvFk65zz/De-Watermark-ai-1754698825673.png" alt="emoji2" style="height: 33px;width: 33px;top: -1px;position: relative;" border="0">
+    </div>
+    <div id="gifs-tab" class="emoji-tab-content">
+      <p>GIFs content will go here.</p>
+    </div>
+    <div id="stickers-tab" class="emoji-tab-content">
+      <p>Stickers content will go here.</p>
+    </div>
+    <div class="emoji-picker-navbar">
+      <span class="nav-tab active" data-tab="emoji-tab">Emoji</span>
+      <span class="nav-tab" data-tab="gifs-tab">GIFs</span>
+      <span class="nav-tab" data-tab="stickers-tab">Stickers</span>
+    </div>
+  </div>
+  <div id="input-container">
+    <button id="emoji-button">
+      <span id="iconToggleWrapper">
+        <i class="fas fa-smile icon" id="smileIcon"></i>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" color="#749cbf" height="24" fill="currentColor" viewBox="0 0 24 24" id="keyboardIcon" style="display: none; cursor: pointer;">
+          <path d="m21,4H3c-1.1,0-2,.9-2,2v12c0,1.1.9,2,2,2h18c1.1,0,2-.9,2-2V6c0-1.1-.9-2-2-2ZM3,18V6h18v12s-18,0-18,0Z"></path>
+          <path d="M5 8H7V10H5z"></path>
+          <path d="M8 8H10V10H8z"></path>
+          <path d="M11 8H13V10H11z"></path>
+          <path d="M14 8H16V10H14z"></path>
+          <path d="M17 8H19V10H17z"></path>
+          <path d="M5 11H7V13H5z"></path>
+          <path d="M8 11H10V13H8z"></path>
+          <path d="M8 14H16V16H8z"></path>
+          <path d="M11 11H13V13H11z"></path>
+          <path d="M14 11H16V13H14z"></path>
+          <path d="M17 11H19V13H17z"></path>
+        </svg>
+      </span>
+    </button>
+    <textarea class="input-field" placeholder="Message" id="inputField" rows="1"></textarea>
+    <i class="fas fa-paperclip icon" id="pinIcon" style="display: inline-flex;"></i>
+    <div class="mic-container" id="micIcon" style="display: inline-flex; align-items: center; justify-content: center; cursor: pointer;">
+      <svg id="micSVG" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 82.05 122.88" width="21" height="21" fill="white" style="display: inline;">
+        <path d="M59.89,20.83V52.3c0,27-37.73,27-37.73,0V20.83c0-27.77,37.73-27.77,37.73,0Zm-14.18,76V118.2a4.69,4.69,0,0,1-9.37,0V96.78a40.71,40.71,0,0,1-12.45-3.51A41.63,41.63,0,0,1,12.05,85L12,84.91A41.31,41.31,0,0,1,3.12,71.68,40.73,40.73,0,0,1,0,56a4.67,4.67,0,0,1,8-3.31l.1.1A4.68,4.68,0,0,1,9.37,56a31.27,31.27,0,0,0,2.4,12.06A32,32,0,0,0,29,85.28a31.41,31.41,0,0,0,24.13,0,31.89,31.89,0,0,0,10.29-6.9l.08-.07a32,32,0,0,0,6.82-10.22A31.27,31.27,0,0,0,72.68,56a4.69,4.69,0,0,1,9.37,0,40.65,40.65,0,0,1-3.12,15.65A41.45,41.45,0,0,1,70,85l-.09.08a41.34,41.34,0,0,1-11.75,8.18,40.86,40.86,0,0,1-12.46,3.51Z"/>
+      </svg>
+      <svg id="videoSVG" width="21px" height="21px" viewBox="0 0 122.88 118.66" xmlns="http://www.w3.org/2000/svg" fill="white" style="display: none;">
+        <path d="M16.68,22.2c-1.78,2.21-3.43,4.55-5.06,7.46C5.63,40.31,3.1,52.39,4.13,64.2 
+        c1.01,11.54,5.43,22.83,13.37,32.27c2.85,3.39,5.91,6.38,9.13,8.97
+        c11.11,8.93,24.28,13.34,37.41,13.22c13.13-0.12,26.21-4.78,37.14-13.98 
+        c3.19-2.68,6.18-5.73,8.91-9.13c6.4-7.96,10.51-17.29,12.07-27.14
+        c1.53-9.67,0.59-19.83-3.07-29.66c-3.49-9.35-8.82-17.68-15.78-24.21 
+        C96.7,8.33,88.59,3.76,79.2,1.48c-2.94-0.71-5.94-1.18-8.99-1.37 
+        c-3.06-0.2-6.19-0.13-9.4,0.22c-2.01,0.22-3.46,2.03-3.24,4.04 
+        c0.22,2.01,2.03,3.46,4.04,3.24c2.78-0.31,5.49-0.37,8.14-0.19 
+        c2.65,0.17,5.23,0.57,7.73,1.17c8.11,1.96,15.1,5.91,20.84,11.29 
+        c6.14,5.75,10.85,13.12,13.94,21.43c3.21,8.61,4.04,17.51,2.7,25.96 
+        C113.59,75.85,110,84,104.4,90.96c-2.47,3.07-5.12,5.78-7.91,8.13 
+        c-9.59,8.07-21.03,12.15-32.5,12.26c-11.47,0.11-23-3.76-32.76-11.61 
+        c-2.9-2.33-5.62-4.98-8.13-7.97c-6.92-8.22-10.77-18.09-11.65-28.2 
+        c-0.91-10.38,1.32-20.99,6.57-30.33c1.59-2.82,3.21-5.07,5.01-7.24l0.53,14.7 
+        c0.07,2.02,1.76,3.6,3.78,3.53c2.02-0.07,3.6-1.76,3.53-3.78l-0.85-23.42 
+        c-0.07-2.02-1.76-3.59-3.78-3.52c-0.13,0.01-0.25,0.02-0.37,0.03v0l-22.7,3.19 
+        c-2,0.28-3.4,2.12-3.12,4.13c0.28,2,2.12,3.4,4.13,3.12L16.68,22.2z 
+        M85.78,58.71L53.11,80.65V37.12L85.78,58.71z"/>
+      </svg>
+    </div>
+  </div>
+  <!-- Lock Container -->
+  <div class="lock-container" id="lockContainer" style="display: none;">
+    <div id="lock">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22px" height="22px" viewBox="0 0 96.108 122.88">
+        <g>
+          <path fill="#a4a4a4" d="M2.892,56.036h8.959v-1.075V37.117c0-10.205,4.177-19.484,10.898-26.207v-0.009   
+          C29.473,4.177,38.754,0,48.966,0C59.17,0,68.449,4.177,75.173,10.901l0.01,0.009   
+          c6.721,6.723,10.898,16.002,10.898,26.207v17.844v1.075h7.136c1.59,0,2.892,1.302,2.892,2.891v61.062   
+          c0,1.589-1.302,2.891-2.892,2.891H2.892c-1.59,0-2.892-1.302-2.892-2.891V58.927   
+          C0,57.338,1.302,56.036,2.892,56.036L2.892,56.036z M26.271,56.036h45.387v-1.075V36.911   
+          c0-6.24-2.554-11.917-6.662-16.03l-0.005,0.004c-4.111-4.114-9.787-6.669-16.025-6.669   
+          c-6.241,0-11.917,2.554-16.033,6.665c-4.109,4.113-6.662,9.79-6.662,16.03v18.051V56.036L26.271,56.036z   
+          M49.149,89.448l4.581,21.139l-12.557,0.053l3.685-21.423c-3.431-1.1-5.918-4.315-5.918-8.111   
+          c0-4.701,3.81-8.511,8.513-8.511c4.698,0,8.511,3.81,8.511,8.511C55.964,85.226,53.036,88.663,49.149,89.448L49.149,89.448z"/>
+        </g>
+      </svg>
+    </div>
+    <div id="unlock">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22px" height="22px" viewBox="0 0 122.88 109.652">
+        <g>
+          <path fill="#a4a4a4" d="M2.585,49.871H54.77V34.054v-0.011h0.009c0.002-9.368,3.828-17.878,9.989-24.042   
+          c6.164-6.163,14.679-9.991,24.051-9.991V0h0.005l0,0h0.012v0.009   
+          c9.368,0.002,17.878,3.828,24.042,9.989c6.164,6.164,9.991,14.679,9.991,24.051h0.012v0.004v15.96v2.403h-2.403h-9.811h-2.404   
+          v-2.403V33.868v-0.009h0.012c-0.002-5.332-2.195-10.189-5.722-13.715c-3.528-3.531-8.388-5.721-13.724-5.724v0.009h-0.005l0,0   
+          h-0.011V14.42c-5.334,0.002-10.191,2.19-13.72,5.717l0.005,0.005c-3.529,3.528-5.722,8.388-5.722,13.722h0.009v0.005v16.003   
+          h13.987c1.422,0,2.585,1.164,2.585,2.585v54.613c0,1.422-1.163,2.583-2.585,2.583H2.585c-1.424,0-2.585-1.161-2.585-2.583   
+          V52.456C0,51.035,1.161,49.871,2.585,49.871L2.585,49.871z M43.957,79.753l4.098,18.908l-11.232,0.045l3.297-19.162   
+          c-3.068-0.981-5.295-3.857-5.295-7.252c0-4.202,3.411-7.613,7.614-7.613c4.202,0,7.613,3.411,7.613,7.613   
+          C50.053,75.975,47.433,79.048,43.957,79.753L43.957,79.753z"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+  <script>
+    // Get references to key elements
+    const emojiPicker = document.getElementById("emoji-picker");
+    const inputContainer = document.getElementById("input-container");
+    const emojiButton = document.getElementById("emoji-button");
+    const inputField = document.getElementById("inputField");
+    const smileIcon = document.getElementById("smileIcon");
+    const keyboardIcon = document.getElementById("keyboardIcon");
+    const lockContainer = document.getElementById("lockContainer");
+    let isLocked = true;
+
+    // Tracks if the emoji picker is visible
+    let pickerVisible = false;
+
+    // Function to adjust lock container position
+    function checkLockContainerPosition() {
+      if (lockContainer.style.display === "flex") {
+        if (pickerVisible || inputField === document.activeElement) {
+          lockContainer.style.top = "calc(84% - 300px)"; // Adjust upward when picker or keyboard is active
+        } else {
+          lockContainer.style.top = "84%"; // Default position
+        }
+      }
+    }
+
+    // This function shows the keyboard icon and hides the smiley when picker is open
+    function updateIcon() {
+      if (pickerVisible) {
+        smileIcon.style.display = "none";
+        keyboardIcon.style.display = "inline";
+      } else {
+        smileIcon.style.display = "inline";
+        keyboardIcon.style.display = "none";
+      }
+      checkLockContainerPosition(); // Update lock container position
+    }
+
+    // Toggles the emoji picker open or closed when the emoji button is clicked
+    emojiButton.addEventListener("click", () => {
+      pickerVisible = !pickerVisible;
+      emojiPicker.style.bottom = pickerVisible ? "0" : "-300px";
+      inputContainer.style.bottom = pickerVisible ? "300px" : "0";
+      updateIcon();
+    });
+
+    // Close emoji picker when user clicks into input field
+    inputField.addEventListener("focus", () => {
+      if (pickerVisible) {
+        emojiPicker.style.bottom = "-300px";
+        inputContainer.style.bottom = "0";
+        pickerVisible = false;
+        updateIcon();
+      } else {
+        inputContainer.style.bottom = "300px"; // Simulate keyboard push-up
+        checkLockContainerPosition();
+      }
+      const currentState = localStorage.getItem("micVideoState") || "mic";
+      const micSVG = document.getElementById("micSVG");
+      const videoSVG = document.getElementById("videoSVG");
+      micSVG.style.display = currentState === "mic" ? "inline" : "none";
+      videoSVG.style.display = currentState === "video" ? "inline" : "none";
+    });
+
+    // Reset input container when focus is lost
+    inputField.addEventListener("blur", () => {
+      if (!pickerVisible) {
+        inputContainer.style.bottom = "0";
+        checkLockContainerPosition();
+      }
+    });
+
+    // Close emoji picker when user starts typing
+    inputField.addEventListener("input", () => {
+      if (pickerVisible) {
+        emojiPicker.style.bottom = "-300px";
+        inputContainer.style.bottom = "0";
+        pickerVisible = false;
+        updateIcon();
+      }
+      const currentState = localStorage.getItem("micVideoState") || "mic";
+      const micSVG = document.getElementById("micSVG");
+      const videoSVG = document.getElementById("videoSVG");
+      micSVG.style.display = currentState === "mic" ? "inline" : "none";
+      videoSVG.style.display = currentState === "video" ? "inline" : "none";
+    });
+
+    // Get all tab buttons and contents for emoji, GIFs, stickers
+    const tabs = document.querySelectorAll('.nav-tab');
+    const tabContents = document.querySelectorAll('.emoji-tab-content');
+
+    // When user clicks a tab, show its content and make it active
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        tabContents.forEach(content => {
+          content.style.display = content.id === tab.dataset.tab ? 'block' : 'none';
+        });
+        checkLockContainerPosition(); // Update lock container position
+      });
+    });
+
+    // This section handles mic/video icon switching with localStorage memory
+    document.addEventListener("DOMContentLoaded", () => {
+      const micSVG = document.getElementById("micSVG");
+      const videoSVG = document.getElementById("videoSVG");
+      const iconToggle = document.getElementById("micIcon");
+
+      if (!micSVG || !videoSVG || !iconToggle) {
+        console.error("Missing icon elements.");
+        return;
+      }
+
+      function updateIconState(state) {
+        micSVG.style.display = state === "mic" ? "inline" : "none";
+        videoSVG.style.display = state === "video" ? "inline" : "none";
+        localStorage.setItem("micVideoState", state);
+      }
+
+      const savedState = localStorage.getItem("micVideoState") || "mic";
+      updateIconState(savedState);
+
+      let isHolding = false;
+      let holdTimer = null;
+      const holdDelay = 200;
+
+      iconToggle.addEventListener("pointerdown", (e) => {
+        e.preventDefault();
+        isHolding = true;
+        holdTimer = setTimeout(() => {
+          isHolding = true;
+        }, holdDelay);
+      });
+
+      iconToggle.addEventListener("pointerup", () => {
+        clearTimeout(holdTimer);
+        holdTimer = null;
+        if (!holdTriggered && isHolding) {
+          const currentState = localStorage.getItem("micVideoState") || "mic";
+          const newState = currentState === "mic" ? "video" : "mic";
+          updateIconState(newState);
+        }
+        isHolding = false;
+      });
+
+      iconToggle.addEventListener("click", (e) => e.preventDefault());
+    });
+
+    // Gesture-based mic drag logic
+    const mic = document.getElementById("micIcon");
+    let startX = 0;
+    let isHolding = false;
+    let moved = false;
+    let holdTimer = null;
+    const holdDelay = 200;
+    let holdTriggered = false;
+    let hasFaded = false;
+
+    function startGesture(e) {
+      e.preventDefault();
+      const x = e.touches ? e.touches[0].clientX : e.clientX;
+      startX = x;
+      moved = false;
+      isHolding = true;
+      holdTriggered = false;
+      hasFaded = false;
+
+      holdTimer = setTimeout(() => {
+        holdTriggered = true;
+        mic.classList.add("hold");
+        mic.style.transition = "transform 0.1s ease, width 0.1s ease, height 0.1s ease";
+        lockContainer.style.display = "flex";
+        lockContainer.classList.remove("drop-and-fade");
+        isLocked = true;
+        document.getElementById("lock").style.display = "block";
+        document.getElementById("unlock").style.display = "none";
+        checkLockContainerPosition();
+      }, holdDelay);
+    }
+
+    function moveGesture(e) {
+      if (!isHolding || !holdTriggered) return;
+      const x = e.touches ? e.touches[0].clientX : e.clientX;
+      const deltaX = x - startX;
+
+      if (Math.abs(deltaX) > 10) {
+        moved = true;
+        if (deltaX < -10 && !hasFaded) {
+          lockContainer.classList.add("drop-and-fade");
+          hasFaded = true;
+          setTimeout(() => {
+            lockContainer.style.display = "none";
+            lockContainer.classList.remove("drop-and-fade");
+          }, 300);
+        } else if (deltaX > 10 && hasFaded) {
+          lockContainer.style.display = "flex";
+          lockContainer.classList.remove("drop-and-fade");
+          hasFaded = false;
+          checkLockContainerPosition();
+        }
+      }
+
+      const limitedDeltaX = deltaX < 0 ? Math.max(deltaX, -78) : deltaX;
+      mic.style.transform = `translateX(${limitedDeltaX}px)`;
+    }
+
+    function endGesture(e) {
+      if (holdTimer) {
+        clearTimeout(holdTimer);
+        holdTimer = null;
+      }
+
+      if (holdTriggered) {
+        mic.classList.remove("hold");
+        mic.style.transition = "transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)";
+        mic.style.transform = "translateX(0px)";
+
+        if (!hasFaded) {
+          lockContainer.style.display = "none";
+        }
+      }
+
+      const currentState = localStorage.getItem("micVideoState") || "mic";
+      const micSVG = document.getElementById("micSVG");
+      const videoSVG = document.getElementById("videoSVG");
+      micSVG.style.display = currentState === "mic" ? "inline" : "none";
+      videoSVG.style.display = currentState === "video" ? "inline" : "none";
+
+      isHolding = false;
+      holdTriggered = false;
+      moved = false;
+      hasFaded = false;
+    }
+
+    mic.addEventListener("touchstart", startGesture);
+    mic.addEventListener("touchmove", moveGesture);
+    mic.addEventListener("touchend", endGesture);
+    mic.addEventListener("mousedown", startGesture);
+    document.addEventListener("mousemove", (e) => { if (isHolding) moveGesture(e); });
+    document.addEventListener("mouseup", (e) => { if (isHolding) endGesture(e); });
+
+    // Create the circular "send" button (➤) and style it
+    let button = document.createElement("button");
+    Object.assign(button.style, {
+      width: "70px",
+      height: "70px",
+      backgroundColor: "#749cbf",
+      color: "white",
+      border: "none",
+      borderRadius: "50%",
+      position: "absolute",
+      bottom: "-9px",
+      right: "-15px",
+      boxShadow: "0 0 0 0 rgba(116, 156, 191, 0.7)",
+      cursor: "pointer",
+      fontSize: "30px",
+      display: "none",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: "9999",
+      overflow: "visible",
+      transition: "transform 0.1s ease-out, box-shadow 0.1s ease-out"
+    });
+    button.innerHTML = "➤";
+    inputContainer.appendChild(button);
+
+    // Lock/unlock toggle animation
+    setInterval(() => {
+      if (lockContainer.style.display === "flex" && !lockContainer.classList.contains("drop-and-fade")) {
+        if (isLocked) {
+          document.getElementById("lock").style.display = "none";
+          document.getElementById("unlock").style.display = "block";
+        } else {
+          document.getElementById("lock").style.display = "block";
+          document.getElementById("unlock").style.display = "none";
+        }
+        isLocked = !isLocked;
+      }
+    }, 2000);
+
+    // Update lock container position on window resize
+    window.addEventListener("resize", checkLockContainerPosition);
+  </script>
+</body>
+</html>
