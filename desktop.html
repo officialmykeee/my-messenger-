@@ -101,7 +101,7 @@ body {
     align-items: center;
     gap: 8px;
     z-index: 1000;
-    width: auto;
+    width: auto ! important;
 }
 
     .mic-btn {
@@ -128,24 +128,11 @@ body {
     box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     z-index: -1; /* Place it behind the microphone button */
 }
- @media (min-width: 1025px) {  
-    .chat-input-container {
-    position: fixed;
-    bottom: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    z-index: 1000;
-    width: 77%;
-    border-radius: 40px;
-   }
-}
+
 </style>
 </head>
 <body>
-<div class="chat-input-container">
+<div class="chat-input-container style=" width: 77%; ">
     <div class="message-bubble" style=" border-radius: 30px; ">
         <i class="fa-regular fa-face-smile"></i>
         <input type="text" placeholder="Message">
