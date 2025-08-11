@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -27,8 +28,13 @@ body {
     transition: bottom 0.3s ease;
     width: 95% ! important;
 }
+/* This class pushes the input up for the emoji picker */
 .chat-input-container.displaying-picker {
     bottom: 328px;
+}
+/* NEW: This class pushes the input up for the virtual keyboard */
+.chat-input-container.keyboard-open {
+    bottom: calc(5px + var(--keyboard-height, 0px));
 }
 .message-bubble {
     background: #fff;
@@ -112,7 +118,7 @@ body {
         gap: 6px;
     }
     .message-bubble {
-    padding: 6px 12px;
+        padding: 6px 12px;
     }
     .mic-btn {
         width: 50px;
@@ -122,7 +128,6 @@ body {
         font-size: 15px;
     }
 }
-/* Updated emoji-picker-container for flexbox and scrolling */
 .emoji-picker-container {
     position: fixed;
     bottom: 0;
@@ -140,8 +145,6 @@ body {
 .emoji-picker-container.active {
     transform: translateY(0);
 }
-
-/* New CSS for the emoji content area */
 .emoji-picker-content {
     flex: 1;
     display: grid;
@@ -156,7 +159,6 @@ body {
     cursor: pointer;
     user-select: none;
 }
-/* CSS for the footer navbar */
 .emoji-picker-navbar {
     width: 100%;
     height: 40px;
@@ -170,13 +172,11 @@ body {
     box-sizing: border-box;
     color: #777;
 }
-
 .emoji-picker-navbar span.active {
     background-color: #f5f5f5;
     color: #6a6969;
     font-weight: bold;
 }
-
 .emoji-picker-navbar span {
     padding: 6px 12px;
     border-radius: 18px;
@@ -205,7 +205,7 @@ body {
 
 <div class="emoji-picker-container" id="emoji-picker">
     <div class="emoji-picker-content">
-        </div>
+    </div>
     <div class="emoji-picker-navbar">
         <span class="nav-tab" data-tab="emoji-tab">Emoji</span>
         <span class="nav-tab active" data-tab="gifs-tab">GIFs</span>
@@ -216,7 +216,7 @@ body {
 <script>
 const emojiBtn = document.getElementById('emoji-btn');
 const emojiPicker = document.getElementById('emoji-picker');
-const emojiPickerContent = document.querySelector('.emoji-picker-content'); // New element to target
+const emojiPickerContent = document.querySelector('.emoji-picker-content');
 const chatInputContainer = document.querySelector('.chat-input-container');
 const chatInputDiv = document.getElementById('chat-input-div');
 const attachBtn = document.querySelector('.attach-btn');
@@ -230,7 +230,6 @@ function updatePlaceholder() {
     }
 }
 
-// Change mic to arrow when typing  
 function updateMicButton() {
     if (chatInputDiv.textContent.trim() === '') {
         micBtn.innerHTML = `
@@ -245,9 +244,38 @@ function updateMicButton() {
     }
 }
 
+// Store the initial viewport height
+const initialViewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+
+// NEW: Function to check if keyboard is open and handle positioning
+function handleKeyboard() {
+    // We use a small delay to allow the keyboard to open and the viewport to resize
+    setTimeout(() => {
+        const currentViewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+        const keyboardHeight = initialViewportHeight - currentViewportHeight;
+
+        // A threshold to determine if the keyboard is open (e.g., more than 100px reduction)
+        if (keyboardHeight > 100) {
+            // Set a CSS variable for the keyboard height and apply the class
+            chatInputContainer.style.setProperty('--keyboard-height', `${keyboardHeight}px`);
+            chatInputContainer.classList.add('keyboard-open');
+        } else {
+            // If the keyboard is not open, remove the class and the variable
+            chatInputContainer.classList.remove('keyboard-open');
+            chatInputContainer.style.removeProperty('--keyboard-height');
+        }
+    }, 150); // Adjust the delay as needed
+}
+
+// Initial setup
 updatePlaceholder();
 
+// Emoji button click listener
 emojiBtn.addEventListener('click', () => {
+    // When the emoji picker is toggled, always remove the keyboard-open class
+    chatInputContainer.classList.remove('keyboard-open');
+
+    // Toggle the emoji picker as before
     const isPickerActive = emojiPicker.classList.contains('active');
     if (isPickerActive) {
         emojiPicker.classList.remove('active');
@@ -256,26 +284,40 @@ emojiBtn.addEventListener('click', () => {
         emojiPicker.classList.add('active');
         chatInputContainer.classList.add('displaying-picker');
     }
+    // Blur the input to hide the virtual keyboard if it was open
+    chatInputDiv.blur();
 });
 
-chatInputDiv.addEventListener('focus', () => {
+// Chat input focus listener
+chatInputDiv.addEventListener('focusin', () => {
+    // When the input is focused, close the emoji picker
     emojiPicker.classList.remove('active');
     chatInputContainer.classList.remove('displaying-picker');
-    updatePlaceholder();
+    
+    // Call the function to handle keyboard positioning
+    handleKeyboard();
 });
 
+// Listen for input and blur events
 chatInputDiv.addEventListener('input', () => {
     updatePlaceholder();
     updateMicButton();
 });
 
+chatInputDiv.addEventListener('blur', () => {
+    // When the input loses focus, remove the keyboard-open class after a slight delay
+    // to allow for smooth transitions
+    setTimeout(() => {
+        chatInputContainer.classList.remove('keyboard-open');
+        chatInputContainer.style.removeProperty('--keyboard-height');
+    }, 150);
+});
+
+// Attach button and emoji logic remains the same
 attachBtn.addEventListener('click', () => {
     alert('Attach button clicked!');
 });
 
-// Note: The global document click listener has been removed to meet your request.
-// The emoji picker will now only close by clicking the smile icon or the chat input field.
-  
 const emojis = [];
 emojis.forEach(emoji => {
     const span = document.createElement('span');
@@ -291,7 +333,7 @@ emojis.forEach(emoji => {
         updatePlaceholder();
         updateMicButton();
     });
-    emojiPickerContent.appendChild(span); // Append to the new content div
+    emojiPickerContent.appendChild(span);
 });
 </script>
 </body>
