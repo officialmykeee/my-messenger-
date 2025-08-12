@@ -64,18 +64,19 @@ body {
     color: #555;  
     cursor: pointer;  
 }  
-.message-input {  
-    flex: 1;  
-    border: none;  
-    outline: none;  
-    padding: 8px;  
-    font-size: 16px;  
-    margin: 0 6px;  
-    background: transparent;  
-    color: #000;  
-    white-space: pre-wrap;  
-    word-wrap: break-word;  
-}  
+.message-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    padding: 8px;
+    font-size: 16px;
+    margin: 0 6px;
+    background: transparent;
+    color: #000;
+    white-space: pre-wrap;
+    overflow-wrap: break-word; /* modern replacement for word-wrap */
+    word-break: break-word;    /* additional fallback */
+}
 .message-input[contenteditable][data-placeholder]:empty::before {  
     content: attr(data-placeholder);  
     color: #999;  
