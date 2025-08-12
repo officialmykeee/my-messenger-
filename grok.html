@@ -284,6 +284,16 @@
         micBtn.addEventListener('touchstart', startHold, { passive: false });
 
         function startHold(e) {
+            // Prevent hold state if input is non-empty
+            if (chatInputDiv.textContent.trim() !== '') {
+                console.log('Send button clicked!');
+                // Optionally, clear the input or handle send action
+                // chatInputDiv.textContent = '';
+                // updatePlaceholder();
+                // updateMicButton();
+                return;
+            }
+
             e.preventDefault();
             e.stopPropagation();
             isHolding = true;
