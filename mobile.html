@@ -254,7 +254,7 @@
             <path d="M59.89,20.83V52.3c0,27-37.73,27-37.73,0V20.83c0-27.77,37.73-27.77,37.73,0Zm-14.18,76V118.2a4.69,4.69,0,0,1-9.37,0V96.78a40.71,40.71,0,0,1-12.45-3.51A41.63,41.63,0,0,1,12.05,85L12,84.91A41.31,41.31,0,0,1,3.12,71.68,40.73,40.73,0,0,1,0,56a4.67,4.67,0,0,1,8-3.31l.1.1A4.68,4.68,0,0,1,9.37,56a31.27,31.27,0,0,0,2.4,12.06A32,32,0,0,0,29,85.28a31.41,31.41,0,0,0,24.13,0,31.89,31.89,0,0,0,10.29-6.9l.08-.07a32,32,0,0,0,6.82-10.22A31.27,31.27,0,0,0,72.68,56a4.69,4.69,0,0,1,9.37,0,40.65,40.65,0,0,1-3.12,15.65A41.45,41.45,0,0,1,70,85l-.09.08a41.34,41.34,0,0,1-11.75,8.18,40.86,40.86,0,0,1-12.46,3.51Z"></path>
         </svg>
     `;
-    const arrowSVG = `
+    const sendArrowSVG = `
         <svg id="arrowSVG" xmlns="http://www.w3.org/2000/svg" viewBox="-15 0 150 122.88" width="21" height="21">
             <g transform="rotate(40, 61.28, 61.44) translate(-5, 0)">
                 <path style="fill: white; fill-rule: evenodd;" d="M2.33,44.58,117.33.37a3.63,3.63,0,0,1,5,4.56l-44,115.61h0a3.63,3.63,0,0,1-6.67.28L53.93,84.14,89.12,33.77,38.85,68.86,2.06,51.24a3.63,3.63,0,0,1,.27-6.66Z"/>
@@ -269,64 +269,20 @@
         </svg>
     `;
 
+    let isHolding = false; // global hold state flag
+    let isAltMic = false; // alternate mic state
+    let startX = 0;
+    let currentX = 0;
+    let initialLeft = 10;
+    let holdTimer = null;
+    let holdTriggered = false;
+
     function updatePlaceholder() {
         if (chatInputDiv.textContent.trim() === '') {
             chatInputDiv.setAttribute('data-placeholder', 'Message');
         } else {
             chatInputDiv.removeAttribute('data-placeholder');
         }
-    }
-
-    function updateMicButton() {
-        if (chatInputDiv.textContent.trim() === '') {
-            micBtn.innerHTML = micSVG;
-        } else {
-            micBtn.innerHTML = arrowSVG;
-        }
-    }
-
-    updatePlaceholder();
-    updateMicButton();
-
-    // Microphone hold & tap toggle logic
-    let isHolding = false;
-    let startX = 0;
-    let currentX = 0;
-    let initialLeft = 10;
-    let holdTimer = null;
-    let holdTriggered = false;
-    let isAltMic = false;
-
-    micBtn.addEventListener('mousedown', micPressStart, { passive: false });
-    micBtn.addEventListener('touchstart', micPressStart, { passive: false });
-
-    function micPressStart(e) {
-        if (chatInputDiv.textContent.trim() !== '') return;
-
-        e.preventDefault();
-        holdTriggered = false;
-
-        holdTimer = setTimeout(() => {
-            holdTriggered = true;
-            startHold(e);
-        }, 150);
-
-        document.addEventListener('mouseup', micPressEnd, { passive: false });
-        document.addEventListener('touchend', micPressEnd, { passive: false });
-    }
-
-    function micPressEnd(e) {
-        clearTimeout(holdTimer);
-
-        if (!holdTriggered) {
-            isAltMic = !isAltMic;
-            micBtn.innerHTML = isAltMic ? micAltSVG : micSVG;
-        } else {
-            endHold(e);
-        }
-
-        document.removeEventListener('mouseup', micPressEnd);
-        document.removeEventListener('touchend', micPressEnd);
     }
 
     function startHold(e) {
@@ -336,7 +292,6 @@
         e.stopPropagation();
         isHolding = true;
         micBtn.classList.add('hold-state', 'dragging');
-
         micBtn.style.transition = 'transform 0.05s ease';
         micBtn.style.transform = `translateX(${initialLeft}px) scale(1.76) translateY(-5px)`;
 
@@ -345,9 +300,7 @@
 
         document.addEventListener('mousemove', onDrag, { passive: false });
         document.addEventListener('touchmove', onDrag, { passive: false });
-        document.addEventListener('mouseup', endHold, { passive: false });
-        document.addEventListener('touchend', endHold, { passive: false });
-        document.addEventListener('touchcancel', endHold, { passive: false });
+        console.log('Recording started');
     }
 
     function onDrag(e) {
@@ -374,13 +327,55 @@
         document.removeEventListener('mouseup', endHold);
         document.removeEventListener('touchend', endHold);
         document.removeEventListener('touchcancel', endHold);
-
         console.log('Recording stopped');
     }
 
-    micBtn.addEventListener('touchstart', (e) => {
-        e.stopPropagation();
-    }, { passive: false });
+    // Microphone hold & tap toggle logic
+    micBtn.addEventListener('mousedown', micPressStart, { passive: false });
+    micBtn.addEventListener('touchstart', micPressStart, { passive: false });
+
+    function micPressStart(e) {
+        if (chatInputDiv.textContent.trim() !== '') return;
+
+        e.preventDefault();
+        holdTriggered = false;
+
+        holdTimer = setTimeout(() => {
+            holdTriggered = true;
+            startHold(e);
+        }, 150);
+
+        document.addEventListener('mouseup', micPressEnd, { passive: false });
+        document.addEventListener('touchend', micPressEnd, { passive: false });
+    }
+
+    function micPressEnd(e) {
+        clearTimeout(holdTimer);
+
+        if (!holdTriggered) {
+            isAltMic = !isAltMic;
+            micBtn.innerHTML = isAltMic ? micAltSVG : micSVG;
+            updateMicButton();
+        } else {
+            endHold(e);
+        }
+
+        document.removeEventListener('mouseup', micPressEnd);
+        document.removeEventListener('touchend', micPressEnd);
+    }
+
+    // Input handling
+    chatInputDiv.addEventListener('input', () => {
+        if (isHolding) return; // Don't change icons during hold
+
+        updatePlaceholder();
+        const text = chatInputDiv.textContent.trim();
+        if (text !== '') {
+            micBtn.innerHTML = sendArrowSVG; // arrow send icon
+        } else {
+            micBtn.innerHTML = isAltMic ? micAltSVG : micSVG; // restore correct mic state
+        }
+    });
 
     // Emoji picker toggle
     emojiBtn.addEventListener('click', () => {
@@ -408,11 +403,6 @@
         updatePlaceholder();
     });
 
-    chatInputDiv.addEventListener('input', () => {
-        updatePlaceholder();
-        updateMicButton();
-    });
-
     attachBtn.addEventListener('click', () => {
         alert('Attach button clicked!');
     });
@@ -430,10 +420,14 @@
             selection.removeAllRanges();
             selection.addRange(range);
             updatePlaceholder();
-            updateMicButton();
+            micBtn.innerHTML = sendArrowSVG; // Update to send arrow when emoji is added
         });
         emojiPickerContent.appendChild(span);
     });
+
+    // Initial setup
+    updatePlaceholder();
+    micBtn.innerHTML = micSVG;
 </script>
                 
 </body>
