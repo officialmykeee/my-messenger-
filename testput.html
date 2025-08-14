@@ -45,7 +45,6 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.1);
             border-radius: 30px;
             position: relative;
-            align-items: flex-start; /* Align items to top to accommodate growing content */
         }
         .message-bubble::after {
             content: '';
@@ -64,16 +63,12 @@
             font-size: 20px;
             color: #555;
             cursor: pointer;
-            margin-top: 8px; /* Align icon with initial padding-top */
         }
         .message-input {
             flex: 1;
             border: none;
             outline: none;
-            padding-left: 8px;
-            padding-right: 8px;
-            padding-top: 8px; /* Initial top padding */
-            padding-bottom: 8px; /* Fixed bottom padding */
+            padding: 8px;
             font-size: 16px;
             margin: 0 6px;
             background: transparent;
@@ -81,10 +76,9 @@
             white-space: pre-wrap;
             overflow-wrap: break-word;
             word-break: break-word;
-            line-height: 1.5; /* Consistent line height */
-            max-height: 120px; /* Increased to allow more lines */
-            overflow-y: auto; /* Enable scrolling for overflow */
-            box-sizing: content-box; /* Ensure padding doesn't affect content width */
+            min-height: 20px;
+            box-sizing: border-box;
+            line-height: 1.4;
         }
         .message-input[contenteditable][data-placeholder]:empty::before {
             content: attr(data-placeholder);
@@ -97,7 +91,6 @@
             border: none;
             padding: 0;
             cursor: pointer;
-            margin-top: 8px; /* Align button with initial padding-top */
         }
         .attach-btn i {
             font-size: 20px;
@@ -132,15 +125,14 @@
         }
         @media (max-width: 480px) {
             .chat-input-container {
-                width: 100% !important;
-                gap: 6px;
-                background: #fff;
-                height: 52px;
+               width: 100% ! important;
+               gap: 6px;
+               background: #fff;
+               height: 52px;
             }
             .message-bubble {
                 padding: 6px 12px;
                 box-shadow: 0 2px 6px 5px rgba(0,0,0,0.1);
-                align-items: flex-start; /* Align to top for mobile */
             }
             .mic-btn {
                 width: 55px;
@@ -154,11 +146,6 @@
             }
             .message-input {
                 font-size: 15px;
-                padding-top: 8px; /* Initial top padding for mobile */
-                padding-bottom: 8px; /* Fixed bottom padding for mobile */
-            }
-            .message-bubble .icon, .attach-btn {
-                margin-top: 8px; /* Align with initial padding-top on mobile */
             }
         }
         .emoji-picker-container {
@@ -250,42 +237,8 @@
             <span class="nav-tab" data-tab="stickers-tab">Stickers</span>
         </div>
     </div>
-
-    <script>
-        const messageInput = document.getElementById('chat-input-div');
-        const basePaddingTop = 8; // Initial top padding in pixels
-        const basePaddingBottom = 8; // Fixed bottom padding in pixels
-        const lineHeight = 24; // Matches line-height: 1.5 * font-size (16px * 1.5 = 24px)
-
-        function adjustPadding() {
-            // Get the scroll height of the content
-            const scrollHeight = messageInput.scrollHeight;
-            // Calculate approximate number of lines based on scrollHeight
-            const lines = Math.max(1, Math.round(scrollHeight / lineHeight));
-            // Increase top padding by 8px for each additional line
-            const newPaddingTop = basePaddingTop + (lines - 1) * 8;
-
-            // Apply padding
-            messageInput.style.paddingTop = `${newPaddingTop}px`;
-            messageInput.style.paddingBottom = `${basePaddingBottom}px`;
-        }
-
-        // Run adjustPadding on input and keydown events
-        messageInput.addEventListener('input', adjustPadding);
-        messageInput.addEventListener('keydown', (e) => {
-            // Handle Enter key and other changes with a slight delay to ensure content updates
-            setTimeout(adjustPadding, 0);
-        });
-
-        // Run on paste to handle pasted content
-        messageInput.addEventListener('paste', () => {
-            setTimeout(adjustPadding, 0);
-        });
-
-        // Initial adjustment
-        adjustPadding();
-
-           const emojiBtn = document.getElementById('emoji-btn');
+   <script>
+         const emojiBtn = document.getElementById('emoji-btn');
     const emojiPicker = document.getElementById('emoji-picker');
     const emojiPickerContent = document.querySelector('.emoji-picker-content');
     const chatInputContainer = document.querySelector('.chat-input-container');
@@ -473,6 +426,7 @@
     // Initial setup
     updatePlaceholder();
     micBtn.innerHTML = micSVG;
-    </script>
+
+   </script>
 </body>
 </html>
