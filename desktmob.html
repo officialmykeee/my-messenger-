@@ -13,7 +13,8 @@ body {
     background-image: url("https://i.ibb.co/HfvQJj50/Screenshot-20250730-222749.jpg");
     background-repeat: no-repeat;
     background-position: center top;
-    background-size: cover;
+    background-siz
+```e: cover;
     background-color: #f9f9f9;
     font-family: Arial, sans-serif;
     height: 100vh;
@@ -111,8 +112,7 @@ svg#micSVG {
     font-size: 20px;  
     color: #555;  
 }  
-    
-i.fa-regular.fa-face-smile {
+i.fa-regular.fa-face-smile, i.fa-solid.fa-keyboard {
     top: -2px;
     position: relative;
 }
@@ -427,6 +427,7 @@ document.addEventListener('click', (e) => {
         chatInputContainer.classList.remove('displaying-picker');
         chatInputContainer.classList.add('keyboard-active');
         chatInputDiv.focus();
+        emojiBtn.innerHTML = '<i class="fa-regular fa-face-smile"></i>'; // Reset to smile icon
         return;
     }
     // For all other clicks (body, mic, attach, etc.), re-focus input to keep keyboard active
@@ -443,6 +444,7 @@ emojiBtn.addEventListener('click', (e) => {
     if (isPickerActive) {
         emojiPicker.classList.remove('active');
         chatInputContainer.classList.remove('displaying-picker');
+        emojiBtn.innerHTML = '<i class="fa-regular fa-face-smile"></i>'; // Switch back to smile icon
         // Re-focus input and show keyboard when emoji picker is closed
         setTimeout(() => {
             chatInputDiv.focus();
@@ -453,6 +455,7 @@ emojiBtn.addEventListener('click', (e) => {
         chatInputContainer.classList.add('displaying-picker');
         chatInputContainer.classList.remove('keyboard-active');
         chatInputDiv.blur();
+        emojiBtn.innerHTML = '<i class="fa-solid fa-keyboard keyboard-icon"></i>'; // Switch to keyboard icon
     }
 });
 
@@ -462,6 +465,7 @@ chatInputDiv.addEventListener('focus', () => {
     emojiPicker.classList.remove('active');
     chatInputContainer.classList.remove('displaying-picker');
     chatInputContainer.classList.add('keyboard-active');
+    emojiBtn.innerHTML = '<i class="fa-regular fa-face-smile"></i>'; // Reset to smile icon
     updatePlaceholder();
 });
 
