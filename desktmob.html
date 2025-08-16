@@ -400,8 +400,6 @@ document.addEventListener('visibilitychange', () => {
                 chatInputContainer.classList.add('keyboard-active');
             }
         }, 200);
-    } else {
-        chatInputContainer.classList.remove('keyboard-active');
     }
     updateMicButton();
 });
@@ -417,13 +415,30 @@ window.addEventListener('focus', () => {
     updateMicButton();
 });
 
-window.addEventListener('blur', () => {
-    chatInputContainer.classList.remove('keyboard-active');
-    updateMicButton();
+// Handle clicks anywhere on the page
+document.addEventListener('click', (e) => {
+    // If the click is on the emoji button, do nothing (let its own handler manage)
+    if (emojiBtn.contains(e.target)) {
+        return;
+    }
+    // If the click is on the input, ensure emoji picker closes and keyboard stays active
+    if (chatInputDiv.contains(e.target)) {
+        emojiPicker.classList.remove('active');
+        chatInputContainer.classList.remove('displaying-picker');
+        chatInputContainer.classList.add('keyboard-active');
+        chatInputDiv.focus();
+        return;
+    }
+    // For all other clicks (body, mic, attach, etc.), re-focus input to keep keyboard active
+    if (!emojiPicker.classList.contains('active')) {
+        chatInputDiv.focus();
+        chatInputContainer.classList.add('keyboard-active');
+    }
 });
 
 // Emoji picker toggle (manual only)
-emojiBtn.addEventListener('click', () => {
+emojiBtn.addEventListener('click', (e) => {
+    e.stopPropagation(); // Prevent the document click handler from re-focusing input
     const isPickerActive = emojiPicker.classList.contains('active');
     if (isPickerActive) {
         emojiPicker.classList.remove('active');
@@ -451,7 +466,7 @@ chatInputDiv.addEventListener('focus', () => {
 });
 
 chatInputDiv.addEventListener('blur', () => {
-    chatInputContainer.classList.remove('keyboard-active');
+    // Only update placeholder, don't remove keyboard-active
     updatePlaceholder();
 });
 
