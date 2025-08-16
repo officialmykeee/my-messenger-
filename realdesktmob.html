@@ -51,7 +51,7 @@ body {
     content: '';  
     position: absolute;  
     bottom: 12px;  
-    right: -6px;  
+    right: -2px;  
     width: 15px;  
     height: 15px;  
     background-color: #fff;  
@@ -87,18 +87,25 @@ body {
     pointer-events: none;  
     display: block;  
 }  
-.attach-btn {  
-    background: none;  
-    border: none;  
-    padding: 0;  
+.attach-btn {
+    background: none;
+    border: none;
+    padding: 0;
     cursor: pointer;
+    position: relative;
     flex-shrink: 0;
+    top: -4px;
     margin-bottom: 2px;
-}  
+}
 .attach-btn i {  
     font-size: 20px;  
     color: #555;  
 }  
+    
+i.fa-regular.fa-face-smile {
+    top: -2px;
+    position: relative;
+}
 .mic-btn {  
     background: #749cbf;  
     border: none;  
