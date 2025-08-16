@@ -274,44 +274,11 @@ const micAltSVG = `
 
 let isHolding = false;
 let isAltMic = false;
-let holdStateEnabled = true; // Track if hold gesture is enabled
 let startX = 0;
 let currentX = 0;
 let initialLeft = 10;
 let holdTimer = null;
 let holdTriggered = false;
-
-// Persistent state storage (using variables since localStorage isn't available in artifacts)
-let micState = {
-    isAltMic: false,
-    holdStateEnabled: true
-};
-
-// Load saved state (in a real app, this would use localStorage)
-function loadMicState() {
-    // In a real application, you would use:
-    // const saved = localStorage.getItem('micState');
-    // if (saved) {
-    //     micState = JSON.parse(saved);
-    //     isAltMic = micState.isAltMic;
-    //     holdStateEnabled = micState.holdStateEnabled;
-    // }
-    
-    // For demonstration, using in-memory state
-    isAltMic = micState.isAltMic;
-    holdStateEnabled = micState.holdStateEnabled;
-}
-
-// Save state (in a real app, this would use localStorage)
-function saveMicState() {
-    micState.isAltMic = isAltMic;
-    micState.holdStateEnabled = holdStateEnabled;
-    
-    // In a real application, you would use:
-    // localStorage.setItem('micState', JSON.stringify(micState));
-    
-    console.log('State saved:', micState);
-}
 
 // Function to update the mic button based on current state
 function updateMicButton() {
@@ -337,7 +304,7 @@ function updatePlaceholder() {
 }
 
 function startHold(e) {
-    if (chatInputDiv.textContent.trim() !== '' || !holdStateEnabled) return;
+    if (chatInputDiv.textContent.trim() !== '') return;
 
     e.preventDefault();
     e.stopPropagation();
@@ -394,13 +361,10 @@ function micPressStart(e) {
     e.preventDefault();
     holdTriggered = false;
 
-    // Only start hold timer if hold state is enabled
-    if (holdStateEnabled) {
-        holdTimer = setTimeout(() => {
-            holdTriggered = true;
-            startHold(e);
-        }, 150);
-    }
+    holdTimer = setTimeout(() => {
+        holdTriggered = true;
+        startHold(e);
+    }, 150);
 
     document.addEventListener('mouseup', micPressEnd, { passive: false });
     document.addEventListener('touchend', micPressEnd, { passive: false });
@@ -410,20 +374,8 @@ function micPressEnd(e) {
     clearTimeout(holdTimer);
 
     if (!holdTriggered) {
-        // Toggle between mic states and save preference
         isAltMic = !isAltMic;
-        
-        // Toggle hold state when switching to alt mic
-        if (isAltMic) {
-            holdStateEnabled = false; // Disable hold for video mode
-        } else {
-            holdStateEnabled = true; // Enable hold for mic mode
-        }
-        
-        saveMicState(); // Save the new state
         updateMicButton();
-        
-        console.log(`Switched to ${isAltMic ? 'video' : 'microphone'} mode. Hold state: ${holdStateEnabled ? 'enabled' : 'disabled'}`);
     } else {
         endHold(e);
     }
@@ -522,7 +474,6 @@ attachBtn.addEventListener('click', () => {
 // No emojis - picker content is empty
 
 // Initial setup
-loadMicState(); // Load saved preferences
 updatePlaceholder();
 updateMicButton();
 
