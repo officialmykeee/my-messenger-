@@ -90,8 +90,8 @@ body {
 svg#arrowSVG {
     width: 28px;
     height: 25px;
-   left: -3px;
-   position: relative;
+    left: -3px;
+    position: relative;
 }
 svg#micSVG {
     width: 25px;
@@ -384,44 +384,45 @@ function micPressEnd(e) {
     document.removeEventListener('touchend', micPressEnd);
 }
 
-// Input handling - this is the key change
+// Input handling
 chatInputDiv.addEventListener('input', () => {
     updatePlaceholder();
-    updateMicButton(); // Use the centralized function
+    updateMicButton();
 });
 
-// Page visibility and focus events to maintain state
+// Page visibility and focus events
 document.addEventListener('visibilitychange', () => {
-    if (document.hidden) {
-        // Close emoji picker when page becomes hidden
-        emojiPicker.classList.remove('active');
-        chatInputContainer.classList.remove('displaying-picker');
-    } else {
+    if (!document.hidden) {
         setTimeout(() => {
-            chatInputDiv.focus();
-            chatInputContainer.classList.add('keyboard-active');
+            // Only focus input if emoji picker is not active
+            if (!emojiPicker.classList.contains('active')) {
+                chatInputDiv.focus();
+                chatInputContainer.classList.add('keyboard-active');
+            }
         }, 200);
+    } else {
+        chatInputContainer.classList.remove('keyboard-active');
     }
     updateMicButton();
 });
 
 window.addEventListener('focus', () => {
     setTimeout(() => {
-        chatInputDiv.focus();
-        chatInputContainer.classList.add('keyboard-active');
+        // Only focus input if emoji picker is not active
+        if (!emojiPicker.classList.contains('active')) {
+            chatInputDiv.focus();
+            chatInputContainer.classList.add('keyboard-active');
+        }
     }, 200);
     updateMicButton();
 });
 
 window.addEventListener('blur', () => {
-    // Close emoji picker when window loses focus
-    emojiPicker.classList.remove('active');
-    chatInputContainer.classList.remove('displaying-picker');
     chatInputContainer.classList.remove('keyboard-active');
     updateMicButton();
 });
 
-// Emoji picker toggle
+// Emoji picker toggle (manual only)
 emojiBtn.addEventListener('click', () => {
     const isPickerActive = emojiPicker.classList.contains('active');
     if (isPickerActive) {
@@ -440,30 +441,17 @@ emojiBtn.addEventListener('click', () => {
     }
 });
 
+// Input focus and blur
 chatInputDiv.addEventListener('focus', () => {
+    // Close emoji picker when input is focused (tapped)
     emojiPicker.classList.remove('active');
     chatInputContainer.classList.remove('displaying-picker');
     chatInputContainer.classList.add('keyboard-active');
     updatePlaceholder();
-    // Don't update mic button here - let the current state persist
 });
 
 chatInputDiv.addEventListener('blur', () => {
-    // Only remove keyboard-active class, but check if we should close emoji picker
     chatInputContainer.classList.remove('keyboard-active');
-    
-    // If the blur is happening and emoji picker is open, close it after a delay
-    // This prevents immediate closing when user is just switching between keyboard and emoji picker
-    setTimeout(() => {
-        if (!chatInputDiv.matches(':focus') && emojiPicker.classList.contains('active')) {
-            // Check if the user isn't actively interacting with the emoji picker
-            if (!emojiPicker.matches(':hover') && !document.activeElement?.closest('.emoji-picker-container')) {
-                emojiPicker.classList.remove('active');
-                chatInputContainer.classList.remove('displaying-picker');
-            }
-        }
-    }, 500);
-    
     updatePlaceholder();
 });
 
@@ -471,86 +459,38 @@ attachBtn.addEventListener('click', () => {
     alert('Attach button clicked!');
 });
 
-// No emojis - picker content is empty
-
 // Initial setup
 updatePlaceholder();
 updateMicButton();
 
-// Auto-focus input on page load to activate keyboard
+// Auto-focus input on page load
 window.addEventListener('load', () => {
     setTimeout(() => {
-        chatInputDiv.focus();
-        chatInputContainer.classList.add('keyboard-active');
-    }, 300);
-});
-
-// Also focus on DOM content loaded as fallback
-document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(() => {
-        chatInputDiv.focus();
-        chatInputContainer.classList.add('keyboard-active');
-    }, 300);
-});
-
-// Keep keyboard active when page becomes visible again
-document.addEventListener('visibilitychange', () => {
-    if (document.hidden) {
-        // Close emoji picker when page becomes hidden
-        emojiPicker.classList.remove('active');
-        chatInputContainer.classList.remove('displaying-picker');
-    } else {
-        setTimeout(() => {
+        if (!emojiPicker.classList.contains('active')) {
             chatInputDiv.focus();
             chatInputContainer.classList.add('keyboard-active');
-        }, 200);
-    }
-    updateMicButton();
-});
-
-// Re-focus when window gets focus
-window.addEventListener('focus', () => {
-    setTimeout(() => {
-        chatInputDiv.focus();
-        chatInputContainer.classList.add('keyboard-active');
-    }, 200);
-    updateMicButton();
-});
-
-// Additional event listeners for better emoji picker management
-document.addEventListener('click', (e) => {
-    // Close emoji picker if clicking outside of it and the emoji button
-    if (!emojiPicker.contains(e.target) && !emojiBtn.contains(e.target)) {
-        if (emojiPicker.classList.contains('active')) {
-            emojiPicker.classList.remove('active');
-            chatInputContainer.classList.remove('displaying-picker');
-            // Re-focus input after closing picker
-            setTimeout(() => {
-                chatInputDiv.focus();
-                chatInputContainer.classList.add('keyboard-active');
-            }, 100);
         }
-    }
+    }, 300);
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        if (!emojiPicker.classList.contains('active')) {
+            chatInputDiv.focus();
+            chatInputContainer.classList.add('keyboard-active');
+        }
+    }, 300);
 });
 
 // Handle device orientation change
 window.addEventListener('orientationchange', () => {
-    // Close emoji picker on orientation change to prevent UI issues
-    emojiPicker.classList.remove('active');
-    chatInputContainer.classList.remove('displaying-picker');
-    
     setTimeout(() => {
-        chatInputDiv.focus();
-        chatInputContainer.classList.add('keyboard-active');
+        if (!emojiPicker.classList.contains('active')) {
+            chatInputDiv.focus();
+            chatInputContainer.classList.add('keyboard-active');
+        }
     }, 300);
 });
-
-// Handle page unload/beforeunload
-window.addEventListener('beforeunload', () => {
-    emojiPicker.classList.remove('active');
-    chatInputContainer.classList.remove('displaying-picker');
-});
 </script>
-
 </body>  
 </html>
