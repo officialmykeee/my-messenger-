@@ -24,6 +24,7 @@
             left: 49%;
             transform: translateX(-50%);
             display: flex;
+            flex-direction: column;
             align-items: center;
             gap: 8px;
             z-index: 1000;
@@ -35,6 +36,57 @@
         }
         .chat-input-container.keyboard-active {
             bottom: 4px;
+        }
+        .reply-container {
+            display: none;
+            background: #f0f0f0;
+            border-radius: 12px;
+            padding: 8px 12px;
+            margin-bottom: 4px;
+            width: 100%;
+            box-sizing: border-box;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-left: 4px solid #749cbf;
+        }
+        .reply-container.active {
+            display: block;
+        }
+        .reply-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+        .reply-to {
+            font-size: 12px;
+            color: #749cbf;
+            font-weight: 600;
+        }
+        .reply-close {
+            cursor: pointer;
+            color: #666;
+            font-size: 14px;
+            padding: 2px;
+        }
+        .reply-close:hover {
+            color: #333;
+        }
+        .reply-content {
+            font-size: 13px;
+            color: #555;
+            line-height: 1.3;
+            max-height: 40px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+        .input-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
         }
         .message-bubble {
             background: #fff;
@@ -128,7 +180,7 @@
                width: 100% ! important;
                gap: 6px;
                background: #fff;
-               height: 52px;
+               min-height: 52px;
             }
             .message-bubble {
                 padding: 6px 12px;
@@ -146,6 +198,10 @@
             }
             .message-input {
                 font-size: 15px;
+            }
+            .reply-container {
+                margin: 8px 12px 4px 12px;
+                width: calc(100% - 24px);
             }
         }
         .emoji-picker-container {
@@ -210,22 +266,50 @@
             font-weight: normal;
             color: #777;
         }
+        
+        /* Demo button for testing reply */
+        .demo-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #25D366;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            z-index: 1000;
+        }
     </style>
 </head>
 <body>
+    <!-- Demo button to test reply functionality -->
+    <button class="demo-btn" onclick="showReply()">Test Reply</button>
+    
     <div class="chat-input-container">
-        <div class="message-bubble">
-            <div class="icon" id="emoji-btn"><i class="fa-regular fa-face-smile"></i></div>
-            <div class="message-input" contenteditable="true" data-placeholder="Message" id="chat-input-div"></div>
-            <button class="attach-btn">
-                <i class="fa-solid fa-paperclip"></i>
+        <div class="reply-container" id="reply-container">
+            <div class="reply-header">
+                <div class="reply-to" id="reply-to">You</div>
+                <div class="reply-close" id="reply-close">✕</div>
+            </div>
+            <div class="reply-content" id="reply-content">Hi</div>
+        </div>
+        
+        <div class="input-wrapper">
+            <div class="message-bubble">
+                <div class="icon" id="emoji-btn"><i class="fa-regular fa-face-smile"></i></div>
+                <div class="message-input" contenteditable="true" data-placeholder="Message" id="chat-input-div"></div>
+                <button class="attach-btn">
+                    <i class="fa-solid fa-paperclip"></i>
+                </button>
+            </div>
+            <button class="mic-btn" id="mic-btn">
+                <svg id="micSVG" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 82.05 122.88" width="21" height="21" fill="white">
+                    <path d="M59.89,20.83V52.3c0,27-37.73,27-37.73,0V20.83c0-27.77,37.73-27.77,37.73,0Zm-14.18,76V118.2a4.69,4.69,0,0,1-9.37,0V96.78a40.71,40.71,0,0,1-12.45-3.51A41.63,41.63,0,0,1,12.05,85L12,84.91A41.31,41.31,0,0,1,3.12,71.68A40.73,40.73,0,0,1,0,56a4.67,4.67,0,0,1,8-3.31l.1.1A4.68,4.68,0,0,1,9.37,56a31.27,31.27,0,0,0,2.4,12.06A32,32,0,0,0,29,85.28a31.41,31.41,0,0,0,24.13,0,31.89,31.89,0,0,0,10.29-6.9l.08-.07a32,32,0,0,0,6.82-10.22A31.27,31.27,0,0,0,72.68,56a4.69,4.69,0,0,1,9.37,0,40.65,40.65,0,0,1-3.12,15.65A41.45,41.45,0,0,1,70,85l-.09.08a41.34,41.34,0,0,1-11.75,8.18,40.86,40.86,0,0,1-12.46,3.51Z"></path>
+                </svg>
             </button>
         </div>
-        <button class="mic-btn" id="mic-btn">
-            <svg id="micSVG" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 82.05 122.88" width="21" height="21" fill="white">
-                <path d="M59.89,20.83V52.3c0,27-37.73,27-37.73,0V20.83c0-27.77,37.73-27.77,37.73,0Zm-14.18,76V118.2a4.69,4.69,0,0,1-9.37,0V96.78a40.71,40.71,0,0,1-12.45-3.51A41.63,41.63,0,0,1,12.05,85L12,84.91A41.31,41.31,0,0,1,3.12,71.68,40.73,40.73,0,0,1,0,56a4.67,4.67,0,0,1,8-3.31l.1.1A4.68,4.68,0,0,1,9.37,56a31.27,31.27,0,0,0,2.4,12.06A32,32,0,0,0,29,85.28a31.41,31.41,0,0,0,24.13,0,31.89,31.89,0,0,0,10.29-6.9l.08-.07a32,32,0,0,0,6.82-10.22A31.27,31.27,0,0,0,72.68,56a4.69,4.69,0,0,1,9.37,0,40.65,40.65,0,0,1-3.12,15.65A41.45,41.45,0,0,1,70,85l-.09.08a41.34,41.34,0,0,1-11.75,8.18,40.86,40.86,0,0,1-12.46,3.51Z"></path>
-            </svg>
-        </button>
     </div>
 
     <div class="emoji-picker-container" id="emoji-picker">
@@ -245,11 +329,17 @@
     const chatInputDiv = document.getElementById('chat-input-div');
     const attachBtn = document.querySelector('.attach-btn');
     const micBtn = document.getElementById('mic-btn');
+    
+    // Reply elements
+    const replyContainer = document.getElementById('reply-container');
+    const replyClose = document.getElementById('reply-close');
+    const replyTo = document.getElementById('reply-to');
+    const replyContent = document.getElementById('reply-content');
 
     // SVG definitions for microphone, arrow, and alternate mic
     const micSVG = `
         <svg id="micSVG" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 82.05 122.88" width="21" height="21" fill="white">
-            <path d="M59.89,20.83V52.3c0,27-37.73,27-37.73,0V20.83c0-27.77,37.73-27.77,37.73,0Zm-14.18,76V118.2a4.69,4.69,0,0,1-9.37,0V96.78a40.71,40.71,0,0,1-12.45-3.51A41.63,41.63,0,0,1,12.05,85L12,84.91A41.31,41.31,0,0,1,3.12,71.68,40.73,40.73,0,0,1,0,56a4.67,4.67,0,0,1,8-3.31l.1.1A4.68,4.68,0,0,1,9.37,56a31.27,31.27,0,0,0,2.4,12.06A32,32,0,0,0,29,85.28a31.41,31.41,0,0,0,24.13,0,31.89,31.89,0,0,0,10.29-6.9l.08-.07a32,32,0,0,0,6.82-10.22A31.27,31.27,0,0,0,72.68,56a4.69,4.69,0,0,1,9.37,0,40.65,40.65,0,0,1-3.12,15.65A41.45,41.45,0,0,1,70,85l-.09.08a41.34,41.34,0,0,1-11.75,8.18,40.86,40.86,0,0,1-12.46,3.51Z"></path>
+            <path d="M59.89,20.83V52.3c0,27-37.73,27-37.73,0V20.83c0-27.77,37.73-27.77,37.73,0Zm-14.18,76V118.2a4.69,4.69,0,0,1-9.37,0V96.78a40.71,40.71,0,0,1-12.45-3.51A41.63,41.63,0,0,1,12.05,85L12,84.91A41.31,41.31,0,0,1,3.12,71.68A40.73,40.73,0,0,1,0,56a4.67,4.67,0,0,1,8-3.31l.1.1A4.68,4.68,0,0,1,9.37,56a31.27,31.27,0,0,0,2.4,12.06A32,32,0,0,0,29,85.28a31.41,31.41,0,0,0,24.13,0,31.89,31.89,0,0,0,10.29-6.9l.08-.07a32,32,0,0,0,6.82-10.22A31.27,31.27,0,0,0,72.68,56a4.69,4.69,0,0,1,9.37,0,40.65,40.65,0,0,1-3.12,15.65A41.45,41.45,0,0,1,70,85l-.09.08a41.34,41.34,0,0,1-11.75,8.18,40.86,40.86,0,0,1-12.46,3.51Z"></path>
         </svg>
     `;
     const sendArrowSVG = `
@@ -275,9 +365,32 @@
     let holdTimer = null;
     let holdTriggered = false;
 
+    // Reply functionality
+    function showReply(sender = "You", message = "Hi") {
+        replyTo.textContent = sender;
+        replyContent.textContent = message;
+        replyContainer.classList.add('active');
+        updatePlaceholder();
+        chatInputDiv.focus();
+    }
+
+    function hideReply() {
+        replyContainer.classList.remove('active');
+        updatePlaceholder();
+    }
+
+    // Reply close button
+    replyClose.addEventListener('click', hideReply);
+
+    // Demo function for testing
+    window.showReply = showReply;
+
     function updatePlaceholder() {
+        const hasReply = replyContainer.classList.contains('active');
+        const placeholder = hasReply ? 'Type a reply' : 'Message';
+        
         if (chatInputDiv.textContent.trim() === '') {
-            chatInputDiv.setAttribute('data-placeholder', 'Message');
+            chatInputDiv.setAttribute('data-placeholder', placeholder);
         } else {
             chatInputDiv.removeAttribute('data-placeholder');
         }
