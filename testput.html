@@ -398,6 +398,34 @@
     let initialLeft = 10;
     let holdTimer = null;
     let holdTriggered = false;
+    let soundEnabled = true; // Default value for sound control
+    let volume = 100; // Default volume level
+
+    // Sound function for microphone button
+    function playButtonSound() {
+        if (soundEnabled) {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+
+                oscillator.frequency.setValueAtTime(800, audioContext.currentTime); // tone pitch
+                oscillator.type = 'sine'; // wave shape
+
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.1 * (volume / 100), audioContext.currentTime + 0.01);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1);
+
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.1);
+            } catch (error) {
+                console.log('Audio not supported');
+            }
+        }
+    }
 
     // Reply functionality
     function showReply(sender = "You", message = "Hi") {
@@ -441,6 +469,7 @@
         micBtn.style.transition = 'transform 0.05s ease';
         micBtn.style.transform = `translateX(${initialLeft}px) scale(1.76) translateY(-5px)`;
         recordingOverlay.classList.add('active');
+        playButtonSound(); // Play sound when hold state starts
 
         startX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
         currentX = startX;
