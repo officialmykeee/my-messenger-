@@ -433,13 +433,17 @@
         replyContent.textContent = message;
         replyContainer.classList.add('active');
         updatePlaceholder();
-        chatInputDiv.focus();
+        if (!emojiPicker.classList.contains('active')) {
+            chatInputDiv.focus(); // Only focus input if emoji picker is not active
+        }
     }
 
     function hideReply() {
         replyContainer.classList.remove('active');
         updatePlaceholder();
-        chatInputDiv.focus(); // Maintain focus on the input
+        if (!emojiPicker.classList.contains('active')) {
+            chatInputDiv.focus(); // Only focus input if emoji picker is not active
+        }
     }
 
     // Reply close button
@@ -610,4 +614,3 @@
    </script>
 </body>
 </html>
-
