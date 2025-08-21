@@ -499,6 +499,7 @@
         micBtn.style.transition = 'transform 0.1s ease';
         micBtn.style.transform = 'translateY(-1px)';
         recordingOverlay.classList.remove('active');
+        playButtonSound(); // Play sound when hold state ends
         document.removeEventListener('mousemove', onDrag);
         document.removeEventListener('touchmove', onDrag);
         document.removeEventListener('mouseup', endHold);
@@ -609,3 +610,4 @@
    </script>
 </body>
 </html>
+
