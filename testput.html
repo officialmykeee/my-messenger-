@@ -388,7 +388,7 @@
     `;
     const sendArrowSVG = `
         <svg id="arrowSVG" xmlns="http://www.w3.org/2000/svg" viewBox="-15 0 150 122.88" width="21" height="21">
-            <g transform="rotate(40, 61.28, 61.44) translate(-5, 0)">
+            <g transform="rotate(41.6, 61.28, 61.44) translate(-5, 0)">
                 <path style="fill: white; fill-rule: evenodd;" d="M2.33,44.58,117.33.37a3.63,3.63,0,0,1,5,4.56l-44,115.61h0a3.63,3.63,0,0,1-6.67.28L53.93,84.14,89.12,33.77,38.85,68.86,2.06,51.24a3.63,3.63,0,0,1,.27-6.66Z"/>
             </g>
         </svg>
@@ -588,6 +588,12 @@
         chatInputContainer.classList.remove('displaying-picker');
         chatInputContainer.classList.add('keyboard-active');
         updatePlaceholder();
+        const text = chatInputDiv.textContent.trim();
+        if (text !== '') {
+            micBtn.innerHTML = sendArrowSVG; // Ensure arrow SVG if input has text
+        } else {
+            micBtn.innerHTML = isAltMic ? micAltSVG : micSVG; // Restore correct mic state
+        }
     });
 
     chatInputDiv.addEventListener('blur', () => {
