@@ -392,7 +392,7 @@
         /* Demo button for testing reply */
         .demo-btn {
             position: fixed;
-            top: 20px;
+            top: 72px; /* Adjusted to be below the chat-header (52px height + 20px spacing) */
             right: 20px;
             background: #25D366;
             color: white;
@@ -519,6 +519,10 @@
             .back-arrow, .menu-icon {
                 padding: 0.5rem;
             }
+            
+            .demo-btn {
+                top: 76px; /* Adjusted for larger header height (56px + 20px spacing) */
+            }
         }
 
         /* Large desktop */
@@ -537,6 +541,10 @@
                 width: 40px;
                 height: 40px;
                 font-size: 1.1rem;
+            }
+            
+            .demo-btn {
+                top: 80px; /* Adjusted for larger header height (56px + 24px spacing) */
             }
         }
 
@@ -613,6 +621,10 @@
             .arrow-icon {
                 width: 18px;
                 height: 18px;
+            }
+            
+            .demo-btn {
+                top: 68px; /* Adjusted for smaller header height (48px + 20px spacing) */
             }
         }
     </style>
@@ -1001,7 +1013,7 @@
         }
 
         function updateUrl() {
-            window.location.hash = '@Mykeespage';
+            history.pushState(null, '', '/@Mykeespage');
         }
 
         // Initial setup
