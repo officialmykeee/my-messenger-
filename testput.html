@@ -185,8 +185,8 @@
             transition: none;
         }
         .mic-btn svg {
-            width: 25px;
-            height: 25px;
+            width: 21px;
+            height: 21px;
             fill: white;
         }
         .recording-overlay {
@@ -313,6 +313,98 @@
             font-size: 14px;
             z-index: 1000;
         }
+        /* Slide to cancel styles */
+        .slide-container {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            padding: 20px 30px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            overflow: hidden;
+            min-width: 200px;
+        }
+        .arrow-icon {
+            width: 20px;
+            height: 20px;
+            opacity: 0.6;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            animation: pulse 2s infinite;
+        }
+        .slide-text {
+            font-size: 16px;
+            color: #666;
+            font-weight: 400;
+            letter-spacing: 0.3px;
+            position: relative;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        /* Loading animation for text */
+        .slide-text::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.4),
+                transparent
+            );
+            animation: shimmer 2s infinite;
+        }
+        /* Pulsing animation for arrow */
+        @keyframes pulse {
+            0%, 100% {
+                transform: translateX(0) scale(1);
+                opacity: 0.6;
+            }
+            50% {
+                transform: translateX(-3px) scale(1.1);
+                opacity: 0.8;
+            }
+        }
+        /* Shimmer effect for text */
+        @keyframes shimmer {
+            0% {
+                left: -100%;
+            }
+            100% {
+                left: 100%;
+            }
+        }
+        /* Hover effects */
+        .slide-container:hover .arrow-icon {
+            transform: translateX(-5px) scale(1.1);
+            opacity: 0.8;
+        }
+        .slide-container:hover {
+            transform: translate(-50%, -50%) translateY(-2px);
+        }
+        /* Active/pressed state */
+        .slide-container:active {
+            transform: translate(-50%, -50%) translateY(0) scale(0.98);
+        }
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .slide-container {
+                padding: 15px 25px;
+                min-width: 180px;
+            }
+            .slide-text {
+                font-size: 14px;
+            }
+            .arrow-icon {
+                width: 18px;
+                height: 18px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -359,274 +451,287 @@
             <span class="nav-tab" data-tab="stickers-tab">Stickers</span>
         </div>
     </div>
-   <script>
-         const emojiBtn = document.getElementById('emoji-btn');
-    const emojiPicker = document.getElementById('emoji-picker');
-    const emojiPickerContent = document.querySelector('.emoji-picker-content');
-    const chatInputContainer = document.querySelector('.chat-input-container');
-    const chatInputDiv = document.getElementById('chat-input-div');
-    const attachBtn = document.querySelector('.attach-btn');
-    const micBtn = document.getElementById('mic-btn');
-    const recordingOverlay = document.getElementById('recording-overlay');
-    
-    // Reply elements
-    const replyContainer = document.getElementById('reply-container');
-    const replyClose = document.getElementById('reply-close');
-    const replyTo = document.getElementById('reply-to');
-    const replyContent = document.getElementById('reply-content');
+    <script>
+        const emojiBtn = document.getElementById('emoji-btn');
+        const emojiPicker = document.getElementById('emoji-picker');
+        const emojiPickerContent = document.querySelector('.emoji-picker-content');
+        const chatInputContainer = document.querySelector('.chat-input-container');
+        const chatInputDiv = document.getElementById('chat-input-div');
+        const attachBtn = document.querySelector('.attach-btn');
+        const micBtn = document.getElementById('mic-btn');
+        const recordingOverlay = document.getElementById('recording-overlay');
+        
+        // Reply elements
+        const replyContainer = document.getElementById('reply-container');
+        const replyClose = document.getElementById('reply-close');
+        const replyTo = document.getElementById('reply-to');
+        const replyContent = document.getElementById('reply-content');
 
-    // SVG definitions for microphone, arrow, and alternate mic
-    const micSVG = `
-        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-            <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
-            <g id="SVGRepo_iconCarrier">
-                <path d="M7.25 7C7.25 4.37665 9.37665 2.25 12 2.25C14.6234 2.25 16.75 4.37665 16.75 7V11C16.75 13.6234 14.6234 15.75 12 15.75C9.37665 15.75 7.25 13.6234 7.25 11V7Z" fill="#ffffff"></path>
-                <path d="M5.75 10C5.75 9.58579 5.41421 9.25 5 9.25C4.58579 9.25 4.25 9.58579 4.25 10V11C4.25 15.0272 7.3217 18.3369 11.25 18.7142V21C11.25 21.4142 11.5858 21.75 12 21.75C12.4142 21.75 12.75 21.4142 12.75 21V18.7142C16.6783 18.3369 19.75 15.0272 19.75 11V10C19.75 9.58579 19.4142 9.25 19 9.25C18.5858 9.25 18.25 9.58579 18.25 10V11C18.25 14.4518 15.4518 17.25 12 17.25C8.54822 17.25 5.75 14.4518 5.75 11V10Z" fill="#ffffff"></path>
-            </g>
-        </svg>
-    `;
-    const sendArrowSVG = `
-        <svg id="arrowSVG" xmlns="http://www.w3.org/2000/svg" viewBox="-15 0 150 122.88" width="21" height="21">
-            <g transform="rotate(41.6, 61.28, 61.44) translate(-5, 0)">
-                <path style="fill: white; fill-rule: evenodd;" d="M2.33,44.58,117.33.37a3.63,3.63,0,0,1,5,4.56l-44,115.61h0a3.63,3.63,0,0,1-6.67.28L53.93,84.14,89.12,33.77,38.85,68.86,2.06,51.24a3.63,3.63,0,0,1,.27-6.66Z"/>
-            </g>
-        </svg>
-    `;
-    const micAltSVG = `
-        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path fill-rule="evenodd" clip-rule="evenodd" 
-            d="M3.46447 3.46447C2 4.92893 2 7.28595 2 12C2 16.714 2 19.0711 3.46447 20.5355C4.92893 22 7.28595 22 12 22C16.714 22 19.0711 22 20.5355 20.5355C22 19.0711 22 16.714 22 12C22 7.28595 22 4.92893 20.5355 3.46447C19.0711 2 16.714 2 12 2C7.28595 2 4.92893 2 3.46447 3.46447ZM7.25 12C7.25 9.37665 9.37665 7.25 12 7.25C14.6234 7.25 16.75 9.37665 16.75 12C16.75 14.6234 14.6234 16.75 12 16.75C9.37665 16.75 7.25 14.6234 7.25 12ZM8.75 12C8.75 10.2051 10.2051 8.75 12 8.75C13.7949 8.75 15.25 10.2051 15.25 12C15.25 13.7949 13.7949 15.25 12 15.25C10.2051 15.25 8.75 13.7949 8.75 12Z" 
-            fill="#ffffff"></path>
-        </svg>
-    `;
+        // SVG definitions for microphone, arrow, and alternate mic
+        const micSVG = `
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+                <g id="SVGRepo_iconCarrier">
+                    <path d="M7.25 7C7.25 4.37665 9.37665 2.25 12 2.25C14.6234 2.25 16.75 4.37665 16.75 7V11C16.75 13.6234 14.6234 15.75 12 15.75C9.37665 15.75 7.25 13.6234 7.25 11V7Z" fill="#ffffff"></path>
+                    <path d="M5.75 10C5.75 9.58579 5.41421 9.25 5 9.25C4.58579 9.25 4.25 9.58579 4.25 10V11C4.25 15.0272 7.3217 18.3369 11.25 18.7142V21C11.25 21.4142 11.5858 21.75 12 21.75C12.4142 21.75 12.75 21.4142 12.75 21V18.7142C16.6783 18.3369 19.75 15.0272 19.75 11V10C19.75 9.58579 19.4142 9.25 19 9.25C18.5858 9.25 18.25 9.58579 18.25 10V11C18.25 14.4518 15.4518 17.25 12 17.25C8.54822 17.25 5.75 14.4518 5.75 11V10Z" fill="#ffffff"></path>
+                </g>
+            </svg>
+        `;
+        const sendArrowSVG = `
+            <svg id="arrowSVG" xmlns="http://www.w3.org/2000/svg" viewBox="-15 0 150 122.88" width="21" height="21">
+                <g transform="rotate(40, 61.28, 61.44) translate(-5, 0)">
+                    <path style="fill: white; fill-rule: evenodd;" d="M2.33,44.58,117.33.37a3.63,3.63,0,0,1,5,4.56l-44,115.61h0a3.63,3.63,0,0,1-6.67.28L53.93,84.14,89.12,33.77,38.85,68.86,2.06,51.24a3.63,3.63,0,0,1,.27-6.66Z"/>
+                </g>
+            </svg>
+        `;
+        const micAltSVG = `
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" clip-rule="evenodd" 
+                d="M3.46447 3.46447C2 4.92893 2 7.28595 2 12C2 16.714 2 19.0711 3.46447 20.5355C4.92893 22 7.28595 22 12 22C16.714 22 19.0711 22 20.5355 20.5355C22 19.0711 22 16.714 22 12C22 7.28595 22 4.92893 20.5355 3.46447C19.0711 2 16.714 2 12 2C7.28595 2 4.92893 2 3.46447 3.46447ZM7.25 12C7.25 9.37665 9.37665 7.25 12 7.25C14.6234 7.25 16.75 9.37665 16.75 12C16.75 14.6234 14.6234 16.75 12 16.75C9.37665 16.75 7.25 14.6234 7.25 12ZM8.75 12C8.75 10.2051 10.2051 8.75 12 8.75C13.7949 8.75 15.25 10.2051 15.25 12C15.25 13.7949 13.7949 15.25 12 15.25C10.2051 15.25 8.75 13.7949 8.75 12Z" 
+                fill="#ffffff"></path>
+            </svg>
+        `;
+        const slideContainerContent = `
+            <div class="slide-container">
+                <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15 18L9 12L15 6" 
+                          stroke="currentColor" 
+                          stroke-width="2" 
+                          stroke-linecap="round" 
+                          stroke-linejoin="round"/>
+                </svg>
+                <span class="slide-text">Slide to cancel</span>
+            </div>
+        `;
 
-    let isHolding = false; // global hold state flag
-    let isAltMic = false; // alternate mic state
-    let startX = 0;
-    let currentX = 0;
-    let initialLeft = 10;
-    let holdTimer = null;
-    let holdTriggered = false;
-    let soundEnabled = true; // Default value for sound control
-    let volume = 100; // Default volume level
+        let isHolding = false; // global hold state flag
+        let isAltMic = false; // alternate mic state
+        let startX = 0;
+        let currentX = 0;
+        let initialLeft = 10;
+        let holdTimer = null;
+        let holdTriggered = false;
+        let soundEnabled = true; // Default value for sound control
+        let volume = 100; // Default volume level
 
-    // Sound function for microphone button
-    function playButtonSound() {
-        if (soundEnabled) {
-            try {
-                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
+        // Sound function for microphone button
+        function playButtonSound() {
+            if (soundEnabled) {
+                try {
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
 
-                oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
 
-                oscillator.frequency.setValueAtTime(800, audioContext.currentTime); // tone pitch
-                oscillator.type = 'sine'; // wave shape
+                    oscillator.frequency.setValueAtTime(800, audioContext.currentTime); // tone pitch
+                    oscillator.type = 'sine'; // wave shape
 
-                gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-                gainNode.gain.linearRampToValueAtTime(0.1 * (volume / 100), audioContext.currentTime + 0.01);
-                gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1);
+                    gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                    gainNode.gain.linearRampToValueAtTime(0.1 * (volume / 100), audioContext.currentTime + 0.01);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1);
 
-                oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + 0.1);
-            } catch (error) {
-                console.log('Audio not supported');
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.1);
+                } catch (error) {
+                    console.log('Audio not supported');
+                }
             }
         }
-    }
 
-    // Reply functionality
-    function showReply(sender = "You", message = "Hi") {
-        replyTo.textContent = sender;
-        replyContent.textContent = message;
-        replyContainer.classList.add('active');
-        updatePlaceholder();
-        if (!emojiPicker.classList.contains('active')) {
-            chatInputDiv.focus(); // Only focus input if emoji picker is not active
-        }
-    }
-
-    function hideReply() {
-        replyContainer.classList.remove('active');
-        updatePlaceholder();
-        if (!emojiPicker.classList.contains('active')) {
-            chatInputDiv.focus(); // Only focus input if emoji picker is not active
-        }
-    }
-
-    // Reply close button
-    replyClose.addEventListener('click', hideReply);
-
-    // Demo function for testing
-    window.showReply = showReply;
-
-    function updatePlaceholder() {
-        const hasReply = replyContainer.classList.contains('active');
-        const placeholder = hasReply ? 'Type a reply' : 'Message';
-        
-        if (chatInputDiv.textContent.trim() === '') {
-            chatInputDiv.setAttribute('data-placeholder', placeholder);
-        } else {
-            chatInputDiv.removeAttribute('data-placeholder');
-        }
-    }
-
-    function startHold(e) {
-        if (chatInputDiv.textContent.trim() !== '') return;
-
-        e.preventDefault();
-        e.stopPropagation();
-        isHolding = true;
-        micBtn.classList.add('hold-state', 'dragging');
-        micBtn.style.transition = 'transform 0.05s ease';
-        micBtn.style.transform = `translateX(${initialLeft}px) scale(1.76) translateY(-5px)`;
-        recordingOverlay.classList.add('active');
-        playButtonSound(); // Play sound when hold state starts
-
-        startX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
-        currentX = startX;
-
-        document.addEventListener('mousemove', onDrag, { passive: false });
-        document.addEventListener('touchmove', onDrag, { passive: false });
-        console.log('Recording started');
-    }
-
-    function onDrag(e) {
-        if (!isHolding) return;
-
-        e.preventDefault();
-        const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
-        const deltaX = clientX - startX;
-        const newLeft = initialLeft + deltaX;
-
-        if (newLeft <= initialLeft && newLeft >= -100) {
-            micBtn.style.transform = `translateX(${newLeft}px) scale(1.76) translateY(-5px)`;
-        }
-    }
-
-    function endHold(e) {
-        if (!isHolding) return;
-        isHolding = false;
-        micBtn.classList.remove('hold-state', 'dragging');
-        micBtn.style.transition = 'transform 0.1s ease';
-        micBtn.style.transform = 'translateY(-1px)';
-        recordingOverlay.classList.remove('active');
-        playButtonSound(); // Play sound when hold state ends
-        document.removeEventListener('mousemove', onDrag);
-        document.removeEventListener('touchmove', onDrag);
-        document.removeEventListener('mouseup', endHold);
-        document.removeEventListener('touchend', endHold);
-        document.removeEventListener('touchcancel', endHold);
-        console.log('Recording stopped');
-    }
-
-    // Microphone hold & tap toggle logic
-    micBtn.addEventListener('mousedown', micPressStart, { passive: false });
-    micBtn.addEventListener('touchstart', micPressStart, { passive: false });
-
-    function micPressStart(e) {
-        if (chatInputDiv.textContent.trim() !== '') return;
-
-        e.preventDefault();
-        holdTriggered = false;
-
-        holdTimer = setTimeout(() => {
-            holdTriggered = true;
-            startHold(e);
-        }, 150);
-
-        document.addEventListener('mouseup', micPressEnd, { passive: false });
-        document.addEventListener('touchend', micPressEnd, { passive: false });
-    }
-
-    function micPressEnd(e) {
-        clearTimeout(holdTimer);
-
-        if (!holdTriggered) {
-            isAltMic = !isAltMic;
-            micBtn.innerHTML = isAltMic ? micAltSVG : micSVG;
-            updateMicButton();
-        } else {
-            endHold(e);
+        // Reply functionality
+        function showReply(sender = "You", message = "Hi") {
+            replyTo.textContent = sender;
+            replyContent.textContent = message;
+            replyContainer.classList.add('active');
+            updatePlaceholder();
+            if (!emojiPicker.classList.contains('active')) {
+                chatInputDiv.focus(); // Only focus input if emoji picker is not active
+            }
         }
 
-        document.removeEventListener('mouseup', micPressEnd);
-        document.removeEventListener('touchend', micPressEnd);
-    }
-
-    // Input handling
-    chatInputDiv.addEventListener('input', () => {
-        if (isHolding) return; // Don't change icons during hold
-
-        updatePlaceholder();
-        const text = chatInputDiv.textContent.trim();
-        if (text !== '') {
-            micBtn.innerHTML = sendArrowSVG; // arrow send icon
-        } else {
-            micBtn.innerHTML = isAltMic ? micAltSVG : micSVG; // restore correct mic state
+        function hideReply() {
+            replyContainer.classList.remove('active');
+            updatePlaceholder();
+            if (!emojiPicker.classList.contains('active')) {
+                chatInputDiv.focus(); // Only focus input if emoji picker is not active
+            }
         }
-    });
 
-    // Emoji picker toggle
-    emojiBtn.addEventListener('click', () => {
-        const isPickerActive = emojiPicker.classList.contains('active');
-        if (isPickerActive) {
+        // Reply close button
+        replyClose.addEventListener('click', hideReply);
+
+        // Demo function for testing
+        window.showReply = showReply;
+
+        function updatePlaceholder() {
+            const hasReply = replyContainer.classList.contains('active');
+            const placeholder = hasReply ? 'Type a reply' : 'Message';
+            
+            if (chatInputDiv.textContent.trim() === '') {
+                chatInputDiv.setAttribute('data-placeholder', placeholder);
+            } else {
+                chatInputDiv.removeAttribute('data-placeholder');
+            }
+        }
+
+        function startHold(e) {
+            if (chatInputDiv.textContent.trim() !== '') return;
+
+            e.preventDefault();
+            e.stopPropagation();
+            isHolding = true;
+            micBtn.classList.add('hold-state', 'dragging');
+            micBtn.style.transition = 'transform 0.05s ease';
+            micBtn.style.transform = `translateX(${initialLeft}px) scale(1.76) translateY(-5px)`;
+            recordingOverlay.classList.add('active');
+            recordingOverlay.innerHTML = slideContainerContent; // Add slide-container to overlay
+            playButtonSound(); // Play sound when hold state starts
+
+            startX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+            currentX = startX;
+
+            document.addEventListener('mousemove', onDrag, { passive: false });
+            document.addEventListener('touchmove', onDrag, { passive: false });
+            console.log('Recording started');
+        }
+
+        function onDrag(e) {
+            if (!isHolding) return;
+
+            e.preventDefault();
+            const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+            const deltaX = clientX - startX;
+            const newLeft = initialLeft + deltaX;
+
+            if (newLeft <= initialLeft && newLeft >= -100) {
+                micBtn.style.transform = `translateX(${newLeft}px) scale(1.76) translateY(-5px)`;
+            }
+        }
+
+        function endHold(e) {
+            if (!isHolding) return;
+            isHolding = false;
+            micBtn.classList.remove('hold-state', 'dragging');
+            micBtn.style.transition = 'transform 0.1s ease';
+            micBtn.style.transform = 'translateY(-1px)';
+            recordingOverlay.classList.remove('active');
+            recordingOverlay.innerHTML = ''; // Clear slide-container from overlay
+            playButtonSound(); // Play sound when hold state ends
+            document.removeEventListener('mousemove', onDrag);
+            document.removeEventListener('touchmove', onDrag);
+            document.removeEventListener('mouseup', endHold);
+            document.removeEventListener('touchend', endHold);
+            document.removeEventListener('touchcancel', endHold);
+            console.log('Recording stopped');
+        }
+
+        // Microphone hold & tap toggle logic
+        micBtn.addEventListener('mousedown', micPressStart, { passive: false });
+        micBtn.addEventListener('touchstart', micPressStart, { passive: false });
+
+        function micPressStart(e) {
+            if (chatInputDiv.textContent.trim() !== '') return;
+
+            e.preventDefault();
+            holdTriggered = false;
+
+            holdTimer = setTimeout(() => {
+                holdTriggered = true;
+                startHold(e);
+            }, 150);
+
+            document.addEventListener('mouseup', micPressEnd, { passive: false });
+            document.addEventListener('touchend', micPressEnd, { passive: false });
+        }
+
+        function micPressEnd(e) {
+            clearTimeout(holdTimer);
+
+            if (!holdTriggered) {
+                isAltMic = !isAltMic;
+                micBtn.innerHTML = isAltMic ? micAltSVG : micSVG;
+                updateMicButton();
+            } else {
+                endHold(e);
+            }
+
+            document.removeEventListener('mouseup', micPressEnd);
+            document.removeEventListener('touchend', micPressEnd);
+        }
+
+        // Input handling
+        chatInputDiv.addEventListener('input', () => {
+            if (isHolding) return; // Don't change icons during hold
+
+            updatePlaceholder();
+            const text = chatInputDiv.textContent.trim();
+            if (text !== '') {
+                micBtn.innerHTML = sendArrowSVG; // arrow send icon
+            } else {
+                micBtn.innerHTML = isAltMic ? micAltSVG : micSVG; // restore correct mic state
+            }
+        });
+
+        // Emoji picker toggle
+        emojiBtn.addEventListener('click', () => {
+            const isPickerActive = emojiPicker.classList.contains('active');
+            if (isPickerActive) {
+                emojiPicker.classList.remove('active');
+                chatInputContainer.classList.remove('displaying-picker');
+            } else {
+                emojiPicker.classList.add('active');
+                chatInputContainer.classList.add('displaying-picker');
+                chatInputContainer.classList.remove('keyboard-active');
+                chatInputDiv.blur();
+            }
+        });
+
+        chatInputDiv.addEventListener('focus', () => {
             emojiPicker.classList.remove('active');
             chatInputContainer.classList.remove('displaying-picker');
-        } else {
-            emojiPicker.classList.add('active');
-            chatInputContainer.classList.add('displaying-picker');
-            chatInputContainer.classList.remove('keyboard-active');
-            chatInputDiv.blur();
-        }
-    });
-
-    chatInputDiv.addEventListener('focus', () => {
-        emojiPicker.classList.remove('active');
-        chatInputContainer.classList.remove('displaying-picker');
-        chatInputContainer.classList.add('keyboard-active');
-        updatePlaceholder();
-        const text = chatInputDiv.textContent.trim();
-        if (text !== '') {
-            micBtn.innerHTML = sendArrowSVG; // Ensure arrow SVG if input has text
-        } else {
-            micBtn.innerHTML = isAltMic ? micAltSVG : micSVG; // Restore correct mic state
-        }
-    });
-
-    chatInputDiv.addEventListener('blur', () => {
-        chatInputContainer.classList.remove('keyboard-active');
-        updatePlaceholder();
-    });
-
-    attachBtn.addEventListener('click', () => {
-        alert('Attach button clicked!');
-    });
-
-    const emojis = [];
-    emojis.forEach(emoji => {
-        const span = document.createElement('span');
-        span.textContent = emoji;
-        span.addEventListener('click', () => {
-            chatInputDiv.textContent += emoji;
-            const range = document.createRange();
-            const selection = window.getSelection();
-            range.selectNodeContents(chatInputDiv);
-            range.collapse(false);
-            selection.removeAllRanges();
-            selection.addRange(range);
+            chatInputContainer.classList.add('keyboard-active');
             updatePlaceholder();
-            micBtn.innerHTML = sendArrowSVG; // Update to send arrow when emoji is added
+            const text = chatInputDiv.textContent.trim();
+            if (text !== '') {
+                micBtn.innerHTML = sendArrowSVG; // Ensure arrow SVG if input has text
+            } else {
+                micBtn.innerHTML = isAltMic ? micAltSVG : micSVG; // Restore correct mic state
+            }
         });
-        emojiPickerContent.appendChild(span);
-    });
 
-    // Initial setup
-    updatePlaceholder();
-    micBtn.innerHTML = micSVG;
+        chatInputDiv.addEventListener('blur', () => {
+            chatInputContainer.classList.remove('keyboard-active');
+            updatePlaceholder();
+        });
 
-   </script>
+        attachBtn.addEventListener('click', () => {
+            alert('Attach button clicked!');
+        });
+
+        const emojis = [];
+        emojis.forEach(emoji => {
+            const span = document.createElement('span');
+            span.textContent = emoji;
+            span.addEventListener('click', () => {
+                chatInputDiv.textContent += emoji;
+                const range = document.createRange();
+                const selection = window.getSelection();
+                range.selectNodeContents(chatInputDiv);
+                range.collapse(false);
+                selection.removeAllRanges();
+                selection.addRange(range);
+                updatePlaceholder();
+                micBtn.innerHTML = sendArrowSVG; // Update to send arrow when emoji is added
+            });
+            emojiPickerContent.appendChild(span);
+        });
+
+        // Initial setup
+        updatePlaceholder();
+        micBtn.innerHTML = micSVG;
+    </script>
 </body>
 </html>
