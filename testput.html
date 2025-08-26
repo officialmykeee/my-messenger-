@@ -67,12 +67,6 @@
 
         .avatar {
             width: 32px;
-            heightయ
-
-System: * The user's message was cut off, but based on the context, they likely want to proceed with the requested changes to the timer font size and circle SVG spacing. Continuing with the response.
-
-### Updated Code (Continued)
-```html
             height: 32px;
             border-radius: 50%;
             background: #4285f4;
@@ -294,7 +288,7 @@ System: * The user's message was cut off, but based on the context, they likely 
             flex-shrink: 0;
         }
 
-        .mic-btn.hold-state {
+        .mic-btn.hold-state, .mic-btn.lock-state {
             transform: scale(1.76) translateY(-5px);
         }
 
@@ -425,6 +419,15 @@ System: * The user's message was cut off, but based on the context, they likely 
             min-width: 160px;
         }
 
+        .slide-container.lock-state {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            left: 0; /* Span recording-overlay */
+            right: 0;
+            width: 100%;
+        }
+
         .recording-circle {
             width: 12px;
             height: 12px;
@@ -464,6 +467,25 @@ System: * The user's message was cut off, but based on the context, they likely 
             position: relative;
             overflow: hidden;
             white-space: nowrap;
+        }
+
+        .cancel-btn {
+            color: #749cbf; /* WhatsApp blue */
+            background: none;
+            border: none;
+            font-size: 19px !important; /* Increased font size */
+            font-weight: 400;
+            cursor: pointer;
+            padding: 4px 8px;
+            transition: opacity 0.2s ease;
+        }
+
+        .cancel-btn:hover {
+            opacity: 0.8;
+        }
+
+        .cancel-btn:active {
+            opacity: 0.6;
         }
 
         /* Loading animation for text */
@@ -621,7 +643,7 @@ System: * The user's message was cut off, but based on the context, they likely 
                 margin-top: 2px;
             }
             
-            .mic-btn.hold-state {
+            .mic-btn.hold-state, .mic-btn.lock-state {
                 transform: scale(1.9) translateY(-5px);
             }
             
@@ -644,6 +666,14 @@ System: * The user's message was cut off, but based on the context, they likely 
                 padding: 8px;
             }
             
+            .slide-container.lock-state {
+                left: 0; /* Span recording-overlay for mobile */
+            }
+            
+            .slide-container.lock-state > div:first-child {
+                padding-left: 10px; /* Adjust for mobile */
+            }
+            
             .recording-circle {
                 width: 10px;
                 height: 10px;
@@ -656,6 +686,14 @@ System: * The user's message was cut off, but based on the context, they likely 
             
             .slide-text {
                 font-size: 13px;
+            }
+            
+            .cancel-btn {
+                font-size: 17px !important; /* Increased font size for mobile */
+            }
+            
+            .slide-container.lock-state > div:nth-child(2) {
+                margin-left: 20px; /* Increased gap for mobile */
             }
             
             .arrow-icon {
@@ -807,11 +845,27 @@ System: * The user's message was cut off, but based on the context, they likely 
                 <span class="slide-text">Slide to cancel</span>
             </div>
         `;
+        const slideContainerLockedContent = `
+            <div class="slide-container lock-state">
+                <div style="display: flex; align-items: center; gap: 8px; padding-left: 12px; min-width: 60px;">
+                    <svg class="recording-circle" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" preserveAspectRatio="xMidYMid meet">
+                        <circle fill="#ff7373" cx="18" cy="18" r="18"></circle>
+                    </svg>
+                    <span class="timer">0:00</span>
+                </div>
+                <div style="flex-grow: 0; margin: 0 auto; margin-left: 24px;">
+                    <button class="cancel-btn">Cancel</button>
+                </div>
+            </div>
+        `;
 
         let isHolding = false; // global hold state flag
+        let isLocked = false; // global lock state flag
         let isAltMic = false; // alternate mic state
         let startX = 0;
+        let startY = 0;
         let currentX = 0;
+        let currentY = 0;
         let initialLeft = 10;
         let holdTimer = null;
         let holdTriggered = false;
@@ -819,6 +873,7 @@ System: * The user's message was cut off, but based on the context, they likely 
         let volume = 100; // Default volume level
         let timerInterval = null; // Timer interval for recording
         let recordingSeconds = 0; // Timer counter
+        let wasInputFocused = false; // Track input focus state
 
         // Sound function for microphone button
         function playButtonSound() {
@@ -877,7 +932,7 @@ System: * The user's message was cut off, but based on the context, they likely 
             replyContainer.classList.add('active');
             updatePlaceholder();
             if (!emojiPicker.classList.contains('active')) {
-                chatInputDiv.focus(); // Only focus input if emoji picker is not active
+                chatInputDiv.focus(); // Focus input if emoji picker is not active
             }
         }
 
@@ -885,7 +940,7 @@ System: * The user's message was cut off, but based on the context, they likely 
             replyContainer.classList.remove('active');
             updatePlaceholder();
             if (!emojiPicker.classList.contains('active')) {
-                chatInputDiv.focus(); // Only focus input if emoji picker is not active
+                chatInputDiv.focus(); // Focus input if emoji picker is not active
             }
         }
 
@@ -906,11 +961,42 @@ System: * The user's message was cut off, but based on the context, they likely 
             }
         }
 
+        function enterLockState() {
+            isLocked = true;
+            isHolding = false;
+            micBtn.classList.remove('hold-state', 'dragging');
+            micBtn.classList.add('lock-state');
+            micBtn.innerHTML = sendArrowSVG; // Change to send arrow SVG
+            recordingOverlay.innerHTML = slideContainerLockedContent; // Use locked content with centered Cancel button
+            const cancelBtn = recordingOverlay.querySelector('.cancel-btn');
+            cancelBtn.addEventListener('click', (e) => {
+                exitLockState();
+            });
+            console.log('Entered lock state');
+        }
+
+        function exitLockState() {
+            isLocked = false;
+            micBtn.classList.remove('lock-state');
+            micBtn.style.transition = 'transform 0.1s ease';
+            micBtn.style.transform = 'translateY(-1px)';
+            micBtn.innerHTML = isAltMic ? micAltSVG : micSVG; // Restore correct mic state
+            recordingOverlay.classList.remove('active');
+            recordingOverlay.innerHTML = ''; // Clear slide-container
+            stopTimer(); // Stop the timer
+            playButtonSound(); // Play sound when exiting lock state
+            if (wasInputFocused) {
+                chatInputDiv.focus(); // Restore focus to input if it was focused
+            }
+            console.log('Exited lock state');
+        }
+
         function startHold(e) {
             if (chatInputDiv.textContent.trim() !== '') return;
 
             e.preventDefault();
             e.stopPropagation();
+            wasInputFocused = document.activeElement === chatInputDiv; // Track if input was focused
             isHolding = true;
             micBtn.classList.add('hold-state', 'dragging');
             micBtn.style.transition = 'transform 0.05s ease';
@@ -921,7 +1007,9 @@ System: * The user's message was cut off, but based on the context, they likely 
             startTimer(); // Start the timer
 
             startX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+            startY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
             currentX = startX;
+            currentY = startY;
 
             document.addEventListener('mousemove', onDrag, { passive: false });
             document.addEventListener('touchmove', onDrag, { passive: false });
@@ -933,11 +1021,25 @@ System: * The user's message was cut off, but based on the context, they likely 
 
             e.preventDefault();
             const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
             const deltaX = clientX - startX;
+            const deltaY = clientY - startY;
             const newLeft = initialLeft + deltaX;
 
+            // Horizontal drag for slide to cancel
             if (newLeft <= initialLeft && newLeft >= -100) {
                 micBtn.style.transform = `translateX(${newLeft}px) scale(1.76) translateY(-5px)`;
+            }
+
+            // Check for lock state: only when primarily upward drag and minimal horizontal movement
+            if (deltaY < -50 && Math.abs(deltaX) < 10) { // Upward drag with minimal horizontal movement
+                enterLockState();
+                document.removeEventListener('mousemove', onDrag);
+                document.removeEventListener('touchmove', onDrag);
+                document.removeEventListener('mouseup', endHold);
+                document.removeEventListener('touchend', endHold);
+                document.removeEventListener('touchcancel', endHold);
+                return;
             }
         }
 
@@ -948,7 +1050,7 @@ System: * The user's message was cut off, but based on the context, they likely 
             micBtn.style.transition = 'transform 0.1s ease';
             micBtn.style.transform = 'translateY(-1px)';
             recordingOverlay.classList.remove('active');
-            recordingOverlay.innerHTML = ''; // Clear slide-container from overlay
+            recordingOverlay.innerHTML = ''; // Clear slide-container
             playButtonSound(); // Play sound when hold state ends
             stopTimer(); // Stop the timer
             document.removeEventListener('mousemove', onDrag);
@@ -956,6 +1058,9 @@ System: * The user's message was cut off, but based on the context, they likely 
             document.removeEventListener('mouseup', endHold);
             document.removeEventListener('touchend', endHold);
             document.removeEventListener('touchcancel', endHold);
+            if (wasInputFocused) {
+                chatInputDiv.focus(); // Restore focus to input if it was focused
+            }
             console.log('Recording stopped');
         }
 
@@ -976,6 +1081,7 @@ System: * The user's message was cut off, but based on the context, they likely 
 
             document.addEventListener('mouseup', micPressEnd, { passive: false });
             document.addEventListener('touchend', micPressEnd, { passive: false });
+            document.addEventListener('touchcancel', micPressEnd, { passive: false });
         }
 
         function micPressEnd(e) {
@@ -991,6 +1097,7 @@ System: * The user's message was cut off, but based on the context, they likely 
 
             document.removeEventListener('mouseup', micPressEnd);
             document.removeEventListener('touchend', micPressEnd);
+            document.removeEventListener('touchcancel', micPressEnd);
         }
 
         // Stub for undefined updateMicButton to prevent errors
@@ -1000,7 +1107,7 @@ System: * The user's message was cut off, but based on the context, they likely 
 
         // Input handling
         chatInputDiv.addEventListener('input', () => {
-            if (isHolding) return; // Don't change icons during hold
+            if (isHolding || isLocked) return; // Don't change icons during hold or lock state
 
             updatePlaceholder();
             const text = chatInputDiv.textContent.trim();
@@ -1030,6 +1137,7 @@ System: * The user's message was cut off, but based on the context, they likely 
             chatInputContainer.classList.remove('displaying-picker');
             chatInputContainer.classList.add('keyboard-active');
             updatePlaceholder();
+            if (isHolding || isLocked) return; // Skip icon update in hold or lock state
             const text = chatInputDiv.textContent.trim();
             if (text !== '') {
                 micBtn.innerHTML = sendArrowSVG; // Ensure arrow SVG if input has text
@@ -1060,7 +1168,9 @@ System: * The user's message was cut off, but based on the context, they likely 
                 selection.removeAllRanges();
                 selection.addRange(range);
                 updatePlaceholder();
-                micBtn.innerHTML = sendArrowSVG; // Update to send arrow when emoji is added
+                if (!isHolding && !isLocked) {
+                    micBtn.innerHTML = sendArrowSVG; // Update to send arrow when emoji is added, unless in hold or lock state
+                }
             });
             emojiPickerContent.appendChild(span);
         });
