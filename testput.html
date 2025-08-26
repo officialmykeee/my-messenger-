@@ -905,12 +905,15 @@
         function startTimer() {
             recordingSeconds = 0;
             const timerElement = document.querySelector('.timer');
-            timerInterval = setInterval(() => {
-                recordingSeconds++;
-                const minutes = Math.floor(recordingSeconds / 60);
-                const seconds = recordingSeconds % 60;
-                timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-            }, 1000);
+            if (timerElement) {
+                timerElement.textContent = '0:00';
+                timerInterval = setInterval(() => {
+                    recordingSeconds++;
+                    const minutes = Math.floor(recordingSeconds / 60);
+                    const seconds = recordingSeconds % 60;
+                    timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                }, 1000);
+            }
         }
 
         function stopTimer() {
@@ -968,6 +971,8 @@
             micBtn.classList.add('lock-state');
             micBtn.innerHTML = sendArrowSVG; // Change to send arrow SVG
             recordingOverlay.innerHTML = slideContainerLockedContent; // Use locked content with centered Cancel button
+            recordingOverlay.classList.add('active'); // Ensure overlay is active
+            startTimer(); // Start the timer in lock state
             const cancelBtn = recordingOverlay.querySelector('.cancel-btn');
             cancelBtn.addEventListener('click', (e) => {
                 exitLockState();
@@ -983,7 +988,7 @@
             micBtn.innerHTML = isAltMic ? micAltSVG : micSVG; // Restore correct mic state
             recordingOverlay.classList.remove('active');
             recordingOverlay.innerHTML = ''; // Clear slide-container
-            stopTimer(); // Stop the timer
+            stopTimer(); // Stop and reset the timer
             playButtonSound(); // Play sound when exiting lock state
             if (wasInputFocused) {
                 chatInputDiv.focus(); // Restore focus to input if it was focused
@@ -1005,7 +1010,6 @@
             recordingOverlay.innerHTML = slideContainerContent; // Add slide-container with circle, timer
             playButtonSound(); // Play sound when hold state starts
             startTimer(); // Start the timer
-
             startX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
             startY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
             currentX = startX;
