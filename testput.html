@@ -289,8 +289,12 @@
             flex-shrink: 0;
         }
 
-        .mic-btn.hold-state, .mic-btn.lock-state {
+        .mic-btn.hold-state {
             transform: scale(1.4) translateY(-5px);
+        }
+
+        .mic-btn.lock-state {
+            transform: translateY(-1px); /* Match unhold state */
         }
 
         .mic-btn.dragging {
@@ -543,7 +547,8 @@
             .chat-input-container { width: 102% !important; gap: 6px; background: #fff; min-height: 52px; }
             .message-bubble { padding: 6px 12px; box-shadow: 0 2px 6px 5px rgba(0,0,0,0.1); }
             .mic-btn { width: 55px; height: 55px; top: -2px; left: 2px; margin-top: 2px; }
-            .mic-btn.hold-state, .mic-btn.lock-state { transform: scale(1.5) translateY(-5px); }
+            .mic-btn.hold-state { transform: scale(1.5) translateY(-5px); }
+            .mic-btn.lock-state { transform: translateY(-1px); } /* Match unhold state */
             .message-input { font-size: 15px; }
             .reply-container { margin: 8px 12px 4px 12px; width: calc(100% - 24px); }
             .recording-overlay { right: 63px; }
@@ -744,13 +749,11 @@
         }
 
         function startTimer() {
-            // Clear any existing interval to prevent multiple timers
             if (timerInterval) {
                 clearInterval(timerInterval);
                 timerInterval = null;
             }
             recordingSeconds = 0;
-            // Set initial timer display
             const initialTimerElement = document.querySelector('.timer');
             if (initialTimerElement) {
                 initialTimerElement.textContent = '0:00';
@@ -759,12 +762,11 @@
                 recordingSeconds++;
                 const minutes = Math.floor(recordingSeconds / 60);
                 const seconds = recordingSeconds % 60;
-                // Dynamically select the current .timer element
                 const timerElement = document.querySelector('.timer');
                 if (timerElement) {
                     timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
                 }
-                console.log(`Timer updated: ${minutes}:${seconds.toString().padStart(2, '0')}`); // Debug log
+                console.log(`Timer updated: ${minutes}:${seconds.toString().padStart(2, '0')}`);
             }, 1000);
         }
 
@@ -777,7 +779,7 @@
                 if (timerElement) {
                     timerElement.textContent = '0:00';
                 }
-                console.log('Timer stopped and reset'); // Debug log
+                console.log('Timer stopped and reset');
             }
         }
 
@@ -818,9 +820,10 @@
             micBtn.classList.remove('hold-state', 'dragging');
             micBtn.classList.add('lock-state');
             micBtn.innerHTML = sendArrowSVG;
+            micBtn.style.transition = 'transform 0.1s ease';
+            micBtn.style.transform = 'translateY(-1px)'; // Match unhold state
             recordingOverlay.innerHTML = slideContainerLockedContent;
             recordingOverlay.classList.add('active');
-            // Update timer display to current recordingSeconds
             const timerElement = document.querySelector('.timer');
             if (timerElement) {
                 const minutes = Math.floor(recordingSeconds / 60);
