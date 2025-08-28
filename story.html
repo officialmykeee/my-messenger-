@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Instagram Story Clone</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #000;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .phone-container {
+      width: 375px;
+      height: 812px;
+      background: url('https://picsum.photos/400/800') center/cover no-repeat;
+      border-radius: 25px;
+      overflow: hidden;
+      position: relative;
+      border: 3px solid #333;
+    }
+
+    /* Story Progress Bar */
+    .story-progress {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      right: 8px;
+      height: 2px;
+      display: flex;
+      gap: 3px;
+      z-index: 20;
+    }
+
+    .progress-segment {
+      flex: 1;
+      background: rgba(255,255,255,0.3);
+      border-radius: 1px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: white;
+      animation: progress 5s linear forwards;
+    }
+
+    @keyframes progress {
+      from { width: 0%; }
+      to { width: 100%; }
+    }
+
+    /* Header (profile + username + icons) */
+    .story-header {
+      position: absolute;
+      top: 18px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 15;
+      color: white;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 2px solid white;
+    }
+
+    .user-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .user-details {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.2;
+    }
+
+    .username {
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .timestamp {
+      font-size: 12px;
+      color: rgba(255,255,255,0.8);
+    }
+
+    .story-actions {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .action-icon {
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="phone-container">
+
+    <!-- Progress Bar (multiple segments supported) -->
+    <div class="story-progress">
+      <div class="progress-segment"><div class="progress-fill"></div></div>
+      <div class="progress-segment"></div>
+      <div class="progress-segment"></div>
+    </div>
+
+    <!-- Header -->
+    <div class="story-header">
+      <div class="user-info">
+        <div class="user-avatar">
+          <img src="https://i.pravatar.cc/150?img=5" alt="avatar">
+        </div>
+        <div class="user-details">
+          <div class="username">Juli ☀️</div>
+          <div class="timestamp">Aug 26 at 10:52 PM</div>
+        </div>
+      </div>
+      <div class="story-actions">
+        <div class="action-icon">🔇</div>
+        <div class="action-icon">⋮</div>
+      </div>
+    </div>
+    
+  </div>
+</body>
+</html>
