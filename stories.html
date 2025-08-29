@@ -1,5 +1,5 @@
 
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -40,30 +40,20 @@
       flex: 1;
       position: relative;
       background: url('https://picsum.photos/400/800') center/cover no-repeat;
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* A new spacer element to push content down */
-    .story-spacer {
-      flex-grow: 1;
-    }
-
-    /* This wrapper now has relative positioning */
-    .story-elements-wrapper {
-      position: relative; /* Key change here */
-      display: flex;
-      flex-direction: column;
-      gap: 8px; /* Gap between progress and header */
-      padding: 8px 12px;
+      min-height: 400px;
     }
 
     /* Progress Bar */
     .story-progress {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      right: 8px;
       height: 2px;
       display: flex;
       gap: 3px;
       z-index: 20;
+      transition: top 0.3s ease;
     }
 
     .progress-segment {
@@ -87,11 +77,16 @@
 
     /* Header */
     .story-header {
+      position: absolute;
+      top: 16px;
+      left: 12px;
+      right: 12px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       z-index: 15;
       color: white;
+      transition: top 0.3s ease;
     }
 
     .user-info {
@@ -155,6 +150,7 @@
       gap: 12px;
       z-index: 20;
       flex-shrink: 0;
+      transition: padding 0.3s ease;
     }
 
     .reply-box {
@@ -202,9 +198,14 @@
 
     /* Mobile Responsive Adjustments */
     @media (max-width: 480px) {
-      .story-elements-wrapper {
-        /* Pushes the wrapper down from the top on mobile */
-        top: 80px;
+      .story-progress {
+        top: 100px;
+      }
+      .story-header {
+        top: 120px;
+      }
+      .reply-section {
+        padding-bottom: 12px;
       }
     }
   </style>
@@ -212,41 +213,43 @@
 <body>
   <div class="phone-container">
 
+    <!-- Story content -->
     <div class="story-content">
-      <div class="story-spacer"></div>
+      <!-- Progress Bar -->
+      <div class="story-progress">
+        <div class="progress-segment"><div class="progress-fill"></div></div>
+        <div class="progress-segment"></div>
+        <div class="progress-segment"></div>
+      </div>
 
-      <div class="story-elements-wrapper">
-        <div class="story-progress">
-          <div class="progress-segment"><div class="progress-fill"></div></div>
-          <div class="progress-segment"></div>
-          <div class="progress-segment"></div>
+      <!-- Header -->
+      <div class="story-header">
+        <div class="user-info">
+          <div class="user-avatar">
+            <img src="https://i.pravatar.cc/150?img=5" alt="avatar">
+          </div>
+          <div class="user-details">
+            <div class="username">Juli ☀️</div>
+            <div class="timestamp">Aug 26 at 10:52 PM</div>
+          </div>
         </div>
-  
-        <div class="story-header">
-          <div class="user-info">
-            <div class="user-avatar">
-              <img src="https://i.pravatar.cc/150?img=5" alt="avatar">
-            </div>
-            <div class="user-details">
-              <div class="username">Juli ☀️</div>
-              <div class="timestamp">Aug 26 at 10:52 PM</div>
-            </div>
-          </div>
-          <div class="story-actions">
-            <div class="action-icon">🔇</div>
-            <div class="action-icon">⋮</div>
-          </div>
+        <div class="story-actions">
+          <div class="action-icon">🔇</div>
+          <div class="action-icon">⋮</div>
         </div>
       </div>
     </div>
 
+    <!-- Reply Section -->
     <div class="reply-section">
       <div class="reply-box">Reply privately...</div>
       <div class="reply-actions">
+        <!-- Share Icon -->
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
           <path d="M4 12v-2a8 8 0 0 1 8-8h1v2h-1a6 6 0 0 0-6 6v2H4z"/>
           <path d="M20 12l-6-6v4H9v4h5v4l6-6z"/>
         </svg>
+        <!-- Heart Icon -->
         <svg class="heart" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
           <path d="M12 21s-6-4.35-9-8.35C-1.5 8.5 3 2.5 7.5 5.5 9.24 6.68 12 9 12 9s2.76-2.32 4.5-3.5C21 2.5 25.5 8.5 21 12.65 18 16.65 12 21 12 21z"/>
         </svg>
@@ -260,6 +263,66 @@
     heart.addEventListener("click", () => {
       heart.classList.toggle("active");
     });
+
+    // Dynamic resize fix for story-content with debouncing
+    let resizeTimeout;
+    
+    function updateLayout() {
+      const storyContent = document.querySelector('.story-content');
+      const phoneContainer = document.querySelector('.phone-container');
+      const replySection = document.querySelector('.reply-section');
+      
+      // Force a reflow to ensure accurate measurements
+      phoneContainer.offsetHeight;
+      replySection.offsetHeight;
+      
+      const availableHeight = phoneContainer.clientHeight - replySection.offsetHeight;
+      storyContent.style.height = availableHeight + 'px';
+      
+      // Also trigger CSS transitions by adding/removing a class
+      document.body.classList.add('layout-updating');
+      requestAnimationFrame(() => {
+        document.body.classList.remove('layout-updating');
+      });
+    }
+
+    // Debounced resize handler to improve performance
+    function handleResize() {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(updateLayout, 100);
+    }
+
+    // Initial calculation with slight delay to ensure DOM is ready
+    setTimeout(updateLayout, 50);
+
+    // Multiple event listeners for different scenarios
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', () => {
+      setTimeout(updateLayout, 200); // Delay for orientation change
+    });
+    
+    // ResizeObserver for more reliable detection of size changes
+    if (window.ResizeObserver) {
+      const resizeObserver = new ResizeObserver(entries => {
+        handleResize();
+      });
+      
+      resizeObserver.observe(document.querySelector('.phone-container'));
+      resizeObserver.observe(document.querySelector('.reply-section'));
+    }
+
+    // MediaQuery listener for responsive breakpoint changes
+    const mediaQuery = window.matchMedia('(max-width: 480px)');
+    mediaQuery.addEventListener('change', updateLayout);
+    
+    // Fallback: periodic check (less ideal but ensures it works)
+    let lastWidth = window.innerWidth;
+    setInterval(() => {
+      if (window.innerWidth !== lastWidth) {
+        lastWidth = window.innerWidth;
+        updateLayout();
+      }
+    }, 500);
   </script>
 </body>
 </html>
