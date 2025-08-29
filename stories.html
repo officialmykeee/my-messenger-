@@ -35,23 +35,24 @@
       flex-direction: column;
     }
 
-    /* Story content wrapper */
+    /* Story image wrapper */
     .story-content {
       flex: 1;
-      background: url('https://picsum.photos/400/800') center/cover no-repeat;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-start;
-      padding: 8px 12px;
       position: relative;
+      background: url('https://picsum.photos/400/800') center/cover no-repeat;
+      min-height: 400px; /* ensures proper height during resize */
     }
 
     /* Progress Bar */
     .story-progress {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      right: 8px;
+      height: 2px;
       display: flex;
       gap: 3px;
-      height: 2px;
-      margin-bottom: 8px;
+      z-index: 20;
     }
 
     .progress-segment {
@@ -75,11 +76,15 @@
 
     /* Header */
     .story-header {
+      position: absolute;
+      top: 16px;
+      left: 12px;
+      right: 12px;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      z-index: 15;
       color: white;
-      margin-bottom: auto; /* pushes content down */
     }
 
     .user-info {
@@ -133,7 +138,7 @@
       cursor: pointer;
     }
 
-    /* Reply Section (black background) */
+    /* Reply Section */
     .reply-section {
       background: #000;
       padding: 12px;
@@ -141,8 +146,8 @@
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      flex-shrink: 0;
       z-index: 20;
+      flex-shrink: 0;
     }
 
     .reply-box {
@@ -188,16 +193,16 @@
       100% { transform: scale(1); }
     }
 
-    /* Mobile adjustments */
+    /* Mobile Responsive Adjustments */
     @media (max-width: 480px) {
-      .story-content {
-        padding: 12px 12px 0 12px;
-      }
       .story-progress {
-        margin-bottom: 12px;
+        top: 100px;
       }
       .story-header {
-        margin-bottom: auto;
+        top: 120px;
+      }
+      .reply-section {
+        padding-bottom: 12px;
       }
     }
   </style>
@@ -255,6 +260,20 @@
     heart.addEventListener("click", () => {
       heart.classList.toggle("active");
     });
+
+    // Dynamic resize fix for story-content
+    function updateLayout() {
+      const storyContent = document.querySelector('.story-content');
+      const phoneContainer = document.querySelector('.phone-container');
+      const replySection = document.querySelector('.reply-section');
+      storyContent.style.height = (phoneContainer.clientHeight - replySection.offsetHeight) + 'px';
+    }
+
+    // Initial calculation
+    updateLayout();
+
+    // Recalculate on resize
+    window.addEventListener('resize', updateLayout);
   </script>
 </body>
 </html>
