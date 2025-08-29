@@ -43,7 +43,7 @@
       min-height: 400px;
     }
 
-    /* Progress Bar */
+    /* Progress Bar - Default positioning */
     .story-progress {
       position: absolute;
       top: 8px;
@@ -54,6 +54,11 @@
       gap: 3px;
       z-index: 20;
       transition: top 0.3s ease;
+    }
+
+    /* Progress Bar - Mobile positioning via class */
+    .mobile-layout .story-progress {
+      top: 100px !important;
     }
 
     .progress-segment {
@@ -75,7 +80,7 @@
       to { width: 100%; }
     }
 
-    /* Header */
+    /* Header - Default positioning */
     .story-header {
       position: absolute;
       top: 16px;
@@ -87,6 +92,11 @@
       z-index: 15;
       color: white;
       transition: top 0.3s ease;
+    }
+
+    /* Header - Mobile positioning via class */
+    .mobile-layout .story-header {
+      top: 120px !important;
     }
 
     .user-info {
@@ -140,7 +150,7 @@
       cursor: pointer;
     }
 
-    /* Reply Section */
+    /* Reply Section - Default */
     .reply-section {
       background: #000;
       padding: 12px;
@@ -151,6 +161,11 @@
       z-index: 20;
       flex-shrink: 0;
       transition: padding 0.3s ease;
+    }
+
+    /* Reply Section - Mobile padding via class */
+    .mobile-layout .reply-section {
+      padding-bottom: 12px !important;
     }
 
     .reply-box {
@@ -196,7 +211,7 @@
       100% { transform: scale(1); }
     }
 
-    /* Mobile Responsive Adjustments */
+    /* Keep original media query as fallback */
     @media (max-width: 480px) {
       .story-progress {
         top: 100px;
@@ -264,65 +279,75 @@
       heart.classList.toggle("active");
     });
 
-    // Dynamic resize fix for story-content with debouncing
-    let resizeTimeout;
-    
+    // Function to check viewport width and apply mobile layout
+    function checkMobileLayout() {
+      const phoneContainer = document.querySelector('.phone-container');
+      const isMobile = window.innerWidth <= 480;
+      
+      if (isMobile) {
+        phoneContainer.classList.add('mobile-layout');
+      } else {
+        phoneContainer.classList.remove('mobile-layout');
+      }
+      
+      // Force layout recalculation
+      updateLayout();
+    }
+
+    // Dynamic resize fix for story-content
     function updateLayout() {
       const storyContent = document.querySelector('.story-content');
       const phoneContainer = document.querySelector('.phone-container');
       const replySection = document.querySelector('.reply-section');
       
-      // Force a reflow to ensure accurate measurements
-      phoneContainer.offsetHeight;
-      replySection.offsetHeight;
+      // Force browser to recalculate styles
+      phoneContainer.style.display = 'none';
+      phoneContainer.offsetHeight; // Trigger reflow
+      phoneContainer.style.display = 'flex';
       
       const availableHeight = phoneContainer.clientHeight - replySection.offsetHeight;
       storyContent.style.height = availableHeight + 'px';
-      
-      // Also trigger CSS transitions by adding/removing a class
-      document.body.classList.add('layout-updating');
-      requestAnimationFrame(() => {
-        document.body.classList.remove('layout-updating');
-      });
     }
 
-    // Debounced resize handler to improve performance
+    // Initial check
+    checkMobileLayout();
+
+    // Comprehensive event handling
+    let resizeTimeout;
     function handleResize() {
       clearTimeout(resizeTimeout);
-      resizeTimeout = setTimeout(updateLayout, 100);
+      resizeTimeout = setTimeout(() => {
+        checkMobileLayout();
+      }, 50);
     }
 
-    // Initial calculation with slight delay to ensure DOM is ready
-    setTimeout(updateLayout, 50);
-
-    // Multiple event listeners for different scenarios
+    // Multiple event listeners for all resize scenarios
     window.addEventListener('resize', handleResize);
     window.addEventListener('orientationchange', () => {
-      setTimeout(updateLayout, 200); // Delay for orientation change
+      setTimeout(checkMobileLayout, 200);
+    });
+
+    // Media query listener for breakpoint changes
+    const mq = window.matchMedia('(max-width: 480px)');
+    mq.addEventListener('change', checkMobileLayout);
+
+    // Mutation observer to catch any DOM changes
+    const observer = new MutationObserver(() => {
+      setTimeout(checkMobileLayout, 100);
     });
     
-    // ResizeObserver for more reliable detection of size changes
-    if (window.ResizeObserver) {
-      const resizeObserver = new ResizeObserver(entries => {
-        handleResize();
-      });
-      
-      resizeObserver.observe(document.querySelector('.phone-container'));
-      resizeObserver.observe(document.querySelector('.reply-section'));
-    }
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['style', 'class']
+    });
 
-    // MediaQuery listener for responsive breakpoint changes
-    const mediaQuery = window.matchMedia('(max-width: 480px)');
-    mediaQuery.addEventListener('change', updateLayout);
-    
-    // Fallback: periodic check (less ideal but ensures it works)
-    let lastWidth = window.innerWidth;
-    setInterval(() => {
-      if (window.innerWidth !== lastWidth) {
-        lastWidth = window.innerWidth;
-        updateLayout();
-      }
-    }, 500);
+    // Periodic fallback check
+    setInterval(checkMobileLayout, 1000);
+
+    // Additional fallback for dev tools responsive mode
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(checkMobileLayout, 100);
+    });
   </script>
 </body>
 </html>
