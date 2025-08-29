@@ -1,4 +1,5 @@
-<!DOCTYPE html>
+
+  <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -31,22 +32,34 @@
       border: 2px solid #333;
       background: #000;
       display: flex;
-      flex-direction: column; /* This is the key change */
+      flex-direction: column;
     }
 
     /* Story image wrapper */
     .story-content {
-      flex-grow: 1; /* This is the key change */
+      flex: 1;
       position: relative;
       background: url('https://picsum.photos/400/800') center/cover no-repeat;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* A new spacer element to push content down */
+    .story-spacer {
+      flex-grow: 1;
+    }
+
+    /* This wrapper now has relative positioning */
+    .story-elements-wrapper {
+      position: relative; /* Key change here */
+      display: flex;
+      flex-direction: column;
+      gap: 8px; /* Gap between progress and header */
+      padding: 8px 12px;
     }
 
     /* Progress Bar */
     .story-progress {
-      position: absolute;
-      top: 8px;
-      left: 8px;
-      right: 8px;
       height: 2px;
       display: flex;
       gap: 3px;
@@ -74,10 +87,6 @@
 
     /* Header */
     .story-header {
-      position: absolute;
-      top: 16px;
-      left: 12px;
-      right: 12px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -193,11 +202,9 @@
 
     /* Mobile Responsive Adjustments */
     @media (max-width: 480px) {
-      .story-progress {
-        top: 100px;
-      }
-      .story-header {
-        top: 120px;
+      .story-elements-wrapper {
+        /* Pushes the wrapper down from the top on mobile */
+        top: 80px;
       }
     }
   </style>
@@ -206,25 +213,29 @@
   <div class="phone-container">
 
     <div class="story-content">
-      <div class="story-progress">
-        <div class="progress-segment"><div class="progress-fill"></div></div>
-        <div class="progress-segment"></div>
-        <div class="progress-segment"></div>
-      </div>
+      <div class="story-spacer"></div>
 
-      <div class="story-header">
-        <div class="user-info">
-          <div class="user-avatar">
-            <img src="https://i.pravatar.cc/150?img=5" alt="avatar">
-          </div>
-          <div class="user-details">
-            <div class="username">Juli ☀️</div>
-            <div class="timestamp">Aug 26 at 10:52 PM</div>
-          </div>
+      <div class="story-elements-wrapper">
+        <div class="story-progress">
+          <div class="progress-segment"><div class="progress-fill"></div></div>
+          <div class="progress-segment"></div>
+          <div class="progress-segment"></div>
         </div>
-        <div class="story-actions">
-          <div class="action-icon">🔇</div>
-          <div class="action-icon">⋮</div>
+  
+        <div class="story-header">
+          <div class="user-info">
+            <div class="user-avatar">
+              <img src="https://i.pravatar.cc/150?img=5" alt="avatar">
+            </div>
+            <div class="user-details">
+              <div class="username">Juli ☀️</div>
+              <div class="timestamp">Aug 26 at 10:52 PM</div>
+            </div>
+          </div>
+          <div class="story-actions">
+            <div class="action-icon">🔇</div>
+            <div class="action-icon">⋮</div>
+          </div>
         </div>
       </div>
     </div>
@@ -252,4 +263,3 @@
   </script>
 </body>
 </html>
-
