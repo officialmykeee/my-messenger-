@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messages App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f3f4f6;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            max-width: 384px;
+            margin: 0 auto;
+            background-color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header styles */
+        .header {
+            background-color: white;
+            padding: 12px 16px;
+            position: sticky;
+            top: 0;
+            z-index: 20;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: black;
+        }
+
+        .header-icons {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .icon {
+            width: 24px;
+            height: 24px;
+            color: #374151;
+        }
+
+        .messages-icon {
+            color: #3b82f6;
+            fill: #3b82f6;
+        }
+
+        /* Stories section */
+        .stories-container {
+            background-color: white;
+            padding: 12px 0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            position: sticky;
+            top: 48px;
+            z-index: 19;
+            margin-top: -1px;
+        }
+
+        .stories-scroll {
+            overflow-x: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .stories-scroll::-webkit-scrollbar {
+            display: none;
+        }
+
+        .stories-list {
+            display: flex;
+            gap: 16px;
+            padding: 0 16px;
+            width: max-content;
+        }
+
+        .story-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+
+        .story-avatar-container {
+            position: relative;
+        }
+
+        .story-avatar-ring {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            padding: 2px;
+        }
+
+        .story-avatar-ring.your-story {
+            background-color: #d1d5db;
+        }
+
+        .story-avatar-ring.has-story {
+            background: linear-gradient(45deg, #fbbf24, #ef4444, #a855f7);
+        }
+
+        .story-avatar-bg {
+            width: 100%;
+            height: 100%;
+            background-color: white;
+            border-radius: 50%;
+            padding: 2px;
+        }
+
+        .story-avatar {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .story-plus {
+            position: absolute;
+            bottom: -4px;
+            right: -4px;
+            width: 24px;
+            height: 24px;
+            background-color: #3b82f6;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid white;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .story-username {
+            font-size: 12px;
+            color: #374151;
+            text-align: center;
+            max-width: 70px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Chat list styles */
+        .chat-list {
+            background-color: white;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .chat-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: background-color 0.1s;
+            background-color: white;
+        }
+
+        .chat-item:first-child {
+            padding-top: 20px;
+        }
+
+        .chat-item:hover {
+            background-color: #f9fafb;
+        }
+
+        .chat-item.pressed {
+            background-color: #e5e7eb;
+        }
+
+        .chat-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .chat-avatar-container {
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .chat-avatar {
+            width: 48px;
+            height: 48px;
+            background-color: #9ca3af;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .online-indicator {
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            width: 14px;
+            height: 14px;
+            background-color: #10b981;
+            border: 2px solid white;
+            border-radius: 50%;
+        }
+
+        .chat-details {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .chat-header {
+            display: flex;
+            align-items: center;
+            justify-content: between;
+            margin-bottom: 2px;
+        }
+
+        .chat-name {
+            font-weight: 600;
+            color: black;
+            font-size: 16px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1;
+        }
+
+        .chat-meta {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-left: auto;
+        }
+
+        .chat-timestamp {
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        .unread-badge {
+            background-color: #3b82f6;
+            color: white;
+            font-size: 12px;
+            font-weight: 500;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 4px;
+        }
+
+        .sent-indicator {
+            width: 16px;
+            height: 16px;
+            margin-left: 4px;
+        }
+
+        .chat-message {
+            font-size: 14px;
+            color: #4b5563;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .chat-message.unread {
+            color: black;
+            font-weight: 500;
+        }
+
+        /* Skeleton loading styles */
+        .skeleton {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            background-color: #e5e7eb;
+            border-radius: 4px;
+        }
+
+        .skeleton-circle {
+            border-radius: 50%;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        /* Stories skeleton styles */
+        .skeleton-stories-container {
+            background-color: white;
+            padding: 12px 0;
+        }
+
+        .skeleton-stories-list {
+            display: flex;
+            gap: 16px;
+            padding: 0 16px;
+            width: max-content;
+        }
+
+        .skeleton-story-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+
+        .skeleton-story-avatar {
+            width: 64px;
+            height: 64px;
+            background-color: #e5e7eb;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .skeleton-story-name {
+            height: 12px;
+            width: 50px;
+            background-color: #e5e7eb;
+            border-radius: 3px;
+        }
+
+        /* Chat skeleton styles */
+        .skeleton-chat-item {
+            padding: 12px 16px;
+        }
+
+        .skeleton-chat-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .skeleton-avatar {
+            width: 48px;
+            height: 48px;
+            background-color: #e5e7eb;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .skeleton-details {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .skeleton-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .skeleton-name {
+            height: 14px;
+            background-color: #e5e7eb;
+            border-radius: 3px;
+            width: 120px;
+        }
+
+        .skeleton-time {
+            height: 12px;
+            background-color: #e5e7eb;
+            border-radius: 3px;
+            width: 50px;
+        }
+
+        .skeleton-message {
+            height: 12px;
+            background-color: #e5e7eb;
+            border-radius: 3px;
+            width: 200px;
+        }
+
+        .skeleton-message.short {
+            width: 150px;
+        }
+
+        .skeleton-message.medium {
+            width: 180px;
+        }
+
+        .skeleton-message.long {
+            width: 220px;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-content">
+                <svg class="icon messages-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: #749cbf; fill: #749cbf;">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                <h1 class="header-title">Messages</h1>
+                <div class="header-icons">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path d="M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0Zm-1.5 0a2.5 2.5 0 1 0-5 0 2.5 2.5 0 0 0 5 0Z"></path><path d="M12 1c.266 0 .532.009.797.028.763.055 1.345.617 1.512 1.304l.352 1.45c.019.078.09.171.225.221.247.089.49.19.728.302.13.061.246.044.315.002l1.275-.776c.603-.368 1.411-.353 1.99.147.402.349.78.726 1.128 1.129.501.578.515 1.386.147 1.99l-.776 1.274c-.042.069-.058.185.002.315.112.238.213.481.303.728.048.135.142.205.22.225l1.45.352c.687.167 1.249.749 1.303 1.512.038.531.038 1.063 0 1.594-.054.763-.616 1.345-1.303 1.512l-1.45.352c-.078.019-.171.09-.221.225-.089.248-.19.491-.302.728-.061.13-.044.246-.002.315l.776 1.275c.368.603.353 1.411-.147 1.99-.349.402-.726.78-1.129 1.128-.578.501-1.386.515-1.99.147l-1.274-.776c-.069-.042-.185-.058-.314.002a8.606 8.606 0 0 1-.729.303c-.135.048-.205.142-.225.22l-.352 1.45c-.167.687-.749 1.249-1.512 1.303-.531.038-1.063.038-1.594 0-.763-.054-1.345-.616-1.512-1.303l-.352-1.45c-.019-.078-.09-.171-.225-.221a8.138 8.138 0 0 1-.728-.302c-.13-.061-.246-.044-.315-.002l-1.275.776c-.603.368-1.411.353-1.99-.147-.402-.349-.78-.726-1.128-1.129-.501-.578-.515-1.386-.147-1.99l.776-1.274c.042-.069.058-.185-.002-.314a8.606 8.606 0 0 1-.303-.729c-.048-.135-.142-.205-.22-.225l-1.45-.352c-.687-.167-1.249-.749-1.304-1.512a11.158 11.158 0 0 1 0-1.594c.055-.763.617-1.345 1.304-1.512l1.45-.352c.078-.019.171-.09.221-.225.089-.248.19-.491.302-.728.061-.13.044-.246.002-.315l-.776-1.275c-.368-.603-.353-1.411.147-1.99.349-.402.726-.78 1.129-1.128.578-.501 1.386-.515 1.99-.147l1.274.776c.069.042.185.058.315-.002.238-.112.481-.213.728-.303.135-.048.205-.142.225-.22l.352-1.45c.167-.687.749-1.249 1.512-1.304C11.466 1.01 11.732 1 12 1Zm-.69 1.525c-.055.004-.135.05-.161.161l-.353 1.45a1.832 1.832 0 0 1-1.172 1.277 7.147 7.147 0 0 0-.6.249 1.833 1.833 0 0 1-1.734-.074l-1.274-.776c-.098-.06-.186-.036-.228 0a9.774 9.774 0 0 0-.976.976c-.036.042-.06.131 0 .228l.776 1.274c.314.529.342 1.18.074 1.734a7.147 7.147 0 0 0-.249.6 1.831 1.831 0 0 1-1.278 1.173l-1.45.351c-.11.027-.156.107-.16.162a9.63 9.63 0 0 0 0 1.38c.004.055.05.135.161.161l1.45.353a1.832 1.832 0 0 1 1.277 1.172c.074.204.157.404.249.6.268.553.24 1.204-.074 1.733l-.776 1.275c-.06.098-.036.186 0 .228.301.348.628.675.976.976.042.036.131.06.228 0l1.274-.776a1.83 1.83 0 0 1 1.734-.075c.196.093.396.176.6.25a1.831 1.831 0 0 1 1.173 1.278l.351 1.45c.027.11.107.156.162.16a9.63 9.63 0 0 0 1.38 0c.055-.004.135-.05.161-.161l.353-1.45a1.834 1.834 0 0 1 1.172-1.278 6.82 6.82 0 0 0 .6-.248 1.831 1.831 0 0 1 1.733.074l1.275.776c.098.06.186.036.228 0 .348-.301.675-.628.976-.976.036-.042.06-.131 0-.228l-.776-1.275a1.834 1.834 0 0 1-.075-1.733c.093-.196.176-.396.25-.6a1.831 1.831 0 0 1 1.278-1.173l1.45-.351c.11-.027.156-.107.16-.162a9.63 9.63 0 0 0 0-1.38c-.004-.055-.05-.135-.161-.161l-1.45-.353c-.626-.152-1.08-.625-1.278-1.172a6.576 6.576 0 0 0-.248-.6 1.833 1.833 0 0 1 .074-1.734l.776-1.274c.06-.098.036-.186 0-.228a9.774 9.774 0 0 0-.976-.976c-.042-.036-.131-.06-.228 0l-1.275.776a1.831 1.831 0 0 1-1.733.074 6.88 6.88 0 0 0-.6-.249 1.835 1.835 0 0 1-1.173-1.278l-.351-1.45c-.027-.11-.107-.156-.162-.16a9.63 9.63 0 0 0-1.38 0Z"></path></svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stories -->
+        <div class="stories-container" id="storiesContainer">
+            <div class="stories-scroll">
+                <div class="stories-list" id="storiesList">
+                    <!-- Stories will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Stories Loading skeleton (hidden by default) -->
+        <div class="skeleton-stories-container hidden" id="storiesLoadingSkeleton">
+            <div class="stories-scroll">
+                <div class="skeleton-stories-list" id="skeletonStoriesList">
+                    <!-- Skeleton stories will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat List -->
+        <div class="chat-list" id="chatList">
+            <!-- Chat items will be populated by JavaScript -->
+        </div>
+
+        <!-- Loading skeleton (hidden by default) -->
+        <div class="chat-list hidden" id="loadingSkeleton">
+            <!-- Skeleton items will be populated by JavaScript -->
+        </div>
+    </div>
+
+    <script>
+        // Stories data
+        const stories = [
+            {
+                id: "your-story",
+                username: "Your story",
+                avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face",
+                hasNewStory: false,
+                isYourStory: true,
+            },
+            {
+                id: "1",
+                username: "Emily",
+                avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&crop=face",
+                hasNewStory: true,
+            },
+            {
+                id: "2",
+                username: "Michael",
+                avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face",
+                hasNewStory: true,
+            },
+            {
+                id: "3",
+                username: "Sarah",
+                avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&crop=face",
+                hasNewStory: true,
+            },
+            {
+                id: "4",
+                username: "David",
+                avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face",
+                hasNewStory: true,
+            },
+            {
+                id: "5",
+                username: "Jessica",
+                avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&crop=face",
+                hasNewStory: true,
+            },
+        ];
+
+        // Chat data with more messages
+        const chats = [
+            {
+                id: "1",
+                name: "Emma Wilson",
+                lastMessage: "Hey! Are we still on for dinner tonight?",
+                timestamp: "2:34 PM",
+                avatar: "EW",
+                unreadCount: 2,
+                isOnline: true,
+            },
+            {
+                id: "2",
+                name: "Family",
+                lastMessage: "Mom: Don't forget about Sunday brunch!",
+                timestamp: "1:15 PM",
+                avatar: "F",
+                unreadCount: 5,
+            },
+            {
+                id: "3",
+                name: "Alex Chen",
+                lastMessage: "Thanks for the help with the project 👍",
+                timestamp: "11:45 AM",
+                avatar: "AC",
+                isOnline: true,
+                isSent: true,
+            },
+            {
+                id: "4",
+                name: "Sarah Johnson",
+                lastMessage: "The photos from the trip are amazing!",
+                timestamp: "Yesterday",
+                avatar: "SJ",
+            },
+            {
+                id: "5",
+                name: "Work Team",
+                lastMessage: "You: Sounds good, see you tomorrow",
+                timestamp: "Yesterday",
+                avatar: "WT",
+                isSent: true,
+            },
+            {
+                id: "6",
+                name: "David Park",
+                lastMessage: "Let's catch up this weekend",
+                timestamp: "Monday",
+                avatar: "DP",
+            },
+            {
+                id: "7",
+                name: "Coffee Chat",
+                lastMessage: "Lisa: That new café downtown is great!",
+                timestamp: "Sunday",
+                avatar: "CC",
+                unreadCount: 1,
+            },
+            {
+                id: "8",
+                name: "Mom",
+                lastMessage: "Love you sweetie ❤️",
+                timestamp: "Saturday",
+                avatar: "M",
+                isOnline: true,
+            },
+            {
+                id: "9",
+                name: "John Miller",
+                lastMessage: "Can you send me the presentation slides?",
+                timestamp: "Friday",
+                avatar: "JM",
+                unreadCount: 3,
+            },
+            {
+                id: "10",
+                name: "Study Group",
+                lastMessage: "Meeting tomorrow at 3 PM in library",
+                timestamp: "Thursday",
+                avatar: "SG",
+            },
+            {
+                id: "11",
+                name: "Lisa Wang",
+                lastMessage: "Happy birthday! Hope you have a great day 🎉",
+                timestamp: "Wednesday",
+                avatar: "LW",
+                isOnline: true,
+            },
+            {
+                id: "12",
+                name: "Gym Buddy",
+                lastMessage: "Ready for leg day tomorrow?",
+                timestamp: "Tuesday",
+                avatar: "GB",
+                isSent: true,
+            },
+            {
+                id: "13",
+                name: "Rachel Green",
+                lastMessage: "The weather is perfect for hiking today!",
+                timestamp: "Monday",
+                avatar: "RG",
+                unreadCount: 1,
+            },
+            {
+                id: "14",
+                name: "Tech Support",
+                lastMessage: "Your issue has been resolved",
+                timestamp: "Last week",
+                avatar: "TS",
+            },
+            {
+                id: "15",
+                name: "Book Club",
+                lastMessage: "Next meeting: discussing chapter 5-8",
+                timestamp: "Last week",
+                avatar: "BC",
+                unreadCount: 2,
+            },
+            {
+                id: "16",
+                name: "Pizza Place",
+                lastMessage: "Your order is ready for pickup!",
+                timestamp: "Last week",
+                avatar: "PP",
+            },
+            {
+                id: "17",
+                name: "Jane Cooper",
+                lastMessage: "Thanks for the movie recommendation!",
+                timestamp: "2 weeks ago",
+                avatar: "JC",
+                isOnline: true,
+            },
+            {
+                id: "18",
+                name: "Basketball Team",
+                lastMessage: "Practice moved to 7 PM tonight",
+                timestamp: "2 weeks ago",
+                avatar: "BT",
+            },
+            {
+                id: "19",
+                name: "Dr. Smith",
+                lastMessage: "Your appointment is confirmed for next week",
+                timestamp: "2 weeks ago",
+                avatar: "DS",
+            },
+            {
+                id: "20",
+                name: "Mike Johnson",
+                lastMessage: "Let's grab lunch next time you're in town",
+                timestamp: "3 weeks ago",
+                avatar: "MJ",
+                isSent: true,
+            }
+        ];
+
+        // Function to render stories
+        function renderStories() {
+            const storiesList = document.getElementById('storiesList');
+            storiesList.innerHTML = '';
+
+            stories.forEach(story => {
+                const storyElement = document.createElement('div');
+                storyElement.className = 'story-item';
+
+                const avatarRingClass = story.isYourStory ? 'your-story' : (story.hasNewStory ? 'has-story' : 'your-story');
+
+                storyElement.innerHTML = `
+                    <div class="story-avatar-container">
+                        <div class="story-avatar-ring ${avatarRingClass}">
+                            <div class="story-avatar-bg">
+                                <img src="${story.avatar}" alt="${story.username}" class="story-avatar">
+                            </div>
+                        </div>
+                        ${story.isYourStory ? '<div class="story-plus">+</div>' : ''}
+                    </div>
+                    <span class="story-username">${story.username}</span>
+                `;
+
+                storiesList.appendChild(storyElement);
+            });
+        }
+
+        // Function to render chat items
+        function renderChats() {
+            const chatList = document.getElementById('chatList');
+            chatList.innerHTML = '';
+
+            chats.forEach(chat => {
+                const chatElement = document.createElement('div');
+                chatElement.className = 'chat-item';
+
+                const onlineIndicator = chat.isOnline ? '<div class="online-indicator"></div>' : '';
+                const unreadBadge = chat.unreadCount ? `<div class="unread-badge">${chat.unreadCount}</div>` : '';
+                const sentIndicator = chat.isSent && !chat.unreadCount ? `
+                    <div class="sent-indicator">
+                        <svg viewBox="0 0 16 16" style="width: 16px; height: 16px; color: #3b82f6; fill: currentColor;">
+                            <path d="M15.854 5.354L6.5 14.707a.5.5 0 0 1-.708 0L2.146 11.06a.5.5 0 1 1 .708-.708L6.5 13.998l8.646-8.646a.5.5 0 0 1 .708.708z"/>
+                        </svg>
+                    </div>
+                ` : '';
+
+                const messageClass = chat.unreadCount ? 'unread' : '';
+
+                chatElement.innerHTML = `
+                    <div class="chat-content">
+                        <div class="chat-avatar-container">
+                            <div class="chat-avatar">${chat.avatar}</div>
+                            ${onlineIndicator}
+                        </div>
+                        <div class="chat-details">
+                            <div class="chat-header">
+                                <h3 class="chat-name">${chat.name}</h3>
+                                <div class="chat-meta">
+                                    <span class="chat-timestamp">${chat.timestamp}</span>
+                                    ${unreadBadge}
+                                    ${sentIndicator}
+                                </div>
+                            </div>
+                            <p class="chat-message ${messageClass}">${chat.lastMessage}</p>
+                        </div>
+                    </div>
+                `;
+
+                // Add press effect
+                chatElement.addEventListener('mousedown', () => {
+                    chatElement.classList.add('pressed');
+                });
+
+                chatElement.addEventListener('mouseup', () => {
+                    chatElement.classList.remove('pressed');
+                });
+
+                chatElement.addEventListener('mouseleave', () => {
+                    chatElement.classList.remove('pressed');
+                });
+
+                chatList.appendChild(chatElement);
+            });
+        }
+
+        // Function to render stories skeleton loading
+        function renderStoriesSkeleton() {
+            const skeletonStoriesList = document.getElementById('skeletonStoriesList');
+            skeletonStoriesList.innerHTML = '';
+
+            for (let i = 0; i < 6; i++) {
+                const skeletonStoryElement = document.createElement('div');
+                skeletonStoryElement.className = 'skeleton-story-item';
+
+                skeletonStoryElement.innerHTML = `
+                    <div class="skeleton skeleton-story-avatar"></div>
+                    <div class="skeleton skeleton-story-name"></div>
+                `;
+
+                skeletonStoriesList.appendChild(skeletonStoryElement);
+            }
+        }
+
+        // Function to render skeleton loading
+        function renderSkeleton() {
+            const loadingSkeleton = document.getElementById('loadingSkeleton');
+            loadingSkeleton.innerHTML = '';
+
+            const messageWidths = ['short', 'medium', 'long', '', 'medium', 'short', 'long', ''];
+
+            for (let i = 0; i < 8; i++) {
+                const skeletonElement = document.createElement('div');
+                skeletonElement.className = 'skeleton-chat-item';
+
+                const messageClass = messageWidths[i] ? `skeleton-message ${messageWidths[i]}` : 'skeleton-message';
+
+                skeletonElement.innerHTML = `
+                    <div class="skeleton-chat-content">
+                        <div class="skeleton skeleton-avatar"></div>
+                        <div class="skeleton-details">
+                            <div class="skeleton-header">
+                                <div class="skeleton skeleton-name"></div>
+                                <div class="skeleton skeleton-time"></div>
+                            </div>
+                            <div class="skeleton ${messageClass}"></div>
+                        </div>
+                    </div>
+                `;
+
+                loadingSkeleton.appendChild(skeletonElement);
+            }
+        }
+
+        // Function to show loading state
+        function showLoading() {
+            // Hide real content
+            document.getElementById('storiesContainer').classList.add('hidden');
+            document.getElementById('chatList').classList.add('hidden');
+            
+            // Show skeleton content
+            document.getElementById('storiesLoadingSkeleton').classList.remove('hidden');
+            document.getElementById('loadingSkeleton').classList.remove('hidden');
+        }
+
+        // Function to hide loading state
+        function hideLoading() {
+            // Hide skeleton content
+            document.getElementById('storiesLoadingSkeleton').classList.add('hidden');
+            document.getElementById('loadingSkeleton').classList.add('hidden');
+            
+            // Show real content
+            document.getElementById('storiesContainer').classList.remove('hidden');
+            document.getElementById('chatList').classList.remove('hidden');
+        }
+
+        // Initialize the app
+        function init() {
+            renderStoriesSkeleton();
+            renderSkeleton();
+            
+            // Simulate loading
+            showLoading();
+            
+            setTimeout(() => {
+                hideLoading();
+                renderStories();
+                renderChats();
+            }, 1000);
+        }
+
+        // Start the app when the page loads
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
