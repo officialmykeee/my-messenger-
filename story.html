@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -22,16 +23,24 @@
     }
 
     .phone-container {
-      width: 375px;
-      height: 812px;
-      background: url('https://picsum.photos/400/800') center/cover no-repeat;
-      border-radius: 25px;
+      width: 100%;
+      max-width: 420px;
+      aspect-ratio: 9 / 19.5; /* keeps phone proportion */
+      border-radius: 20px;
       overflow: hidden;
       position: relative;
-      border: 3px solid #333;
+      border: 2px solid #333;
+      background: #000; /* ensures black behind reply section */
     }
 
-    /* Story Progress Bar */
+    /* Story Image area */
+    .story-image {
+      width: 100%;
+      height: calc(100% - 70px); /* reduce image height to leave space for reply bar */
+      background: url('https://picsum.photos/400/800') center/cover no-repeat;
+    }
+
+    /* Progress Bar */
     .story-progress {
       position: absolute;
       top: 8px;
@@ -62,10 +71,10 @@
       to { width: 100%; }
     }
 
-    /* Header (profile + username + icons) */
+    /* Header */
     .story-header {
       position: absolute;
-      top: 18px;
+      top: 16px;
       left: 12px;
       right: 12px;
       display: flex;
@@ -87,6 +96,7 @@
       border-radius: 50%;
       overflow: hidden;
       border: 2px solid white;
+      flex-shrink: 0;
     }
 
     .user-avatar img {
@@ -125,12 +135,84 @@
       cursor: pointer;
     }
 
+    /* Reply Section */
+    .reply-section {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #000; /* black background strip */
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      z-index: 20;
+    }
+
+    .reply-box {
+      flex: 1;
+      background: rgba(255,255,255,0.1);
+      border-radius: 25px;
+      padding: 10px 15px;
+      color: rgba(255,255,255,0.6);
+      font-size: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .reply-actions {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      flex-shrink: 0;
+    }
+
+    .reply-actions svg {
+      width: 24px;
+      height: 24px;
+      fill: none;
+      stroke: white;
+      stroke-width: 2;
+      cursor: pointer;
+      transition: 0.3s ease;
+    }
+
+    .heart.active {
+      fill: red;
+      stroke: red;
+      animation: heartBeat 0.4s ease;
+    }
+
+    @keyframes heartBeat {
+      0% { transform: scale(1); }
+      25% { transform: scale(1.3); }
+      50% { transform: scale(0.9); }
+      75% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+
+    /* 📱 Mobile Responsive Adjustments */
+    @media (max-width: 480px) {
+      .story-progress {
+        top: 31px;
+      }
+      .story-header {
+        top: 54px;
+      }
+      .reply-section {
+        bottom: 0;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="phone-container">
 
-    <!-- Progress Bar (multiple segments supported) -->
+    <div class="story-image"></div>
+
+    <!-- Progress Bar -->
     <div class="story-progress">
       <div class="progress-segment"><div class="progress-fill"></div></div>
       <div class="progress-segment"></div>
@@ -153,7 +235,30 @@
         <div class="action-icon">⋮</div>
       </div>
     </div>
-    
+
+    <!-- Reply Section -->
+    <div class="reply-section">
+      <div class="reply-box">Reply privately...</div>
+      <div class="reply-actions">
+        <!-- Share Icon -->
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path d="M4 12v-2a8 8 0 0 1 8-8h1v2h-1a6 6 0 0 0-6 6v2H4z"/>
+          <path d="M20 12l-6-6v4H9v4h5v4l6-6z"/>
+        </svg>
+        <!-- Heart Icon -->
+        <svg class="heart" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path d="M12 21s-6-4.35-9-8.35C-1.5 8.5 3 2.5 7.5 5.5 9.24 6.68 12 9 12 9s2.76-2.32 4.5-3.5C21 2.5 25.5 8.5 21 12.65 18 16.65 12 21 12 21z"/>
+        </svg>
+      </div>
+    </div>
+
   </div>
+
+  <script>
+    const heart = document.querySelector(".heart");
+    heart.addEventListener("click", () => {
+      heart.classList.toggle("active");
+    });
+  </script>
 </body>
 </html>
