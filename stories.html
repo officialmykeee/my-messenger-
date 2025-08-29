@@ -194,14 +194,15 @@
 
     /* 📱 Mobile Responsive Adjustments */
     @media (max-width: 480px) {
+      /* Use percentages for dynamic adjustment on resize */
       .story-progress {
-        top: 100px; /* moved down for mobile */
+        top: calc(8px + 5%); /* adapts to container height */
       }
       .story-header {
-        top: 120px; /* moved down for mobile */
+        top: calc(16px + 6%); /* adapts dynamically */
       }
       .reply-section {
-        padding-bottom: 12px; /* stays at bottom */
+        padding-bottom: 12px; /* stays pinned at bottom */
       }
     }
   </style>
