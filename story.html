@@ -204,6 +204,14 @@
       height: 24px;
       fill: #fff;
     }
+    /* Apply only on smaller screens (example: max-width 768px) */
+@media (max-width: 768px) {
+  .story-container {
+    height: 78vh;   /* override */
+    top: -50px;     /* only inside media query */
+  }
+}
+    
   </style>
 </head>
 <body>
