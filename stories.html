@@ -25,7 +25,7 @@
     .phone-container {
       width: 100%;
       max-width: 420px;
-      aspect-ratio: 9 / 19.5;
+      aspect-ratio: 9 / 19.5; /* keeps phone proportion */
       border-radius: 20px;
       overflow: hidden;
       position: relative;
@@ -33,14 +33,15 @@
       background: #000;
       display: flex;
       flex-direction: column;
+      height: 100%; /* full container height */
     }
 
     /* Story image wrapper */
     .story-content {
-      flex: 1;
+      flex-grow: 1; /* fills all space above reply section */
+      min-height: 0; /* fixes flex shrinking issue */
       position: relative;
       background: url('https://picsum.photos/400/800') center/cover no-repeat;
-      min-height: 400px; /* ensures proper height during resize */
     }
 
     /* Progress Bar */
@@ -147,7 +148,7 @@
       justify-content: space-between;
       gap: 12px;
       z-index: 20;
-      flex-shrink: 0;
+      flex-shrink: 0; /* stays at bottom */
     }
 
     .reply-box {
@@ -260,20 +261,6 @@
     heart.addEventListener("click", () => {
       heart.classList.toggle("active");
     });
-
-    // Dynamic resize fix for story-content
-    function updateLayout() {
-      const storyContent = document.querySelector('.story-content');
-      const phoneContainer = document.querySelector('.phone-container');
-      const replySection = document.querySelector('.reply-section');
-      storyContent.style.height = (phoneContainer.clientHeight - replySection.offsetHeight) + 'px';
-    }
-
-    // Initial calculation
-    updateLayout();
-
-    // Recalculate on resize
-    window.addEventListener('resize', updateLayout);
   </script>
 </body>
 </html>
