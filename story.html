@@ -22,14 +22,28 @@
     }
 
     .story-container {
-      position: relative;
-      width: 100%;
-      max-width: 450px;
-      height: 83vh;
-      background: #000;
-      border-radius: 10px;
-      overflow: hidden;
-    }
+  position: relative;
+  width: 100%;
+  max-width: 450px;
+  height: 83vh;
+  background: #000;
+  border-radius: 10px;
+
+  /* IMPORTANT: hide both axes */
+  overflow: hidden;
+
+  /* Prevent the container's scroll gestures from propagating to the page (stops "rubber-band" / scroll chaining) */
+  overscroll-behavior: contain; /* or `none` to stop everything */
+
+  /* Mobile: stop default touch panning (use with caution — blocks touch defaults inside) */
+  touch-action: none;
+
+  box-sizing: border-box;
+}
+
+/* If you need to hide scrollbars (if any browser still shows them) */
+.story-container::-webkit-scrollbar { display: none; }
+.story-container { -ms-overflow-style: none; scrollbar-width: none; }
 
     /* Progress bars */
     .progress-bars {
