@@ -35,23 +35,23 @@
       flex-direction: column;
     }
 
-    /* Story image wrapper */
+    /* Story content wrapper */
     .story-content {
-      flex: 1; /* fills remaining space above reply section */
+      flex: 1;
       background: url('https://picsum.photos/400/800') center/cover no-repeat;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      padding: 8px 12px;
       position: relative;
     }
 
     /* Progress Bar */
     .story-progress {
-      position: absolute;
-      top: 8px;
-      left: 8px;
-      right: 8px;
-      height: 2px;
       display: flex;
       gap: 3px;
-      z-index: 20;
+      height: 2px;
+      margin-bottom: 8px;
     }
 
     .progress-segment {
@@ -75,15 +75,11 @@
 
     /* Header */
     .story-header {
-      position: absolute;
-      top: 16px;
-      left: 12px;
-      right: 12px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      z-index: 15;
       color: white;
+      margin-bottom: auto; /* pushes content down */
     }
 
     .user-info {
@@ -145,8 +141,8 @@
       align-items: center;
       justify-content: space-between;
       gap: 12px;
+      flex-shrink: 0;
       z-index: 20;
-      flex-shrink: 0; /* prevents shrinking */
     }
 
     .reply-box {
@@ -192,17 +188,16 @@
       100% { transform: scale(1); }
     }
 
-    /* 📱 Mobile Responsive Adjustments */
+    /* Mobile adjustments */
     @media (max-width: 480px) {
-      /* Use percentages for dynamic adjustment on resize */
+      .story-content {
+        padding: 12px 12px 0 12px;
+      }
       .story-progress {
-        top: calc(8px + 5%); /* adapts to container height */
+        margin-bottom: 12px;
       }
       .story-header {
-        top: calc(16px + 6%); /* adapts dynamically */
-      }
-      .reply-section {
-        padding-bottom: 12px; /* stays pinned at bottom */
+        margin-bottom: auto;
       }
     }
   </style>
