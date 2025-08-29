@@ -43,7 +43,7 @@
       min-height: 400px;
     }
 
-    /* Progress Bar - Default positioning */
+    /* Progress Bar */
     .story-progress {
       position: absolute;
       top: 8px;
@@ -53,12 +53,6 @@
       display: flex;
       gap: 3px;
       z-index: 20;
-      transition: top 0.3s ease;
-    }
-
-    /* Progress Bar - Mobile positioning via class */
-    .mobile-layout .story-progress {
-      top: 100px !important;
     }
 
     .progress-segment {
@@ -80,7 +74,7 @@
       to { width: 100%; }
     }
 
-    /* Header - Default positioning */
+    /* Header */
     .story-header {
       position: absolute;
       top: 16px;
@@ -91,12 +85,6 @@
       justify-content: space-between;
       z-index: 15;
       color: white;
-      transition: top 0.3s ease;
-    }
-
-    /* Header - Mobile positioning via class */
-    .mobile-layout .story-header {
-      top: 120px !important;
     }
 
     .user-info {
@@ -150,7 +138,7 @@
       cursor: pointer;
     }
 
-    /* Reply Section - Default */
+    /* Reply Section */
     .reply-section {
       background: #000;
       padding: 12px;
@@ -160,12 +148,6 @@
       gap: 12px;
       z-index: 20;
       flex-shrink: 0;
-      transition: padding 0.3s ease;
-    }
-
-    /* Reply Section - Mobile padding via class */
-    .mobile-layout .reply-section {
-      padding-bottom: 12px !important;
     }
 
     .reply-box {
@@ -209,19 +191,6 @@
       30% { transform: scale(1.4); }
       60% { transform: scale(0.85); }
       100% { transform: scale(1); }
-    }
-
-    /* Keep original media query as fallback */
-    @media (max-width: 480px) {
-      .story-progress {
-        top: 100px;
-      }
-      .story-header {
-        top: 120px;
-      }
-      .reply-section {
-        padding-bottom: 12px;
-      }
     }
   </style>
 </head>
@@ -279,74 +248,44 @@
       heart.classList.toggle("active");
     });
 
-    // Function to check viewport width and apply mobile layout
-    function checkMobileLayout() {
+    // Simple function to apply responsive positioning
+    function applyResponsiveLayout() {
+      const progress = document.querySelector('.story-progress');
+      const header = document.querySelector('.story-header');
+      const replySection = document.querySelector('.reply-section');
+      const storyContent = document.querySelector('.story-content');
       const phoneContainer = document.querySelector('.phone-container');
+      
       const isMobile = window.innerWidth <= 480;
       
       if (isMobile) {
-        phoneContainer.classList.add('mobile-layout');
+        // Mobile positioning
+        progress.style.top = '100px';
+        header.style.top = '120px';
+        replySection.style.paddingBottom = '12px';
       } else {
-        phoneContainer.classList.remove('mobile-layout');
+        // Desktop positioning
+        progress.style.top = '8px';
+        header.style.top = '16px';
+        replySection.style.paddingBottom = '12px';
       }
       
-      // Force layout recalculation
-      updateLayout();
+      // Update story content height
+      setTimeout(() => {
+        const availableHeight = phoneContainer.clientHeight - replySection.offsetHeight;
+        storyContent.style.height = availableHeight + 'px';
+      }, 10);
     }
 
-    // Dynamic resize fix for story-content
-    function updateLayout() {
-      const storyContent = document.querySelector('.story-content');
-      const phoneContainer = document.querySelector('.phone-container');
-      const replySection = document.querySelector('.reply-section');
-      
-      // Force browser to recalculate styles
-      phoneContainer.style.display = 'none';
-      phoneContainer.offsetHeight; // Trigger reflow
-      phoneContainer.style.display = 'flex';
-      
-      const availableHeight = phoneContainer.clientHeight - replySection.offsetHeight;
-      storyContent.style.height = availableHeight + 'px';
-    }
+    // Apply layout immediately
+    applyResponsiveLayout();
 
-    // Initial check
-    checkMobileLayout();
-
-    // Comprehensive event handling
-    let resizeTimeout;
-    function handleResize() {
-      clearTimeout(resizeTimeout);
-      resizeTimeout = setTimeout(() => {
-        checkMobileLayout();
-      }, 50);
-    }
-
-    // Multiple event listeners for all resize scenarios
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('orientationchange', () => {
-      setTimeout(checkMobileLayout, 200);
-    });
-
-    // Media query listener for breakpoint changes
-    const mq = window.matchMedia('(max-width: 480px)');
-    mq.addEventListener('change', checkMobileLayout);
-
-    // Mutation observer to catch any DOM changes
-    const observer = new MutationObserver(() => {
-      setTimeout(checkMobileLayout, 100);
-    });
+    // Handle window resize
+    window.addEventListener('resize', applyResponsiveLayout);
     
-    observer.observe(document.body, {
-      attributes: true,
-      attributeFilter: ['style', 'class']
-    });
-
-    // Periodic fallback check
-    setInterval(checkMobileLayout, 1000);
-
-    // Additional fallback for dev tools responsive mode
-    document.addEventListener('DOMContentLoaded', () => {
-      setTimeout(checkMobileLayout, 100);
+    // Handle orientation change
+    window.addEventListener('orientationchange', () => {
+      setTimeout(applyResponsiveLayout, 100);
     });
   </script>
 </body>
