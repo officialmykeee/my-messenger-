@@ -1,3 +1,476 @@
-/body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WhatsApp Story Clone</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      position: relative;
+    }
+
+    .story-container {
+      position: relative;
+      width: 100%;
+      max-width: 450px;
+      height: 83vh;
+      background: #000;
+      border-radius: 10px;
+      overflow: hidden;
+      overscroll-behavior: contain;
+      touch-action: none;
+      box-sizing: border-box;
+    }
+
+    .story-container::-webkit-scrollbar { display: none; }
+    .story-container { -ms-overflow-style: none; scrollbar-width: none; }
+
+    .progress-bars {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      display: flex;
+      gap: 5px;
+      z-index: 10;
+    }
+
+    .progress {
+      flex: 1;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 5px;
+      overflow: hidden;
+    }
+
+    .progress span {
+      display: block;
+      height: 100%;
+      width: 0%;
+      background: white;
+    }
+
+    .header {
+      position: absolute;
+      top: 20px;
+      left: 10px;
+      right: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #fff;
+      z-index: 10;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid rgba(255,255,255,0.3);
+    }
+
+    .info {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.2;
+    }
+
+    .username {
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .time {
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .story {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+    }
+
+    .story.active {
+      display: block;
+    }
+
+    .top-gradient {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 120px;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.6), rgba(0,0,0,0));
+      z-index: 5;
+    }
+
+    .controls {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      z-index: 20;
+    }
+
+    .control {
+      flex: 1;
+    }
+
+    .input-container {
+      position: fixed;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 450px;
+      padding: 0 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 30;
+    }
+
+    .input-field {
+      flex-grow: 1;
+      height: 40px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      color: #fff;
+    }
+
+    .input-field input {
+      background: transparent;
+      border: none;
+      color: #fff;
+      font-size: 14px;
+      width: 100%;
+    }
+
+    .input-field input::placeholder {
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .input-field:focus-within {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .svg-icon {
+      width: 24px;
+      height: 24px;
+      fill: #fff;
+      cursor: pointer; /* Make heart clickable */
+      transition: fill 0.2s ease, transform 0.2s ease; /* Smooth transition for animation */
+    }
+
+    .svg-icon.liked {
+      fill: #e1306c; /* Instagram-like red color for liked state */
+      transform: scale(1.2); /* Slightly enlarge on like */
+      animation: likeAnimation 0.3s ease; /* Trigger animation */
+    }
+
+    @keyframes likeAnimation {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.4); } /* Brief pop effect */
+      100% { transform: scale(1.2); } /* Settle at slightly larger size */
+    }
+
+    .micro-btn {
+      background: transparent;
+      border: none;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+      box-shadow: none;
+      transition: all 0.1s ease;
+      touch-action: none;
+      z-index: 1001;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+
+    .micro-btn.active {
+      background: #749cbf;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      width: 80px;
+      height: 60px;
+      border-radius: 50%;
+      left: 16px;
+    }
+
+    .micro-btn .svg-icon {
+      display: block;
+      position: absolute;
+    }
+
+    @media (max-width: 768px) {
+      .story-container {
+        height: 78vh;
+        top: -50px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="story-container">
+    <div class="progress-bars" id="progress-bars">
+      <!-- Dynamically updated -->
+    </div>
+
+    <div class="header">
+      <div class="header-left">
+        <img id="avatar" src="" alt="Profile Picture" class="avatar">
+        <div class="info">
+          <div id="username" class="username"></div>
+          <div id="time" class="time"></div>
+        </div>
+      </div>
+      <div class="menu">⋮</div>
+    </div>
+
+    <div class="top-gradient"></div>
+
+    <div id="stories">
+      <!-- User 1 Stories -->
+      <img src="https://picsum.photos/id/1011/500/800" class="story" data-user="0">
+      <img src="https://picsum.photos/id/1015/500/800" class="story" data-user="0">
+      <img src="https://picsum.photos/id/1025/500/800" class="story" data-user="0">
+      <img src="https://picsum.photos/id/1035/500/800" class="story" data-user="0">
+      <img src="https://picsum.photos/id/1041/500/800" class="story" data-user="0">
+      <img src="https://picsum.photos/id/1051/500/800" class="story" data-user="0">
+      <!-- User 2 Stories -->
+      <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=500&h=800&q=80" class="story" data-user="1">
+      <img src="https://images.unsplash.com/photo-1471922694854-ff1b63b20054?auto=format&fit=crop&w=500&h=800&q=80" class="story" data-user="1">
+      <img src="https://picsum.photos/id/1051/500/800" class="story" data-user="1">
+      <img src="https://picsum.photos/id/1025/500/800" class="story" data-user="1">
+    </div>
+
+    <div class="controls">
+      <div class="control prev"></div>
+      <div class="control next"></div>
+    </div>
+  </div>
+
+  <div class="input-container">
+    <div class="input-field">
+      <input type="text" placeholder="Reply privately...">
+      <div class="micro-btn">
+        <svg class="svg-icon microphone" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+          <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+          <g id="SVGRepo_iconCarrier">
+            <path d="M7.25 7C7.25 4.37665 9.37665 2.25 12 2.25C14.6234 2.25 16.75 4.37665 16.75 7V11C16.75 13.6234 14.6234 15.75 12 15.75C9.37665 15.75 7.25 13.6234 7.25 11V7Z" fill="#ffffff"></path>
+            <path d="M5.75 10C5.75 9.58579 5.41421 9.25 5 9.25C4.58579 9.25 4.25 9.58579 4.25 10V11C4.25 15.0272 7.3217 18.3369 11.25 18.7142V21C11.25 21.4142 11.5858 21.75 12 21.75C12.4142 21.75 12.75 21.4142 12.75 21V18.7142C16.6783 18.3369 19.75 15.0272 19.75 11V10C19.75 9.58579 19.4142 9.25 19 9.25C18.5858 9.25 18.25 9.58579 18.25 10V11C18.25 14.4518 15.4518 17.25 12 17.25C8.54822 17.25 5.75 14.4518 5.75 11V10Z" fill="#ffffff"></path>
+          </g>
+        </svg>
+      </div>
+    </div>
+    <svg class="svg-icon heart" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <path d="M12 21.35L10.55 20.03C5.4 15.36 2 12.28 2 8.5C2 5.42 4.42 3 7.5 3C9.24 3 10.91 3.81 12 5.09C13.09 3.81 14.76 3 16.5 3C19.58 3 22 5.42 22 8.5C22 12.28 18.6 15.36 13.45 20.03L12 21.35Z"/>
+    </svg>
+  </div>
+
+  <script>
+    // User data
+    const users = [
+      {
+        avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=60",
+        username: "Mykee 🌞",
+        time: "August 15 at 11:00 PM",
+        storyCount: 6
+      },
+      {
+        avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=60",
+        username: "Alex_Star ✨",
+        time: "August 16 at 9:30 AM",
+        storyCount: 4
+      }
+    ];
+
+    const stories = document.querySelectorAll(".story");
+    const progressBarsContainer = document.getElementById("progress-bars");
+    const avatar = document.getElementById("avatar");
+    const username = document.getElementById("username");
+    const time = document.getElementById("time");
+    let currentStoryIndex = 0;
+    let currentUserIndex = 0;
+    let interval;
+    let isPaused = false;
+
+    // Function to create progress bars dynamically
+    function createProgressBars(count) {
+      progressBarsContainer.innerHTML = "";
+      for (let i = 0; i < count; i++) {
+        const progress = document.createElement("div");
+        progress.classList.add("progress");
+        progress.innerHTML = "<span></span>";
+        progressBarsContainer.appendChild(progress);
+      }
+    }
+
+    // Function to update header
+    function updateHeader(userIndex) {
+      const user = users[userIndex];
+      avatar.src = user.avatar;
+      username.textContent = user.username;
+      time.textContent = user.time;
+      createProgressBars(user.storyCount);
+    }
+
+    // Function to get the story range for a user
+    function getUserStoryRange(userIndex) {
+      let start = 0;
+      for (let i = 0; i < userIndex; i++) {
+        start += users[i].storyCount;
+      }
+      return { start, end: start + users[userIndex].storyCount - 1 };
+    }
+
+    // Function to show a specific story
+    function showStory(storyIndex) {
+      // Determine the current user
+      let userIndex = 0;
+      let cumulativeStories = 0;
+      for (let i = 0; i < users.length; i++) {
+        cumulativeStories += users[i].storyCount;
+        if (storyIndex < cumulativeStories) {
+          userIndex = i;
+          break;
+        }
+      }
+
+      if (userIndex !== currentUserIndex) {
+        currentUserIndex = userIndex;
+        updateHeader(userIndex);
+      }
+
+      const { start } = getUserStoryRange(userIndex);
+      const localStoryIndex = storyIndex - start;
+
+      // Update stories
+      stories.forEach((s, i) => {
+        s.classList.toggle("active", i === storyIndex);
+        if (i === storyIndex && !s.complete) {
+          s.onload = () => s.classList.add("active");
+          s.onerror = () => console.error(`Failed to load image: ${s.src}`);
+        }
+      });
+
+      // Update progress bars
+      const progressSpans = document.querySelectorAll(".progress span");
+      progressSpans.forEach((p, i) => {
+        p.style.width = i < localStoryIndex ? "100%" : i === localStoryIndex ? "0%" : "0%";
+      });
+
+      animateProgress(localStoryIndex, userIndex);
+    }
+
+    // Function to animate progress bar
+    function animateProgress(localStoryIndex, userIndex) {
+      clearInterval(interval);
+      const progressSpans = document.querySelectorAll(".progress span");
+      let width = 0;
+      interval = setInterval(() => {
+        if (!isPaused) {
+          width += 0.5;
+          if (localStoryIndex < progressSpans.length) {
+            progressSpans[localStoryIndex].style.width = width + "%";
+          }
+          if (width >= 100) {
+            clearInterval(interval);
+            if (currentStoryIndex < stories.length - 1) {
+              currentStoryIndex++;
+              showStory(currentStoryIndex);
+            } else {
+              currentStoryIndex = 0;
+              showStory(currentStoryIndex);
+            }
+          }
+        }
+      }, 50);
+    }
+
+    // Navigation controls
+    document.querySelector(".next").addEventListener("click", () => {
+      if (currentStoryIndex < stories.length - 1) {
+        currentStoryIndex++;
+        showStory(currentStoryIndex);
+      } else {
+        currentStoryIndex = 0;
+        showStory(currentStoryIndex);
+      }
+    });
+
+    document.querySelector(".prev").addEventListener("click", () => {
+      if (currentStoryIndex > 0) {
+        currentStoryIndex--;
+        showStory(currentStoryIndex);
+      }
+    });
+
+    // Pause on hold for controls
+    document.querySelector(".controls").addEventListener("mousedown", () => isPaused = true);
+    document.querySelector(".controls").addEventListener("mouseup", () => isPaused = false);
+    document.querySelector(".controls").addEventListener("touchstart", () => isPaused = true);
+    document.querySelector(".controls").addEventListener("touchend", () => isPaused = false);
+
+    // Microphone button hold effect with pause logic
+    const microBtn = document.querySelector(".micro-btn");
+    microBtn.addEventListener("mousedown", () => {
+      microBtn.classList.add("active");
+      isPaused = true;
+    });
+    microBtn.addEventListener("mouseup", () => {
+      microBtn.classList.remove("active");
+      isPaused = false;
+    });
+    microBtn.addEventListener("touchstart", () => {
+      microBtn.classList.add("active");
+      isPaused = true;
+    });
+    microBtn.addEventListener("touchend", () => {
+      microBtn.classList.remove("active");
+      isPaused = false;
+    });
+
+    // Heart like functionality
+    const heartIcon = document.querySelector(".heart");
+    heartIcon.addEventListener("click", () => {
+      heartIcon.classList.toggle("liked");
+    });
+
+    // Initialize
+    updateHeader(currentUserIndex);
+    showStory(currentStoryIndex);
+  </script>
+</body>
 </html>
 
