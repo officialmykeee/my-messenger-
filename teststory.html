@@ -303,7 +303,7 @@
     </svg>
   </div>
 
-     <script>
+    <script>
   // User data
   const users = [
     {
@@ -333,8 +333,9 @@
   // Swipe detection variables
   let touchStartX = 0;
   let touchEndX = 0;
-  const swipeThreshold = 80; // Minimum px distance for swipe
+  const swipeThreshold = 50; // Minimum distance for a swipe
 
+  // Function to create progress bars dynamically
   function createProgressBars(count) {
     progressBarsContainer.innerHTML = "";
     for (let i = 0; i < count; i++) {
@@ -345,6 +346,7 @@
     }
   }
 
+  // Function to update header
   function updateHeader(userIndex) {
     const user = users[userIndex];
     avatar.src = user.avatar;
@@ -353,6 +355,7 @@
     createProgressBars(user.storyCount);
   }
 
+  // Function to get the story range for a user
   function getUserStoryRange(userIndex) {
     let start = 0;
     for (let i = 0; i < userIndex; i++) {
@@ -361,8 +364,11 @@
     return { start, end: start + users[userIndex].storyCount - 1 };
   }
 
+  // Function to show a specific story
   function showStory(storyIndex) {
-    let userIndex = 0, cumulativeStories = 0;
+    // Determine the current user
+    let userIndex = 0;
+    let cumulativeStories = 0;
     for (let i = 0; i < users.length; i++) {
       cumulativeStories += users[i].storyCount;
       if (storyIndex < cumulativeStories) {
@@ -379,18 +385,25 @@
     const { start } = getUserStoryRange(userIndex);
     const localStoryIndex = storyIndex - start;
 
+    // Update stories
     stories.forEach((s, i) => {
       s.classList.toggle("active", i === storyIndex);
+      if (i === storyIndex && !s.complete) {
+        s.onload = () => s.classList.add("active");
+        s.onerror = () => console.error(`Failed to load image: ${s.src}`);
+      }
     });
 
+    // Update progress bars
     const progressSpans = document.querySelectorAll(".progress span");
     progressSpans.forEach((p, i) => {
-      p.style.width = i < localStoryIndex ? "100%" : "0%";
+      p.style.width = i < localStoryIndex ? "100%" : i === localStoryIndex ? "0%" : "0%";
     });
 
     animateProgress(localStoryIndex, userIndex);
   }
 
+  // Function to animate progress bar
   function animateProgress(localStoryIndex, userIndex) {
     clearInterval(interval);
     const progressSpans = document.querySelectorAll(".progress span");
@@ -415,7 +428,7 @@
     }, 50);
   }
 
-  // Tap navigation
+  // Navigation controls
   document.querySelector(".next").addEventListener("click", () => {
     if (currentStoryIndex < stories.length - 1) {
       currentStoryIndex++;
@@ -433,27 +446,47 @@
     }
   });
 
-  // Pause on hold
+  // Pause on hold for controls
   document.querySelector(".controls").addEventListener("mousedown", () => isPaused = true);
   document.querySelector(".controls").addEventListener("mouseup", () => isPaused = false);
-  document.querySelector(".controls").addEventListener("touchstart", () => isPaused = true);
-  document.querySelector(".controls").addEventListener("touchend", () => isPaused = false);
+  document.querySelector(".controls").addEventListener("touchstart", (e) => {
+    isPaused = true;
+    e.stopPropagation(); // Prevent swipe detection on controls
+  });
+  document.querySelector(".controls").addEventListener("touchend", (e) => {
+    isPaused = false;
+    e.stopPropagation(); // Prevent swipe detection on controls
+  });
 
-  // Microphone hold
+  // Microphone button hold effect with pause logic
   const microBtn = document.querySelector(".micro-btn");
-  microBtn.addEventListener("mousedown", () => { microBtn.classList.add("active"); isPaused = true; });
-  microBtn.addEventListener("mouseup", () => { microBtn.classList.remove("active"); isPaused = false; });
-  microBtn.addEventListener("touchstart", () => { microBtn.classList.add("active"); isPaused = true; });
-  microBtn.addEventListener("touchend", () => { microBtn.classList.remove("active"); isPaused = false; });
+  microBtn.addEventListener("mousedown", () => {
+    microBtn.classList.add("active");
+    isPaused = true;
+  });
+  microBtn.addEventListener("mouseup", () => {
+    microBtn.classList.remove("active");
+    isPaused = false;
+  });
+  microBtn.addEventListener("touchstart", (e) => {
+    microBtn.classList.add("active");
+    isPaused = true;
+    e.stopPropagation(); // Prevent swipe detection on microphone
+  });
+  microBtn.addEventListener("touchend", (e) => {
+    microBtn.classList.remove("active");
+    isPaused = false;
+    e.stopPropagation(); // Prevent swipe detection on microphone
+  });
 
-  // Heart like
+  // Heart like functionality
   const heartIcon = document.querySelector(".heart");
   heartIcon.addEventListener("click", (e) => {
     heartIcon.classList.toggle("liked");
-    e.stopPropagation();
+    e.stopPropagation(); // Prevent swipe detection on heart
   });
 
-  // SWIPE navigation (Tinder-like)
+  // Swipe navigation on story body
   const storiesContainer = document.getElementById("stories");
   storiesContainer.addEventListener("touchstart", (e) => {
     touchStartX = e.changedTouches[0].screenX;
@@ -465,23 +498,18 @@
 
     if (Math.abs(swipeDistance) > swipeThreshold) {
       if (swipeDistance > 0) {
-        // 👉 Swipe left → next user
-        if (currentUserIndex < users.length - 1) {
-          currentUserIndex++;
+        // 👉 Swipe left → always jump to User 2's first story
+        if (users.length > 1) {
+          currentUserIndex = 1; // Force to User 2
           const { start } = getUserStoryRange(currentUserIndex);
-          currentStoryIndex = start;
-          showStory(currentStoryIndex);
-        } else {
-          currentUserIndex = 0;
-          currentStoryIndex = 0;
+          currentStoryIndex = start; // First story of User 2
           showStory(currentStoryIndex);
         }
       } else {
-        // 👈 Swipe right → previous user
-        if (currentUserIndex > 0) {
-          currentUserIndex--;
-          const { end } = getUserStoryRange(currentUserIndex);
-          currentStoryIndex = end;
+        // 👈 Swipe right → back to User 1's first story
+        if (users.length > 0) {
+          currentUserIndex = 0;
+          currentStoryIndex = 0; // First story of User 1
           showStory(currentStoryIndex);
         }
       }
@@ -491,7 +519,7 @@
   // Initialize
   updateHeader(currentUserIndex);
   showStory(currentStoryIndex);
-</script>               
+</script>
 </body>
 </html>
 
