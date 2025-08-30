@@ -30,7 +30,6 @@
       border-radius: 10px;
       overflow: hidden;
       overscroll-behavior: contain;
-      touch-action: none;
       box-sizing: border-box;
     }
 
@@ -101,6 +100,11 @@
 
     .time {
       font-size: 12px;
+      opacity: 0.8;
+    }
+
+    .menu {
+      font-size: 20px;
       cursor: pointer;
     }
 
@@ -184,20 +188,20 @@
       width: 24px;
       height: 24px;
       fill: #fff;
-      cursor: pointer; /* Make heart clickable */
-      transition: fill 0.2s ease, transform 0.2s ease; /* Smooth transition for animation */
+      cursor: pointer;
+      transition: fill 0.2s ease, transform 0.2s ease;
     }
 
     .svg-icon.liked {
-      fill: #e1306c; /* Instagram-like red color for liked state */
-      transform: scale(1.2); /* Slightly enlarge on like */
-      animation: likeAnimation 0.3s ease; /* Trigger animation */
+      fill: #e1306c;
+      transform: scale(1.2);
+      animation: likeAnimation 0.3s ease;
     }
 
     @keyframes likeAnimation {
       0% { transform: scale(1); }
-      50% { transform: scale(1.4); } /* Brief pop effect */
-      100% { transform: scale(1.2); } /* Settle at slightly larger size */
+      50% { transform: scale(1.4); }
+      100% { transform: scale(1.2); }
     }
 
     .micro-btn {
@@ -229,6 +233,10 @@
     .micro-btn .svg-icon {
       display: block;
       position: absolute;
+    }
+
+    #stories {
+      touch-action: pan-x; /* Allow horizontal swiping on story body */
     }
 
     @media (max-width: 768px) {
@@ -324,6 +332,11 @@
     let currentUserIndex = 0;
     let interval;
     let isPaused = false;
+
+    // Swipe detection variables
+    let touchStartX = 0;
+    let touchEndX = 0;
+    const swipeThreshold = 50; // Minimum distance for a swipe
 
     // Function to create progress bars dynamically
     function createProgressBars(count) {
@@ -439,8 +452,14 @@
     // Pause on hold for controls
     document.querySelector(".controls").addEventListener("mousedown", () => isPaused = true);
     document.querySelector(".controls").addEventListener("mouseup", () => isPaused = false);
-    document.querySelector(".controls").addEventListener("touchstart", () => isPaused = true);
-    document.querySelector(".controls").addEventListener("touchend", () => isPaused = false);
+    document.querySelector(".controls").addEventListener("touchstart", (e) => {
+      isPaused = true;
+      e.stopPropagation(); // Prevent swipe detection on controls
+    });
+    document.querySelector(".controls").addEventListener("touchend", (e) => {
+      isPaused = false;
+      e.stopPropagation(); // Prevent swipe detection on controls
+    });
 
     // Microphone button hold effect with pause logic
     const microBtn = document.querySelector(".micro-btn");
@@ -452,19 +471,58 @@
       microBtn.classList.remove("active");
       isPaused = false;
     });
-    microBtn.addEventListener("touchstart", () => {
+    microBtn.addEventListener("touchstart", (e) => {
       microBtn.classList.add("active");
       isPaused = true;
+      e.stopPropagation(); // Prevent swipe detection on microphone
     });
-    microBtn.addEventListener("touchend", () => {
+    microBtn.addEventListener("touchend", (e) => {
       microBtn.classList.remove("active");
       isPaused = false;
+      e.stopPropagation(); // Prevent swipe detection on microphone
     });
 
     // Heart like functionality
     const heartIcon = document.querySelector(".heart");
-    heartIcon.addEventListener("click", () => {
+    heartIcon.addEventListener("click", (e) => {
       heartIcon.classList.toggle("liked");
+      e.stopPropagation(); // Prevent swipe detection on heart
+    });
+
+    // Swipe navigation on story body
+    const storiesContainer = document.getElementById("stories");
+    storiesContainer.addEventListener("touchstart", (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    });
+
+    storiesContainer.addEventListener("touchend", (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      const swipeDistance = touchStartX - touchEndX;
+
+      if (Math.abs(swipeDistance) > swipeThreshold) {
+        if (swipeDistance > 0) {
+          // Swipe left (to next user)
+          if (currentUserIndex < users.length - 1) {
+            currentUserIndex++;
+            const { start } = getUserStoryRange(currentUserIndex);
+            currentStoryIndex = start;
+            showStory(currentStoryIndex);
+          } else {
+            // Loop to first user if at the end
+            currentUserIndex = 0;
+            currentStoryIndex = 0;
+            showStory(currentStoryIndex);
+          }
+        } else {
+          // Swipe right (to previous user)
+          if (currentUserIndex > 0) {
+            currentUserIndex--;
+            const { end } = getUserStoryRange(currentUserIndex);
+            currentStoryIndex = end;
+            showStory(currentStoryIndex);
+          }
+        }
+      }
     });
 
     // Initialize
@@ -473,4 +531,3 @@
   </script>
 </body>
 </html>
-
