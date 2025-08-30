@@ -220,16 +220,18 @@
     <div class="top-gradient"></div>
 
     <div id="stories">
+      <!-- User 1 Stories -->
       <img src="https://picsum.photos/id/1011/500/800" class="story" data-user="0">
       <img src="https://picsum.photos/id/1015/500/800" class="story" data-user="0">
       <img src="https://picsum.photos/id/1025/500/800" class="story" data-user="0">
       <img src="https://picsum.photos/id/1035/500/800" class="story" data-user="0">
       <img src="https://picsum.photos/id/1041/500/800" class="story" data-user="0">
       <img src="https://picsum.photos/id/1051/500/800" class="story" data-user="0">
-      <img src="https://picsum.photos/id/1060/500/800" class="story" data-user="1">
-      <img src="https://picsum.photos/id/1074/500/800" class="story" data-user="1">
-      <img src="https://picsum.photos/id/1084/500/800" class="story" data-user="1">
-      <img src="https://picsum.photos/id/109/500/800" class="story" data-user="1">
+      <!-- User 2 Stories -->
+      <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=500&h=800&q=80" class="story" data-user="1">
+      <img src="https://images.unsplash.com/photo-1471922694854-ff1b63b20054?auto=format&fit=crop&w=500&h=800&q=80" class="story" data-user="1">
+      <img src="https://picsum.photos/id/1051/500/800" class="story" data-user="1">
+      <img src="https://picsum.photos/id/1025/500/800" class="story" data-user="1">
     </div>
 
     <div class="controls">
@@ -333,7 +335,14 @@
       const localStoryIndex = storyIndex - start;
 
       // Update stories
-      stories.forEach((s, i) => s.classList.toggle("active", i === storyIndex));
+      stories.forEach((s, i) => {
+        s.classList.toggle("active", i === storyIndex);
+        // Ensure image is loaded
+        if (i === storyIndex && !s.complete) {
+          s.onload = () => s.classList.add("active");
+          s.onerror = () => console.error(`Failed to load image: ${s.src}`);
+        }
+      });
 
       // Update progress bars
       const progressSpans = document.querySelectorAll(".progress span");
@@ -352,11 +361,17 @@
       interval = setInterval(() => {
         if (!isPaused) {
           width += 0.5;
-          progressSpans[localStoryIndex].style.width = width + "%";
+          if (localStoryIndex < progressSpans.length) {
+            progressSpans[localStoryIndex].style.width = width + "%";
+          }
           if (width >= 100) {
             clearInterval(interval);
             if (currentStoryIndex < stories.length - 1) {
               currentStoryIndex++;
+              showStory(currentStoryIndex);
+            } else {
+              // Optionally loop back to the first story or stop
+              currentStoryIndex = 0;
               showStory(currentStoryIndex);
             }
           }
@@ -368,6 +383,10 @@
     document.querySelector(".next").addEventListener("click", () => {
       if (currentStoryIndex < stories.length - 1) {
         currentStoryIndex++;
+        showStory(currentStoryIndex);
+      } else {
+        // Loop back to the first story
+        currentStoryIndex = 0;
         showStory(currentStoryIndex);
       }
     });
