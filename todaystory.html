@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -120,7 +121,7 @@
     /* Story image */
     .story {
       width: 100%;
-      height: calc(100% - 60px); /* Adjusted to fill remaining space minus header area */
+      height: calc(100% - 60px);
       object-fit: cover;
       position: absolute;
       bottom: 0;
@@ -134,6 +135,12 @@
       top: 0;
       left: 0;
       transition: transform 0.5s ease;
+      transform: translateX(100%); /* Hide all cards by default */
+    }
+
+    .status-card:first-child {
+      transform: translateX(0); /* Show only the first card initially */
+      z-index: 1;
     }
 
     .status-card.swipe-left {
@@ -203,17 +210,16 @@
 
       function showCard(index) {
         cards.forEach((card, i) => {
-          card.style.transform = 'translateX(0)';
+          card.style.transform = i === index ? 'translateX(0)' : 'translateX(100%)';
           card.style.zIndex = i === index ? 1 : 0;
-          if (i !== index) {
-            card.style.transform = 'translateX(100%)';
-          }
 
           // Reset progress animation
           const progressFill = card.querySelector('.progress-fill');
           progressFill.style.animation = 'none';
-          progressFill.offsetHeight; // reflow
-          progressFill.style.animation = 'fill 8s linear forwards';
+          progressFill.offsetHeight; // Trigger reflow
+          if (i === index) {
+            progressFill.style.animation = 'fill 8s linear forwards';
+          }
         });
       }
 
@@ -270,4 +276,3 @@
   </script>
 </body>
 </html>
-
