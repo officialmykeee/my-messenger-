@@ -213,6 +213,34 @@
         <img src="https://picsum.photos/id/1015/500/800" alt="Alex Story" class="story-segment active">
       </div>
     </div>
+
+    <div class="status-card" data-user="3">
+      <div class="progress-bar"></div>
+
+      <div class="header">
+        <div class="user-info">
+          <img class="profile-pic" src="https://picsum.photos/id/1025/500/800" alt="New User">
+          <div class="user-details">
+            <span class="username">New User 🌟</span>
+            <span class="timestamp">Just now</span>
+          </div>
+        </div>
+        <div class="menu">
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+        </div>
+      </div>
+
+      <div class="story-segments">
+        <img src="https://picsum.photos/id/1026/500/800" alt="New User Story 1" class="story-segment active">
+        <img src="https://picsum.photos/id/1027/500/800" alt="New User Story 2" class="story-segment">
+        <img src="https://picsum.photos/id/1028/500/800" alt="New User Story 3" class="story-segment">
+        <img src="https://picsum.photos/id/1029/500/800" alt="New User Story 4" class="story-segment">
+        <img src="https://picsum.photos/id/1030/500/800" alt="New User Story 5" class="story-segment">
+        <img src="https://picsum.photos/id/1031/500/800" alt="New User Story 6" class="story-segment">
+      </div>
+    </div>
   </div>
 
   <script>
@@ -269,6 +297,12 @@
       // --- User and Story Segment Flow Management ---
       function startStoryTimer(card, index) {
         clearTimeout(storyTimer);
+        const segments = card.querySelectorAll('.story-segment');
+        // Stop timer if we're at the last segment of the last card
+        if (currentCardIndex === cards.length - 1 && index === segments.length - 1) {
+            return;
+        }
+
         storyTimer = setTimeout(() => {
           advanceToNextSegment(card, index);
         }, STORY_DURATION);
