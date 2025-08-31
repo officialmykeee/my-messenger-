@@ -57,6 +57,7 @@
       background: #fff;
     }
 
+    /* Keyframes for the fill animation */
     @keyframes fill {
       from { width: 0%; }
       to { width: 100%; }
@@ -118,16 +119,28 @@
       border-radius: 50%;
     }
 
-    /* Story image */
-    .story {
-      width: 100%;
-      height: calc(100% - 60px);
-      object-fit: cover;
-      position: absolute;
-      bottom: 0;
-      left: 0;
+    /* Story segments container */
+    .story-segments {
+        width: 100%;
+        height: 100%;
+        position: relative;
     }
 
+    /* Individual story image/video */
+    .story-segment {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        position: absolute;
+        top: 0;
+        left: 0;
+        display: none; /* Hide all by default */
+    }
+
+    .story-segment.active {
+        display: block; /* Show the active segment */
+    }
+    
     .status-card {
       position: absolute;
       width: 100%;
@@ -154,13 +167,8 @@
 </head>
 <body>
   <div class="story-container">
-    <!-- First story -->
     <div class="status-card" data-user="1">
-      <div class="progress-bar">
-        <div class="progress-segment"><div class="progress-fill"></div></div>
-      </div>
-
-      <div class="header">
+      <div class="progress-bar"></div> <div class="header">
         <div class="user-info">
           <img class="profile-pic" src="https://images.unsplash.com/photo-1599839573349-9c3a6b0e3b73" alt="Mykee">
           <div class="user-details">
@@ -175,14 +183,16 @@
         </div>
       </div>
 
-      <img src="https://picsum.photos/id/1011/500/800" alt="Mykee Story" class="story">
+      <div class="story-segments">
+        <img src="https://picsum.photos/id/1011/500/800" alt="Mykee Story 1" class="story-segment active">
+        <img src="https://picsum.photos/id/1012/500/800" alt="Mykee Story 2" class="story-segment">
+        <img src="https://picsum.photos/id/1013/500/800" alt="Mykee Story 3" class="story-segment">
+        <img src="https://picsum.photos/id/1014/500/800" alt="Mykee Story 4" class="story-segment">
+      </div>
     </div>
 
-    <!-- Second story -->
     <div class="status-card" data-user="2">
-      <div class="progress-bar">
-        <div class="progress-segment"><div class="progress-fill"></div></div>
-      </div>
+      <div class="progress-bar"></div>
 
       <div class="header">
         <div class="user-info">
@@ -199,7 +209,9 @@
         </div>
       </div>
 
-      <img src="https://picsum.photos/id/1015/500/800" alt="Alex Story" class="story">
+      <div class="story-segments">
+        <img src="https://picsum.photos/id/1015/500/800" alt="Alex Story" class="story-segment active">
+      </div>
     </div>
   </div>
 
@@ -207,24 +219,149 @@
     document.addEventListener('DOMContentLoaded', () => {
       const cards = document.querySelectorAll('.status-card');
       let currentCardIndex = 0;
+      let currentSegmentIndex = 0;
+      let storyTimer;
+      const STORY_DURATION = 5000; // 5 seconds per segment
 
-      function showCard(index) {
-        cards.forEach((card, i) => {
-          card.style.transform = i === index ? 'translateX(0)' : 'translateX(100%)';
-          card.style.zIndex = i === index ? 1 : 0;
-
-          // Reset progress animation
-          const progressFill = card.querySelector('.progress-fill');
-          progressFill.style.animation = 'none';
-          progressFill.offsetHeight; // Trigger reflow
-          if (i === index) {
-            progressFill.style.animation = 'fill 8s linear forwards';
-          }
-        });
+      // --- Dynamic Progress Bar Generation ---
+      function generateProgressBars(card) {
+        const segmentsContainer = card.querySelector('.story-segments');
+        const progressContainer = card.querySelector('.progress-bar');
+        const segmentCount = segmentsContainer.querySelectorAll('.story-segment').length;
+        
+        progressContainer.innerHTML = ''; // Clear existing bars
+        for (let i = 0; i < segmentCount; i++) {
+          const segment = document.createElement('div');
+          segment.classList.add('progress-segment');
+          const fill = document.createElement('div');
+          fill.classList.add('progress-fill');
+          segment.appendChild(fill);
+          progressContainer.appendChild(segment);
+        }
       }
 
-      showCard(currentCardIndex);
+      // --- Story Segment Navigation ---
+      function showStorySegment(card, index) {
+        const segments = card.querySelectorAll('.story-segment');
+        segments.forEach((segment, i) => {
+          segment.classList.remove('active');
+        });
+        if (segments[index]) {
+            segments[index].classList.add('active');
+        }
+      }
 
+      function updateProgressBar(card, index) {
+        const progressFills = card.querySelectorAll('.progress-fill');
+        progressFills.forEach((fill, i) => {
+          fill.style.animation = 'none';
+          if (i < index) {
+            fill.style.width = '100%';
+          } else {
+            fill.style.width = '0%';
+          }
+        });
+        if (progressFills[index]) {
+          progressFills[index].style.animation = `fill ${STORY_DURATION / 1000}s linear forwards`;
+        }
+      }
+
+      // --- User and Story Segment Flow Management ---
+      function startStoryTimer(card, index) {
+        clearTimeout(storyTimer);
+        storyTimer = setTimeout(() => {
+          advanceToNextSegment(card, index);
+        }, STORY_DURATION);
+      }
+
+      function advanceToNextSegment(card, index) {
+        const segmentCount = card.querySelectorAll('.story-segment').length;
+        if (index < segmentCount - 1) {
+          currentSegmentIndex++;
+          updateStory(currentCardIndex, currentSegmentIndex);
+        } else {
+          // End of segments for this user, move to the next user story
+          goToNextUserStory();
+        }
+      }
+
+      function advanceToPreviousSegment(card, index) {
+        if (index > 0) {
+          currentSegmentIndex--;
+          updateStory(currentCardIndex, currentSegmentIndex);
+        } else {
+          // At the first segment, move to the previous user story
+          goToPreviousUserStory();
+        }
+      }
+
+      function updateStory(cardIndex, segmentIndex) {
+          const card = cards[cardIndex];
+          showStorySegment(card, segmentIndex);
+          updateProgressBar(card, segmentIndex);
+          startStoryTimer(card, segmentIndex);
+      }
+
+      // --- User Story (Card) Navigation ---
+      function goToNextUserStory() {
+          if (currentCardIndex < cards.length - 1) {
+              cards[currentCardIndex].classList.add('swipe-left');
+              currentCardIndex++;
+              currentSegmentIndex = 0; // Reset segment index for new user
+              showCard(currentCardIndex);
+              setTimeout(() => {
+                  cards[currentCardIndex - 1].classList.remove('swipe-left');
+              }, 500);
+          }
+      }
+      
+      function goToPreviousUserStory() {
+          if (currentCardIndex > 0) {
+              cards[currentCardIndex].classList.add('swipe-right');
+              currentCardIndex--;
+              currentSegmentIndex = 0; // Reset segment index for new user
+              showCard(currentCardIndex);
+              setTimeout(() => {
+                  cards[currentCardIndex + 1].classList.remove('swipe-right');
+              }, 500);
+          }
+      }
+
+      function showCard(index) {
+          cards.forEach((card, i) => {
+              card.style.transform = i === index ? 'translateX(0)' : 'translateX(100%)';
+              card.style.zIndex = i === index ? 1 : 0;
+              // Reset all progress bars on inactive cards
+              card.querySelectorAll('.progress-fill').forEach(fill => {
+                fill.style.animation = 'none';
+                fill.style.width = '0%';
+              });
+          });
+          // Start the timer for the active card's first segment
+          if (cards[index]) {
+            currentSegmentIndex = 0; // Ensure we start from the first segment
+            updateStory(index, currentSegmentIndex);
+          }
+      }
+
+      // --- Main Event Listeners ---
+      // Tap/Click to advance within a single user's story
+      document.addEventListener('click', (e) => {
+        const activeCard = cards[currentCardIndex];
+        const rect = activeCard.getBoundingClientRect();
+        const tapX = e.clientX - rect.left;
+
+        // Taps on the right side of the screen
+        if (tapX > rect.width / 2) {
+          advanceToNextSegment(activeCard, currentSegmentIndex);
+        } 
+        // Taps on the left side of the screen
+        else {
+          advanceToPreviousSegment(activeCard, currentSegmentIndex);
+        }
+      });
+
+      // Swipe to move between different user stories
       let touchStartX = 0;
       let touchEndX = 0;
 
@@ -234,44 +371,19 @@
 
       document.addEventListener('touchend', (e) => {
         touchEndX = e.changedTouches[0].screenX;
-        handleSwipe();
-      });
-
-      function handleSwipe() {
         const swipeThreshold = 50;
         const swipeDistance = touchEndX - touchStartX;
 
-        if (swipeDistance > swipeThreshold && currentCardIndex > 0) {
-          cards[currentCardIndex].classList.add('swipe-right');
-          currentCardIndex--;
-          showCard(currentCardIndex);
-          setTimeout(() => {
-            cards[currentCardIndex + 1].classList.remove('swipe-right');
-          }, 500);
-        } else if (swipeDistance < -swipeThreshold && currentCardIndex < cards.length - 1) {
-          cards[currentCardIndex].classList.add('swipe-left');
-          currentCardIndex++;
-          showCard(currentCardIndex);
-          setTimeout(() => {
-            cards[currentCardIndex - 1].classList.remove('swipe-left');
-          }, 500);
+        if (swipeDistance > swipeThreshold) {
+            goToPreviousUserStory();
+        } else if (swipeDistance < -swipeThreshold) {
+            goToNextUserStory();
         }
-      }
-
-      // Auto progress to next story
-      cards.forEach((card, index) => {
-        const progressFill = card.querySelector('.progress-fill');
-        progressFill.addEventListener('animationend', () => {
-          if (index < cards.length - 1) {
-            card.classList.add('swipe-left');
-            currentCardIndex++;
-            showCard(currentCardIndex);
-            setTimeout(() => {
-              card.classList.remove('swipe-left');
-            }, 500);
-          }
-        });
       });
+      
+      // --- Initialization ---
+      cards.forEach(generateProgressBars);
+      showCard(currentCardIndex);
     });
   </script>
 </body>
