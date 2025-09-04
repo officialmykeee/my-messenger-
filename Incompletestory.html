@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WhatsApp Story Clone</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #000;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .story-container {
+      position: relative;
+      width: 100%;
+      max-width: 420px;
+      height: 100vh;
+      background: #000;
+      overflow: hidden;
+      border-radius: 12px;
+    }
+
+    /* Progress bar */
+    .progress-bar {
+      display: flex;
+      gap: 4px;
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      right: 6px;
+      z-index: 10;
+    }
+
+    .progress-segment {
+      flex: 1;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      width: 0%;
+      height: 100%;
+      background: #fff;
+    }
+
+    /* Keyframes for the fill animation */
+    @keyframes fill {
+      from { width: 0%; }
+      to { width: 100%; }
+    }
+
+    .paused .progress-fill {
+        animation-play-state: paused !important;
+    }
+    
+    /* Header on story */
+    .header {
+      position: absolute;
+      top: 16px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 11;
+      color: #fff;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .profile-pic {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #fff;
+    }
+
+    .user-details {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.2;
+    }
+
+    .username {
+      font-weight: bold;
+      font-size: 15px;
+    }
+
+    .timestamp {
+      font-size: 12px;
+      color: #fff;
+    }
+
+    .menu {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .dot {
+      width: 5px;
+      height: 5px;
+      background-color: #fff;
+      border-radius: 50%;
+    }
+
+    /* Story segments container */
+    .story-segments {
+        width: 100%;
+        height: 100%;
+        position: relative;
+    }
+
+    /* Individual story image/video */
+    .story-segment {
+        width: 100%;
+        height: calc(100% - 70px); 
+        object-fit: cover;
+        position: absolute;
+        top: 0;
+        left: 0;
+        display: none; /* Hide all by default */
+    }
+
+    .story-segment.active {
+        display: block; /* Show the active segment */
+    }
+    
+    .status-card {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      transition: transform 0.5s ease;
+      transform: translateX(100%); /* Hide all cards by default */
+    }
+
+    .status-card:first-child {
+      transform: translateX(0); /* Show only the first card initially */
+      z-index: 1;
+    }
+
+    .status-card.swipe-left {
+      transform: translateX(-100%);
+    }
+
+    .status-card.swipe-right {
+      transform: translateX(100%);
+    }
+
+    /* Reply bar CSS */
+    .input-container {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      max-width: 400px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 12; /* Ensure it's above the stories */
+    }
+
+    .input-field {
+      display: flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      padding: 0 10px;
+      flex-grow: 1;
+      height: 40px;
+      position: relative; /* Needed for the slide-container positioning */
+    }
+
+    .message-input {
+      flex-grow: 1;
+      min-height: 40px;
+      line-height: 40px;
+      background: transparent;
+      color: #fff;
+      font-size: 14px;
+      outline: none;
+      padding-right: 10px;
+      z-index: 2;
+    }
+
+    .message-input:empty:before {
+      content: attr(data-placeholder);
+      color: rgba(255, 255, 255, 0.8);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* Styles for the "Slide to Cancel" feature */
+    .slide-container {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;  
+        padding: 10px;  
+        display: flex;  
+        align-items: center;  
+        gap: 8px;  
+        position: absolute;  
+        top: 50%;  
+        right: 0;  
+        transform: translateY(-50%);  
+        overflow: hidden;  
+        min-width: 160px;  
+        color: #fff;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+        z-index: 1002; /* Higher than input-field, below micro-btn.active */
+        width: 100%;
+        height: 100%;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 20px;
+        right: 0;
+        left: 0;
+        user-select: none; /* Prevent text selection */
+        justify-content: flex-start; /* Aligns content to the left */
+        padding-left: 20px;
+        gap: 10px;
+    }
+    
+    .input-field.active .slide-container {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .record-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: #db4d4d;
+    }
+
+    .timer-text {
+        font-size: 14px;
+        font-weight: 500;
+        color: #fff;
+        margin-right: 8px;
+    }
+
+    .arrow-icon {  
+        width: 16px; 
+        height: 16px;
+        opacity: 0.6;  
+        animation: pulse 2s infinite;  
+        transition: transform 0.3s ease, opacity 0.3s ease;
+    }  
+
+    .blinking-svg {
+        animation: blink 1s infinite alternate;
+    }
+    
+    .slide-text {  
+        font-size: 14px;
+        color: #ddd;
+        font-weight: 400;  
+        letter-spacing: 0.3px;  
+        position: relative;  
+        overflow: hidden;  
+        white-space: nowrap;  
+        user-select: none; /* Prevent text selection */
+    }  
+    
+    .slide-text::before {  
+      content: '';  
+      position: absolute;  
+      top: 0;  
+      left: -100%;  
+      width: 100%;  
+      height: 100%;  
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);  
+      animation: shimmer 2s infinite;  
+    }  
+
+    .lock-text {
+        color: #749cbf;
+        font-size: 14px;
+        font-weight: 400;
+        letter-spacing: 0.3px;
+        cursor: pointer;
+        z-index: 1003;
+        padding: 8px 12px;
+        position: absolute;
+        right: 95px;
+        top: 50%;
+        transform: translateY(-50%);
+        border-radius: 4px;
+        transition: background 0.2s ease;
+        user-select: none;
+    }
+
+    .arrow-lock {
+        width: 21px;
+        height: 21px;
+    }
+    
+    @keyframes pulse {  
+      0%, 100% { transform: translateX(0) scale(1); opacity: 0.6; }  
+      50% { transform: translateX(-3px) scale(1.05); opacity: 0.85; }  
+    }  
+    
+    @keyframes shimmer {  
+      0% { left: -100%; }  
+      100% { left: 100%; }  
+    }
+
+    @keyframes blink {
+        from { opacity: 1; }
+        to { opacity: 0.4; }
+    }
+    
+    /* Hide placeholder when slide-container is visible */
+    .input-field.active .message-input:empty:before {
+      opacity: 0;
+    }
+
+    /* Microphone button container */
+    .micro-btn {
+      border: none;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+      box-shadow: none;
+      transition: all 0.1s ease;
+      touch-action: none;
+      z-index: 1001;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+
+    /* Microphone active state (when pressed/held) */
+    .micro-btn.active {
+      background: #749cbf; /* Solid bluish background, no transparency */
+      opacity: 1; /* Ensure full opacity */
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      width: 62px;   /* Retained reduced width */
+      height: 60px;
+      border-radius: 50%;
+      left: 16px;
+      z-index: 1003; /* Above slide-container */
+    }
+
+    .micro-btn.delete-pulse {
+        animation: deletePulse 0.3s ease-in-out;
+    }
+    
+    @keyframes deletePulse {
+        0% { transform: translateX(0); }
+        50% { transform: translateX(-5px); }
+        100% { transform: translateX(0); }
+    }
+    
+    .svg-icon {
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+    }
+
+    /* Microphone SVG inside button */
+    .micro-btn .svg-icon {
+      display: block;
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      fill: #fff; /* White by default */
+      transition: fill 0.2s ease, transform 0.2s ease;
+    }
+
+    /* Keep SVG size in active state to match default state */
+    .micro-btn.active .svg-icon {
+      width: 24px;
+      height: 24px;
+    }
+
+    .svg-icon.heart {
+      width: 32px; 
+      height: 32px; 
+      fill: #fff;
+      transition: fill 0.3s ease;
+    }
+
+    .svg-icon.heart.liked path {
+      fill: #ff69b4; 
+    }
+
+    /* Fade animation for hiding elements */
+    .hidden {
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="story-container">
+    <div class="status-card" data-user="1">
+      <div class="progress-bar"></div>
+      <div class="header">
+        <div class="user-info">
+          <img class="profile-pic" src="https://images.unsplash.com/photo-1599839573349-9c3a6b0e3b73" alt="Mykee">
+          <div class="user-details">
+            <span class="username">Mykee 🌞</span>
+            <span class="timestamp">August 15 at 11:00 PM</span>
+          </div>
+        </div>
+        <div class="menu">
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+        </div>
+      </div>
+
+      <div class="story-segments">
+        <img src="https://picsum.photos/id/1011/500/800" alt="Mykee Story 1" class="story-segment active">
+        <img src="https://picsum.photos/id/1012/500/800" alt="Mykee Story 1" class="story-segment">
+        <img src="https://picsum.photos/id/1013/500/800" alt="Mykee Story 3" class="story-segment">
+        <img src="https://picsum.photos/id/1014/500/800" alt="Mykee Story 4" class="story-segment">
+      </div>
+      <div class="input-container">
+        <div class="input-field">
+          <div class="message-input" contenteditable="false" data-placeholder="Reply privately..." id="chat-input-div"></div>
+          
+          <div class="slide-container" id="slideContainer">
+            <svg class="blinking-svg" width="16px" height="16px" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+              <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+              <g id="SVGRepo_iconCarrier">
+                <circle cx="8" cy="8" r="8" fill="#db4d4d"></circle>
+              </g>
+            </svg>
+            <span class="timer-text">0:00</span>
+            <svg class="arrow-icon" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+              <path d="M768 903.232l-50.432 56.768L256 512l461.568-448 50.432 56.768L364.928 512z" fill="currentColor"></path>
+            </svg>
+            <div class="slide-text">slide to cancel</div>
+          </div>
+
+          <div class="micro-btn">
+            <svg id="microphoneSVG" class="svg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M7.25 7C7.25 4.37665 9.37665 2.25 12 2.25C14.6234 2.25 16.75 4.37665 16.75 7V11C16.75 13.6234 14.6234 15.75 12 15.75C9.37665 15.75 7.25 13.6234 7.25 11V7Z" fill="#ffffff"></path>
+              <path d="M5.75 10C5.75 9.58579 5.41421 9.25 5 9.25C4.58579 9.25 4.25 9.58579 4.25 10V11C4.25 15.0272 7.3217 18.3369 11.25 18.7142V21C11.25 21.4142 11.5858 21.75 12 21.75C12.4142 21.75 12.75 21.4142 12.75 21V18.7142C16.6783 18.3369 19.75 15.0272 19.75 11V10C19.75 9.58579 19.4142 9.25 19 9.25C18.5858 9.25 18.25 9.58579 18.25 10V11C18.25 14.4518 15.4518 17.25 12 17.25C8.54822 17.25 5.75 14.4518 5.75 11V10Z" fill="#ffffff"></path>
+            </svg>
+             <svg id="arrowSVG" class="arrow-lock" xmlns="http://www.w3.org/2000/svg" viewBox="-15 0 150 122.88" width="21" height="21" style="display: none;">
+                <g transform="rotate(40, 61.28, 61.44) translate(-5, 0)">
+                    <path style="fill: white; fill-rule: evenodd;" d="M2.33,44.58,117.33.37a3.63,3.63,0,0,1,5,4.56l-44,115.61h0a3.63,3.63,0,0,1-6.67.28L53.93,84.14,89.12,33.77,38.85,68.86,2.06,51.24a3.63,3.63,0,0,1,.27-6.66Z"/>
+                </g>
+            </svg>
+          </div>
+        </div>
+        <svg class="svg-icon heart" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path d="M12 21.35L10.55 20.03C5.4 15.36 2 12.28 2 8.5C2 5.42 4.42 3 7.5 3C9.24 3 10.91 3.81 12 5.09C13.09 3.81 14.76 3 16.5 3C19.58 3 22 5.42 22 8.5C22 12.28 18.6 15.36 13.45 20.03L12 21.35Z"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="status-card" data-user="2">
+      <div class="progress-bar"></div>
+
+      <div class="header">
+        <div class="user-info">
+          <img class="profile-pic" src="https://images.unsplash.com/photo-1607606192248-7c769ac0ab43" alt="Alex">
+          <div class="user-details">
+            <span class="username">Alex Chioma 🌞</span>
+            <span class="timestamp">August 15 at 12:00 PM</span>
+          </div>
+        </div>
+        <div class="menu">
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+        </div>
+      </div>
+
+      <div class="story-segments">
+        <img src="https://picsum.photos/id/1015/500/800" alt="Alex Story" class="story-segment active">
+      </div>
+      <div class="input-container">
+        <div class="input-field">
+          <div class="message-input" contenteditable="false" data-placeholder="Reply privately..." id="chat-input-div-2"></div>
+          
+          <div class="slide-container">
+            <svg class="blinking-svg" width="16px" height="16px" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+              <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+              <g id="SVGRepo_iconCarrier">
+                <circle cx="8" cy="8" r="8" fill="#db4d4d"></circle>
+              </g>
+            </svg>
+            <span class="timer-text">0:00</span>
+            <svg class="arrow-icon" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+              <path d="M768 903.232l-50.432 56.768L256 512l461.568-448 50.432 56.768L364.928 512z" fill="currentColor"></path>
+            </svg>
+            <div class="slide-text">slide to cancel</div>
+          </div>
+
+          <div class="micro-btn">
+            <svg id="microphoneSVG" class="svg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M7.25 7C7.25 4.37665 9.37665 2.25 12 2.25C14.6234 2.25 16.75 4.37665 16.75 7V11C16.75 13.6234 14.6234 15.75 12 15.75C9.37665 15.75 7.25 13.6234 7.25 11V7Z" fill="#ffffff"></path>
+              <path d="M5.75 10C5.75 9.58579 5.41421 9.25 5 9.25C4.58579 9.25 4.25 9.58579 4.25 10V11C4.25 15.0272 7.3217 18.3369 11.25 18.7142V21C11.25 21.4142 11.5858 21.75 12 21.75C12.4142 21.75 12.75 21.4142 12.75 21V18.7142C16.6783 18.3369 19.75 15.0272 19.75 11V10C19.75 9.58579 19.4142 9.25 19 9.25C18.5858 9.25 18.25 9.58579 18.25 10V11C18.25 14.4518 15.4518 17.25 12 17.25C8.54822 17.25 5.75 14.4518 5.75 11V10Z" fill="#ffffff"></path>
+            </svg>
+             <svg id="arrowSVG" class="arrow-lock" xmlns="http://www.w3.org/2000/svg" viewBox="-15 0 150 122.88" width="21" height="21" style="display: none;">
+                <g transform="rotate(40, 61.28, 61.44) translate(-5, 0)">
+                    <path style="fill: white; fill-rule: evenodd;" d="M2.33,44.58,117.33.37a3.63,3.63,0,0,1,5,4.56l-44,115.61h0a3.63,3.63,0,0,1-6.67.28L53.93,84.14,89.12,33.77,38.85,68.86,2.06,51.24a3.63,3.63,0,0,1,.27-6.66Z"/>
+                </g>
+            </svg>
+          </div>
+        </div>
+        <svg class="svg-icon heart" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path d="M12 21.35L10.55 20.03C5.4 15.36 2 12.28 2 8.5C2 5.42 4.42 3 7.5 3C9.24 3 10.91 3.81 12 5.09C13.09 3.81 14.76 3 16.5 3C19.58 3 22 5.42 22 8.5C22 12.28 18.6 15.36 13.45 20.03L12 21.35Z"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="status-card" data-user="3">
+      <div class="progress-bar"></div>
+
+      <div class="header">
+        <div class="user-info">
+          <img class="profile-pic" src="https://picsum.photos/id/1025/500/800" alt="New User">
+          <div class="user-details">
+            <span class="username">New User 🌟</span>
+            <span class="timestamp">Just now</span>
+          </div>
+        </div>
+        <div class="menu">
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+        </div>
+      </div>
+
+      <div class="story-segments">
+        <img src="https://picsum.photos/id/1026/500/800" alt="New User Story 1" class="story-segment active">
+        <img src="https://picsum.photos/id/1027/500/800" alt="New User Story 2" class="story-segment">
+        <img src="https://picsum.photos/id/1028/500/800" alt="New User Story 3" class="story-segment">
+        <img src="https://picsum.photos/id/1029/500/800" alt="New User Story 4" class="story-segment">
+        <img src="https://picsum.photos/id/1030/500/800" alt="New User Story 5" class="story-segment">
+        <img src="https://picsum.photos/id/1031/500/800" alt="New User Story 6" class="story-segment">
+      </div>
+      <div class="input-container">
+        <div class="input-field">
+          <div class="message-input" contenteditable="false" data-placeholder="Reply privately..." id="chat-input-div-3"></div>
+          
+          <div class="slide-container">
+            <svg class="blinking-svg" width="16px" height="16px" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+              <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+              <g id="SVGRepo_iconCarrier">
+                <circle cx="8" cy="8" r="8" fill="#db4d4d"></circle>
+              </g>
+            </svg>
+            <span class="timer-text">0:00</span>
+            <svg class="arrow-icon" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+              <path d="M768 903.232l-50.432 56.768L256 512l461.568-448 50.432 56.768L364.928 512z" fill="currentColor"></path>
+            </svg>
+            <div class="slide-text">slide to cancel</div>
+          </div>
+
+          <div class="micro-btn">
+            <svg id="microphoneSVG" class="svg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M7.25 7C7.25 4.37665 9.37665 2.25 12 2.25C14.6234 2.25 16.75 4.37665 16.75 7V11C16.75 13.6234 14.6234 15.75 12 15.75C9.37665 15.75 7.25 13.6234 7.25 11V7Z" fill="#ffffff"></path>
+              <path d="M5.75 10C5.75 9.58579 5.41421 9.25 5 9.25C4.58579 9.25 4.25 9.58579 4.25 10V11C4.25 15.0272 7.3217 18.3369 11.25 18.7142V21C11.25 21.4142 11.5858 21.75 12 21.75C12.4142 21.75 12.75 21.4142 12.75 21V18.7142C16.6783 18.3369 19.75 15.0272 19.75 11V10C19.75 9.58579 19.4142 9.25 19 9.25C18.5858 9.25 18.25 9.58579 18.25 10V11C18.25 14.4518 15.4518 17.25 12 17.25C8.54822 17.25 5.75 14.4518 5.75 11V10Z" fill="#ffffff"></path>
+            </svg>
+             <svg id="arrowSVG" class="arrow-lock" xmlns="http://www.w3.org/2000/svg" viewBox="-15 0 150 122.88" width="21" height="21" style="display: none;">
+                <g transform="rotate(40, 61.28, 61.44) translate(-5, 0)">
+                    <path style="fill: white; fill-rule: evenodd;" d="M2.33,44.58,117.33.37a3.63,3.63,0,0,1,5,4.56l-44,115.61h0a3.63,3.63,0,0,1-6.67.28L53.93,84.14,89.12,33.77,38.85,68.86,2.06,51.24a3.63,3.63,0,0,1,.27-6.66Z"/>
+                </g>
+            </svg>
+          </div>
+        </div>
+        <svg class="svg-icon heart" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path d="M12 21.35L10.55 20.03C5.4 15.36 2 12.28 2 8.5C2 5.42 4.42 3 7.5 3C9.24 3 10.91 3.81 12 5.09C13.09 3.81 14.76 3 16.5 3C19.58 3 22 5.42 22 8.5C22 12.28 18.6 15.36 13.45 20.03L12 21.35Z"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="status-card" data-user="4">
+      <div class="progress-bar"></div>
+      <div class="header">
+        <div class="user-info">
+          <img class="profile-pic" src="https://picsum.photos/id/1032/500/800" alt="Video User">
+          <div class="user-details">
+            <span class="username">Video User 🎥</span>
+            <span class="timestamp">Just now</span>
+          </div>
+        </div>
+        <div class="menu">
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+        </div>
+      </div>
+      <div class="story-segments">
+        <video src="https://cdn.pixabay.com/video/2024/05/29/214696_tiny.mp4" class="story-segment active" autoplay muted loop playsinline></video>
+      </div>
+      <div class="input-container">
+        <div class="input-field">
+          <div class="message-input" contenteditable="false" data-placeholder="Reply privately..." id="chat-input-div-4"></div>
+          <div class="slide-container">
+            <svg class="blinking-svg" width="16px" height="16px" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+              <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+              <g id="SVGRepo_iconCarrier">
+                <circle cx="8" cy="8" r="8" fill="#db4d4d"></circle>
+              </g>
+            </svg>
+            <span class="timer-text">0:00</span>
+            <svg class="arrow-icon" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+              <path d="M768 903.232l-50.432 56.768L256 512l461.568-448 50.432 56.768L364.928 512z" fill="currentColor"></path>
+            </svg>
+            <div class="slide-text">slide to cancel</div>
+          </div>
+          <div class="micro-btn">
+            <svg id="microphoneSVG" class="svg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M7.25 7C7.25 4.37665 9.37665 2.25 12 2.25C14.6234 2.25 16.75 4.37665 16.75 7V11C16.75 13.6234 14.6234 15.75 12 15.75C9.37665 15.75 7.25 13.6234 7.25 11V7Z" fill="#ffffff"></path>
+              <path d="M5.75 10C5.75 9.58579 5.41421 9.25 5 9.25C4.58579 9.25 4.25 9.58579 4.25 10V11C4.25 15.0272 7.3217 18.3369 11.25 18.7142V21C11.25 21.4142 11.5858 21.75 12 21.75C12.4142 21.75 12.75 21.4142 12.75 21V18.7142C16.6783 18.3369 19.75 15.0272 19.75 11V10C19.75 9.58579 19.4142 9.25 19 9.25C18.5858 9.25 18.25 9.58579 18.25 10V11C18.25 14.4518 15.4518 17.25 12 17.25C8.54822 17.25 5.75 14.4518 5.75 11V10Z" fill="#ffffff"></path>
+            </svg>
+            <svg id="arrowSVG" class="arrow-lock" xmlns="http://www.w3.org/2000/svg" viewBox="-15 0 150 122.88" width="21" height="21" style="display: none;">
+              <g transform="rotate(40, 61.28, 61.44) translate(-5, 0)">
+                <path style="fill: white; fill-rule: evenodd;" d="M2.33,44.58,117.33.37a3.63,3.63,0,0,1,5,4.56l-44,115.61h0a3.63,3.63,0,0,1-6.67.28L53.93,84.14,89.12,33.77,38.85,68.86,2.06,51.24a3.63,3.63,0,0,1,.27-6.66Z"/>
+              </g>
+            </svg>
+          </div>
+        </div>
+        <svg class="svg-icon heart" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path d="M12 21.35L10.55 20.03C5.4 15.36 2 12.28 2 8.5C2 5.42 4.42 3 7.5 3C9.24 3 10.91 3.81 12 5.09C13.09 3.81 14.76 3 16.5 3C19.58 3 22 5.42 22 8.5C22 12.28 18.6 15.36 13.45 20.03L12 21.35Z"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const cards = document.querySelectorAll('.status-card');
+      let currentCardIndex = 0;
+      let currentSegmentIndex = 0;
+      let storyTimer;
+      const STORY_DURATION = 5000;
+      let isPaused = false;
+      
+      function generateProgressBars(card) {
+        const segmentsContainer = card.querySelector('.story-segments');
+        const progressContainer = card.querySelector('.progress-bar');
+        const segmentCount = segmentsContainer.querySelectorAll('.story-segment').length;
+        progressContainer.innerHTML = '';
+        for (let i = 0; i < segmentCount; i++) {
+          const segment = document.createElement('div');
+          segment.classList.add('progress-segment');
+          const fill = document.createElement('div');
+          fill.classList.add('progress-fill');
+          segment.appendChild(fill);
+          progressContainer.appendChild(segment);
+        }
+      }
+
+      function showStorySegment(card, index) {
+        const segments = card.querySelectorAll('.story-segment');
+        segments.forEach((segment, i) => {
+          segment.classList.remove('active');
+          if (segment.tagName === 'VIDEO' && i !== index) {
+            segment.pause(); // Pause non-active videos
+          }
+        });
+        if (segments[index]) {
+          segments[index].classList.add('active');
+          if (segments[index].tagName === 'VIDEO' && !isPaused) {
+            segments[index].play(); // Play active video
+          }
+        }
+      }
+
+      function updateProgressBar(card, index) {
+        const progressFills = card.querySelectorAll('.progress-fill');
+        progressFills.forEach((fill, i) => {
+          fill.style.animation = 'none';
+          if (i < index) {
+            fill.style.width = '100%';
+          } else {
+            fill.style.width = '0%';
+          }
+        });
+        if (progressFills[index]) {
+          progressFills[index].style.animation = `fill ${STORY_DURATION / 1000}s linear forwards`;
+        }
+      }
+
+      function startStoryTimer(card, index) {
+        clearTimeout(storyTimer);
+        const segments = card.querySelectorAll('.story-segment');
+        if (isPaused || (currentCardIndex === cards.length - 1 && index === segments.length - 1)) {
+            return;
+        }
+        storyTimer = setTimeout(() => {
+          advanceToNextSegment(card, index);
+        }, STORY_DURATION);
+      }
+
+      function pauseStory() {
+        isPaused = true;
+        clearTimeout(storyTimer);
+        const activeCard = cards[currentCardIndex];
+        if (activeCard) {
+          activeCard.classList.add('paused');
+          const activeSegment = activeCard.querySelector('.story-segment.active');
+          if (activeSegment && activeSegment.tagName === 'VIDEO') {
+            activeSegment.pause(); // Pause video during story hold
+          }
+        }
+      }
+
+      function resumeStory() {
+        isPaused = false;
+        const activeCard = cards[currentCardIndex];
+        if (activeCard) {
+          activeCard.classList.remove('paused');
+          const activeSegment = activeCard.querySelector('.story-segment.active');
+          if (activeSegment && activeSegment.tagName === 'VIDEO') {
+            activeSegment.play(); // Resume video
+          }
+        }
+        startStoryTimer(activeCard, currentSegmentIndex);
+      }
+
+      function advanceToNextSegment(card, index) {
+        const segmentCount = card.querySelectorAll('.story-segments .story-segment').length;
+        if (index < segmentCount - 1) {
+          currentSegmentIndex++;
+          updateStory(currentCardIndex, currentSegmentIndex);
+        } else {
+          goToNextUserStory();
+        }
+      }
+
+      function advanceToPreviousSegment(card, index) {
+        if (index > 0) {
+          currentSegmentIndex--;
+          updateStory(currentCardIndex, currentSegmentIndex);
+        } else {
+          goToPreviousUserStory();
+        }
+      }
+
+      function updateStory(cardIndex, segmentIndex) {
+        const card = cards[cardIndex];
+        showStorySegment(card, segmentIndex);
+        updateProgressBar(card, segmentIndex);
+        startStoryTimer(card, segmentIndex);
+      }
+
+      function goToNextUserStory() {
+        if (currentCardIndex < cards.length - 1) {
+          cards[currentCardIndex].classList.add('swipe-left');
+          currentCardIndex++;
+          currentSegmentIndex = 0; 
+          showCard(currentCardIndex);
+          setTimeout(() => {
+            cards[currentCardIndex - 1].classList.remove('swipe-left');
+          }, 500);
+        }
+      }
+      
+      function goToPreviousUserStory() {
+        if (currentCardIndex > 0) {
+          cards[currentCardIndex].classList.add('swipe-right');
+          currentCardIndex--;
+          currentSegmentIndex = 0; 
+          showCard(currentCardIndex);
+          setTimeout(() => {
+            cards[currentCardIndex + 1].classList.remove('swipe-right');
+          }, 500);
+        }
+      }
+
+      function showCard(index) {
+        cards.forEach((card, i) => {
+          card.style.transform = i === index ? 'translateX(0)' : 'translateX(100%)';
+          card.style.zIndex = i === index ? 1 : 0;
+          card.querySelectorAll('.progress-fill').forEach(fill => {
+            fill.style.animation = 'none';
+            fill.style.width = '0%';
+          });
+          // Pause all videos in non-active cards
+          if (i !== index) {
+            card.querySelectorAll('.story-segment').forEach(segment => {
+              if (segment.tagName === 'VIDEO') {
+                segment.pause();
+              }
+            });
+          }
+        });
+        if (cards[index]) {
+          currentSegmentIndex = 0; 
+          updateStory(index, currentSegmentIndex);
+        }
+      }
+
+      function setupHoldToPause() {
+        let holdTimeout;
+        let isHolding = false;
+        let holdStartTime;
+
+        function fadeOutElements(card) {
+          const progressBar = card.querySelector('.progress-bar');
+          const inputContainer = card.querySelector('.input-container');
+          const heartIcon = card.querySelector('.svg-icon.heart');
+          const menu = card.querySelector('.menu');
+          const microphoneSVG = card.querySelector('.micro-btn .svg-icon');
+          if (progressBar) progressBar.classList.add('hidden');
+          if (inputContainer) inputContainer.classList.add('hidden');
+          if (heartIcon) heartIcon.classList.add('hidden');
+          if (menu) menu.classList.add('hidden');
+          if (microphoneSVG) microphoneSVG.classList.add('hidden');
+        }
+
+        function fadeInElements(card) {
+          const progressBar = card.querySelector('.progress-bar');
+          const inputContainer = card.querySelector('.input-container');
+          const heartIcon = card.querySelector('.svg-icon.heart');
+          const menu = card.querySelector('.menu');
+          const microphoneSVG = card.querySelector('.micro-btn .svg-icon');
+          if (progressBar) progressBar.classList.remove('hidden');
+          if (inputContainer) inputContainer.classList.remove('hidden');
+          if (heartIcon) heartIcon.classList.remove('hidden');
+          if (menu) menu.classList.remove('hidden');
+          if (microphoneSVG) microphoneSVG.classList.remove('hidden');
+        }
+
+        document.addEventListener('mousedown', (e) => {
+          if (e.target.closest('.story-segments')) {
+            const activeCard = cards[currentCardIndex];
+            if (!activeCard) return;
+            isHolding = true;
+            holdStartTime = Date.now();
+            pauseStory();
+            holdTimeout = setTimeout(() => {
+              if (isHolding) {
+                fadeOutElements(activeCard);
+              }
+            }, 300); // 300ms delay for fade-out
+          }
+        });
+
+        document.addEventListener('mouseup', (e) => {
+          if (e.target.closest('.story-segments')) {
+            const activeCard = cards[currentCardIndex];
+            if (!activeCard) return;
+            const holdDuration = Date.now() - holdStartTime;
+            isHolding = false;
+            clearTimeout(holdTimeout);
+            if (holdDuration < 200) {
+              // Treat as tap, don't fade, let click handler advance segment
+              resumeStory();
+              return;
+            }
+            fadeInElements(activeCard);
+            resumeStory();
+          }
+        });
+
+        document.addEventListener('touchstart', (e) => {
+          if (e.target.closest('.story-segments')) {
+            const activeCard = cards[currentCardIndex];
+            if (!activeCard) return;
+            isHolding = true;
+            holdStartTime = Date.now();
+            pauseStory();
+            holdTimeout = setTimeout(() => {
+              if (isHolding) {
+                fadeOutElements(activeCard);
+              }
+            }, 300); // 300ms delay for fade-out
+          }
+        });
+
+        document.addEventListener('touchend', (e) => {
+          if (e.target.closest('.story-segments')) {
+            const activeCard = cards[currentCardIndex];
+            if (!activeCard) return;
+            const holdDuration = Date.now() - holdStartTime;
+            isHolding = false;
+            clearTimeout(holdTimeout);
+            if (holdDuration < 200) {
+              // Treat as tap, don't fade, let click handler advance segment
+              resumeStory();
+              return;
+            }
+            fadeInElements(activeCard);
+            resumeStory();
+          }
+        });
+      }
+
+      // Prevent browser context menu on story segments
+      document.querySelectorAll('.story-segment').forEach(segment => {
+        segment.addEventListener('contextmenu', (e) => {
+          e.preventDefault();
+        });
+      });
+
+      // Tap handling (advancing segments) - Disabled in hold/lock states for all cards
+      document.addEventListener('click', (e) => {
+        // Check all micro-btn elements across all cards for hold or lock state
+        const anyMicroBtnActive = Array.from(document.querySelectorAll('.micro-btn')).some(btn => btn.classList.contains('active'));
+        const anyMicroBtnLocked = Array.from(document.querySelectorAll('.micro-btn')).some(btn => {
+          const slideContainer = btn.closest('.input-field').querySelector('.slide-container');
+          return slideContainer.querySelector('.lock-text') !== null;
+        });
+
+        // Disable tap if any card's microphone is in hold or lock state
+        if (e.target.closest('.input-container') || anyMicroBtnActive || anyMicroBtnLocked) {
+          return;
+        }
+        const activeCard = cards[currentCardIndex];
+        const rect = activeCard.getBoundingClientRect();
+        const tapX = e.clientX - rect.left;
+        if (!isPaused) {
+          if (tapX > rect.width / 2) {
+            advanceToNextSegment(activeCard, currentSegmentIndex);
+          } else {
+            advanceToPreviousSegment(activeCard, currentSegmentIndex);
+          }
+        }
+      });
+
+      // Swipe handling (switching user stories) - Disabled in hold/lock states for all cards
+      let touchStartX = 0;
+      let touchEndX = 0;
+      let isSwiping = false;
+
+      document.addEventListener('touchstart', (e) => {
+        // Check all micro-btn elements across all cards for hold or lock state
+        const anyMicroBtnActive = Array.from(document.querySelectorAll('.micro-btn')).some(btn => btn.classList.contains('active'));
+        const anyMicroBtnLocked = Array.from(document.querySelectorAll('.micro-btn')).some(btn => {
+          const slideContainer = btn.closest('.input-field').querySelector('.slide-container');
+          return slideContainer.querySelector('.lock-text') !== null;
+        });
+
+        // Disable swipe if any card's microphone is in hold or lock state
+        if (e.target.closest('.input-container') || anyMicroBtnActive || anyMicroBtnLocked) {
+          isSwiping = false;
+          return;
+        }
+        isSwiping = true;
+        touchStartX = e.changedTouches[0].screenX;
+      });
+
+      document.addEventListener('touchend', (e) => {
+        if (!isSwiping) return;
+        touchEndX = e.changedTouches[0].screenX;
+        const swipeThreshold = 50;
+        const swipeDistance = touchEndX - touchStartX;
+        if (swipeDistance > swipeThreshold) {
+          goToPreviousUserStory();
+        } else if (swipeDistance < -swipeThreshold) {
+          goToNextUserStory();
+        }
+        isSwiping = false;
+      });
+
+      const microBtns = document.querySelectorAll(".micro-btn");
+      const messageInputs = document.querySelectorAll(".message-input");
+
+      microBtns.forEach(btn => {
+        let holdTimer;
+        let isHolding = false;
+        let startX = 0;
+        let startY = 0;
+        let isLocked = false;
+        let timerInterval;
+        let seconds = 0;
+        const inputField = btn.closest('.input-field');
+        const slideContainer = inputField.querySelector('.slide-container');
+        const timerText = slideContainer.querySelector('.timer-text');
+        const microphoneSVG = btn.querySelector('#microphoneSVG');
+        const arrowSVG = btn.querySelector('#arrowSVG');
+        const slideText = slideContainer.querySelector('.slide-text');
+
+        // Create the "Cancel" text element once
+        const lockText = document.createElement('div');
+        lockText.textContent = "Cancel";
+        lockText.classList.add('lock-text');
+
+        function formatTime(sec) {
+          const minutes = Math.floor(sec / 60);
+          const seconds = sec % 60;
+          return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        const startTimer = () => {
+          seconds = 0;
+          timerText.textContent = '0:00';
+          timerInterval = setInterval(() => {
+            seconds++;
+            timerText.textContent = formatTime(seconds);
+          }, 1000);
+        };
+
+        const stopTimer = () => {
+          clearInterval(timerInterval);
+          seconds = 0;
+          timerText.textContent = '0:00';
+        };
+
+        const resetRecordingState = () => {
+          isLocked = false;
+          isHolding = false;
+          stopTimer();
+          btn.classList.remove("active");
+          inputField.classList.remove("active");
+          btn.style.transform = 'translate(0, 0)';
+          btn.style.left = '';
+          microphoneSVG.style.display = 'block';
+          arrowSVG.style.display = 'none';
+          slideContainer.querySelector('.arrow-icon').style.display = 'block';
+          slideText.style.display = 'block';
+          if (slideContainer.contains(lockText)) {
+            slideContainer.removeChild(lockText);
+          }
+          resumeStory();
+        };
+
+        const startHold = (event) => {
+          isHolding = true;
+          startX = event.touches ? event.touches[0].clientX : event.clientX;
+          startY = event.touches ? event.touches[0].clientY : event.clientY;
+
+          holdTimer = setTimeout(() => {
+            if (!isLocked) {
+              btn.classList.add("active");
+              inputField.classList.add("active");
+              startTimer();
+              pauseStory();
+            }
+          }, 100);
+        };
+
+        const endHold = () => {
+          clearTimeout(holdTimer);
+          if (isHolding && !isLocked) {
+            resetRecordingState();
+          }
+        };
+
+        const lockRecording = () => {
+          isLocked = true;
+          btn.classList.add('active');
+          inputField.classList.add('active');
+          microphoneSVG.style.display = 'none';
+          arrowSVG.style.display = 'block';
+          slideContainer.querySelector('.arrow-icon').style.display = 'none';
+          slideText.style.display = 'none';
+          if (!slideContainer.contains(lockText)) {
+            slideContainer.appendChild(lockText);
+          }
+          btn.style.transform = 'translate(0, 0)';
+          btn.style.left = '16px'; // Match hold state position
+        };
+
+        const onMove = (event) => {
+          if (!isHolding || isLocked) return;
+          const currentX = event.touches ? event.touches[0].clientX : event.clientX;
+          const currentY = event.touches ? event.touches[0].clientY : event.clientY;
+          const distanceX = currentX - startX;
+          const distanceY = currentY - startY;
+          const lockArea = -40; // Pixels upwards to trigger lock
+
+          if (distanceY < lockArea && distanceX > -20) { // Check for upward movement
+            lockRecording();
+          } else if (distanceX < 0) {
+            btn.style.transform = `translateX(${Math.max(distanceX, -80)}px)`;
+            if (distanceX < -60) { // Cancel if slid far enough left
+              resetRecordingState();
+            }
+          } else {
+            btn.style.transform = 'translateX(0)';
+          }
+        };
+
+        // Delegated event listeners for lockText to handle click and touch
+        slideContainer.addEventListener('click', (e) => {
+          if (e.target === lockText) {
+            e.stopPropagation();
+            console.log("Cancel clicked"); // Debug log
+            resetRecordingState();
+          }
+        });
+
+        slideContainer.addEventListener('touchend', (e) => {
+          if (e.target === lockText) {
+            e.stopPropagation();
+            console.log("Cancel touched"); // Debug log
+            resetRecordingState();
+          }
+        });
+
+        // Desktop events
+        btn.addEventListener("mousedown", (e) => {
+          startHold(e);
+          e.stopPropagation();
+        });
+        document.addEventListener("mouseup", () => {
+          endHold();
+        });
+        document.addEventListener("mousemove", (e) => {
+          onMove(e);
+        });
+
+        // Mobile events
+        btn.addEventListener("touchstart", (e) => {
+          startHold(e);
+          e.stopPropagation();
+        });
+        document.addEventListener("touchend", () => {
+          endHold();
+        });
+        document.addEventListener("touchmove", (e) => {
+          onMove(e);
+        });
+      });
+
+      messageInputs.forEach(input => {
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Backspace' || e.key === 'Delete') {
+            const microBtn = input.closest('.input-field').querySelector('.micro-btn');
+            if (microBtn) {
+              microBtn.classList.add('delete-pulse');
+              setTimeout(() => {
+                microBtn.classList.remove('delete-pulse');
+              }, 300);
+            }
+          }
+        });
+      });
+
+      const heartIcon = document.querySelectorAll(".heart");
+      heartIcon.forEach(icon => {
+        icon.addEventListener("click", (e) => {
+          icon.classList.toggle("liked");
+          e.stopPropagation();
+        });
+      });
+
+      cards.forEach(generateProgressBars);
+      setupHoldToPause();
+      showCard(currentCardIndex);
+    });
+  </script>
+</body>
+</html>
