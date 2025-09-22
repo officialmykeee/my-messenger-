@@ -397,27 +397,36 @@ skills.forEach(skill => {
         
         // Update progress bars
         function updateProgressBars() {
+            // First, reset all progress bars and their transitions
             for (let i = 0; i < totalStories; i++) {
                 const progressFill = document.getElementById(`progress-${i}`);
-                
-                if (i < currentStory) {
-                    // Completed stories
-                    progressFill.style.width = '100%';
-                } else if (i === currentStory) {
-                    // Current story - animate
-                    progressFill.style.width = '0%';
-                    if (isAutoPlaying) {
-                        // Animate progress bar
-                        setTimeout(() => {
+                progressFill.style.transition = 'width 0.1s linear';
+                progressFill.style.width = '0%';
+            }
+            
+            // Wait a moment for reset, then apply correct states
+            setTimeout(() => {
+                for (let i = 0; i < totalStories; i++) {
+                    const progressFill = document.getElementById(`progress-${i}`);
+                    
+                    if (i < currentStory) {
+                        // Completed stories - fill instantly
+                        progressFill.style.transition = 'width 0.1s linear';
+                        progressFill.style.width = '100%';
+                    } else if (i === currentStory) {
+                        // Current story - animate if auto-playing
+                        if (isAutoPlaying) {
                             progressFill.style.transition = `width ${STORY_DURATION}ms linear`;
                             progressFill.style.width = '100%';
-                        }, 50);
+                        } else {
+                            progressFill.style.width = '0%';
+                        }
+                    } else {
+                        // Future stories - keep empty
+                        progressFill.style.width = '0%';
                     }
-                } else {
-                    // Future stories
-                    progressFill.style.width = '0%';
                 }
-            }
+            }, 100);
         }
         
         // Navigate to next story
