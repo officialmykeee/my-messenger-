@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram Story Mode</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .story-container {
+            width: 375px;
+            height: 667px;
+            background: #000;
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
+        }
+
+        .story-header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 10;
+            padding: 15px;
+            background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, transparent 100%);
+        }
+
+        .progress-bars {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 15px;
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #fff;
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            color: white;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .user-details h3 {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .user-details span {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        .story-content {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .story-slide {
+            width: 100%;
+            height: 100%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            padding: 60px 30px 30px;
+            text-align: center;
+            position: absolute;
+        }
+
+        .story-slide.active {
+            display: flex;
+        }
+
+        .story-slide h1 {
+            color: white;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+
+        .story-slide p {
+            color: rgba(255,255,255,0.9);
+            font-size: 16px;
+            line-height: 1.5;
+            max-width: 300px;
+            margin-bottom: 30px;
+        }
+
+        .code-example {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #00ff88;
+            text-align: left;
+            backdrop-filter: blur(10px);
+        }
+
+        /* Background gradients for different slides */
+        .story-slide:nth-child(1) {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .story-slide:nth-child(2) {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        .story-slide:nth-child(3) {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        .story-slide:nth-child(4) {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+        .story-slide:nth-child(5) {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        .nav-areas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            z-index: 5;
+        }
+
+        .nav-area {
+            flex: 1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.1s;
+        }
+
+        .nav-area:active {
+            background-color: rgba(255,255,255,0.1);
+        }
+
+        .nav-area.left {
+            justify-content: flex-start;
+        }
+
+        .nav-area.right {
+            justify-content: flex-end;
+        }
+
+        .story-controls {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 10;
+        }
+
+        .control-btn {
+            width: 50px;
+            height: 50px;
+            border: 2px solid rgba(255,255,255,0.3);
+            background: rgba(0,0,0,0.3);
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .control-btn:hover {
+            background: rgba(255,255,255,0.2);
+            transform: scale(1.1);
+        }
+
+        .auto-play {
+            position: absolute;
+            bottom: 90px;
+            right: 20px;
+            color: white;
+            font-size: 12px;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <div class="story-container">
+        <!-- Header with progress bars -->
+        <div class="story-header">
+            <div class="progress-bars" id="progressBars">
+                <!-- Progress bars will be generated by JavaScript -->
+            </div>
+            <div class="user-info">
+                <div class="user-avatar">JS</div>
+                <div class="user-details">
+                    <h3>Learn JavaScript</h3>
+                    <span id="timeAgo">2m ago</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Story content slides -->
+        <div class="story-content">
+            <div class="story-slide active">
+                <h1>🚀 Welcome to JavaScript!</h1>
+                <p>Let's learn JavaScript by building this Instagram-style story viewer together!</p>
+                <div class="code-example">
+// This is JavaScript!
+console.log("Hello, World!");
+                </div>
+                <p>Swipe right or click the right side to continue →</p>
+            </div>
+
+            <div class="story-slide">
+                <h1>📱 HTML Structure</h1>
+                <p>First, we create the HTML skeleton with semantic elements:</p>
+                <div class="code-example">
+&lt;div class="story-container"&gt;
+  &lt;div class="story-header"&gt;
+    &lt;div class="progress-bars"&gt;&lt;/div&gt;
+  &lt;/div&gt;
+  &lt;div class="story-content"&gt;
+    &lt;div class="story-slide"&gt;&lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+                </div>
+            </div>
+
+            <div class="story-slide">
+                <h1>🎨 CSS Styling</h1>
+                <p>We use CSS to make it look beautiful with gradients, flexbox, and animations:</p>
+                <div class="code-example">
+.story-container {
+  width: 375px;
+  height: 667px;
+  background: #000;
+  border-radius: 20px;
+  position: relative;
+}
+                </div>
+            </div>
+
+            <div class="story-slide">
+                <h1>⚡ JavaScript Magic</h1>
+                <p>JavaScript adds interactivity - navigation, progress bars, and auto-play:</p>
+                <div class="code-example">
+function nextStory() {
+  currentStory++;
+  if (currentStory >= stories.length) {
+    currentStory = 0;
+  }
+  showStory(currentStory);
+}
+                </div>
+            </div>
+
+            <div class="story-slide">
+                <h1>🎉 You Did It!</h1>
+                <p>You've learned the basics of building interactive web apps with HTML, CSS, and JavaScript!</p>
+                <div class="code-example">
+// Ready to build more? 
+const skills = ['HTML', 'CSS', 'JavaScript'];
+skills.forEach(skill => {
+  console.log(`I learned ${skill}!`);
+});
+                </div>
+                <p>Keep practicing and building awesome projects! 🚀</p>
+            </div>
+        </div>
+
+        <!-- Navigation areas (invisible) -->
+        <div class="nav-areas">
+            <div class="nav-area left" onclick="prevStory()"></div>
+            <div class="nav-area right" onclick="nextStory()"></div>
+        </div>
+
+        <!-- Control buttons -->
+        <div class="story-controls">
+            <div class="control-btn" onclick="toggleAutoPlay()">⏯️</div>
+            <div class="control-btn" onclick="resetStories()">🔄</div>
+        </div>
+
+        <div class="auto-play" id="autoPlayStatus">Auto-play: ON</div>
+    </div>
+
+    <script>
+        // JavaScript starts here!
+        
+        // Variables to track our story state
+        let currentStory = 0;
+        let isAutoPlaying = true;
+        let autoPlayInterval;
+        const STORY_DURATION = 4000; // 4 seconds per story
+        
+        // Get all story slides
+        const stories = document.querySelectorAll('.story-slide');
+        const totalStories = stories.length;
+        
+        // Initialize the story viewer
+        function initializeStories() {
+            // Create progress bars
+            createProgressBars();
+            
+            // Start auto-play
+            startAutoPlay();
+            
+            // Show first story
+            showStory(0);
+        }
+        
+        // Create progress bars dynamically
+        function createProgressBars() {
+            const progressContainer = document.getElementById('progressBars');
+            progressContainer.innerHTML = ''; // Clear existing bars
+            
+            for (let i = 0; i < totalStories; i++) {
+                // Create progress bar element
+                const progressBar = document.createElement('div');
+                progressBar.className = 'progress-bar';
+                
+                // Create progress fill element
+                const progressFill = document.createElement('div');
+                progressFill.className = 'progress-fill';
+                progressFill.id = `progress-${i}`;
+                
+                // Add fill to bar, bar to container
+                progressBar.appendChild(progressFill);
+                progressContainer.appendChild(progressBar);
+            }
+        }
+        
+        // Show a specific story
+        function showStory(index) {
+            // Hide all stories
+            stories.forEach(story => story.classList.remove('active'));
+            
+            // Show current story
+            stories[index].classList.add('active');
+            
+            // Update progress bars
+            updateProgressBars();
+            
+            // Update time display
+            updateTimeDisplay();
+        }
+        
+        // Update progress bars
+        function updateProgressBars() {
+            for (let i = 0; i < totalStories; i++) {
+                const progressFill = document.getElementById(`progress-${i}`);
+                
+                if (i < currentStory) {
+                    // Completed stories
+                    progressFill.style.width = '100%';
+                } else if (i === currentStory) {
+                    // Current story - animate
+                    progressFill.style.width = '0%';
+                    if (isAutoPlaying) {
+                        // Animate progress bar
+                        setTimeout(() => {
+                            progressFill.style.transition = `width ${STORY_DURATION}ms linear`;
+                            progressFill.style.width = '100%';
+                        }, 50);
+                    }
+                } else {
+                    // Future stories
+                    progressFill.style.width = '0%';
+                }
+            }
+        }
+        
+        // Navigate to next story
+        function nextStory() {
+            currentStory++;
+            
+            if (currentStory >= totalStories) {
+                currentStory = 0; // Loop back to start
+            }
+            
+            showStory(currentStory);
+            restartAutoPlay();
+        }
+        
+        // Navigate to previous story
+        function prevStory() {
+            currentStory--;
+            
+            if (currentStory < 0) {
+                currentStory = totalStories - 1; // Loop to end
+            }
+            
+            showStory(currentStory);
+            restartAutoPlay();
+        }
+        
+        // Auto-play functionality
+        function startAutoPlay() {
+            if (isAutoPlaying) {
+                autoPlayInterval = setInterval(() => {
+                    nextStory();
+                }, STORY_DURATION);
+            }
+        }
+        
+        function stopAutoPlay() {
+            if (autoPlayInterval) {
+                clearInterval(autoPlayInterval);
+            }
+        }
+        
+        function restartAutoPlay() {
+            stopAutoPlay();
+            startAutoPlay();
+        }
+        
+        // Toggle auto-play on/off
+        function toggleAutoPlay() {
+            isAutoPlaying = !isAutoPlaying;
+            const status = document.getElementById('autoPlayStatus');
+            
+            if (isAutoPlaying) {
+                status.textContent = 'Auto-play: ON';
+                startAutoPlay();
+            } else {
+                status.textContent = 'Auto-play: OFF';
+                stopAutoPlay();
+                
+                // Reset progress bar transitions
+                const progressFills = document.querySelectorAll('.progress-fill');
+                progressFills.forEach(fill => {
+                    fill.style.transition = 'width 0.1s linear';
+                });
+            }
+        }
+        
+        // Reset all stories to beginning
+        function resetStories() {
+            currentStory = 0;
+            showStory(currentStory);
+            restartAutoPlay();
+        }
+        
+        // Update time display
+        function updateTimeDisplay() {
+            const timeElement = document.getElementById('timeAgo');
+            const times = ['2m ago', '5m ago', '1h ago', '3h ago', '1d ago'];
+            timeElement.textContent = times[currentStory] || '2m ago';
+        }
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case 'ArrowRight':
+                case ' ': // Spacebar
+                    e.preventDefault();
+                    nextStory();
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    prevStory();
+                    break;
+                case 'r':
+                case 'R':
+                    e.preventDefault();
+                    resetStories();
+                    break;
+                case 'p':
+                case 'P':
+                    e.preventDefault();
+                    toggleAutoPlay();
+                    break;
+            }
+        });
+        
+        // Initialize everything when page loads
+        document.addEventListener('DOMContentLoaded', initializeStories);
+        
+        // Pause auto-play when user hovers over story
+        document.querySelector('.story-container').addEventListener('mouseenter', () => {
+            if (isAutoPlaying) {
+                stopAutoPlay();
+            }
+        });
+        
+        // Resume auto-play when user stops hovering
+        document.querySelector('.story-container').addEventListener('mouseleave', () => {
+            if (isAutoPlaying) {
+                startAutoPlay();
+            }
+        });
+    </script>
+</body>
+</html>
