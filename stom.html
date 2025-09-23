@@ -1,806 +1,216 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Instagram Story Mode</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Instagram Story Cube with Header Inside</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background: #000;
+      overflow: hidden;
+    }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            overflow: hidden;
-        }
+    .story-container {
+      position: relative;
+      width: 300px;
+      height: 500px;
+      perspective: 1000px;
+    }
 
-        .story-container {
-            width: 375px;
-            height: 667px;
-            background: #000;
-            border-radius: 20px;
-            overflow: hidden;
-            position: relative;
-            box-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
-            perspective: 1000px;
-        }
+    .cube {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      transform-style: preserve-3d;
+      transition: transform 0.6s ease-in-out;
+    }
 
-        .cube-container {
-            width: 100%;
-            height: 100%;
-            position: relative;
-            transform-style: preserve-3d;
-            transition: transform 0.6s cubic-bezier(0.4, 0.0, 0.2, 1);
-        }
+    .cube img {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 20px;
+    }
 
-        .cube-face {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            backface-visibility: hidden;
-        }
+    /* Cube faces */
+    .cube .front  { transform: rotateY(0deg)   translateZ(150px); }
+    .cube .right  { transform: rotateY(90deg)  translateZ(150px); }
+    .cube .back   { transform: rotateY(180deg) translateZ(150px); }
+    .cube .left   { transform: rotateY(-90deg) translateZ(150px); }
 
-        .cube-face.front {
-            transform: translateZ(187.5px);
-        }
+    /* Top bar area inside story */
+    .top-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 10px;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent);
+      border-radius: 20px 20px 0 0;
+      z-index: 3;
+    }
 
-        .cube-face.back {
-            transform: translateZ(-187.5px) rotateY(180deg);
-        }
+    /* Progress bar */
+    .progress {
+      height: 3px;
+      background: rgba(255,255,255,0.3);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+    .progress-inner {
+      height: 100%;
+      width: 0%;
+      background: white;
+      transition: width linear;
+    }
 
-        .cube-face.right {
-            transform: rotateY(90deg) translateZ(187.5px);
-        }
+    /* Story header (profile, name, meta) */
+    .story-header {
+      display: flex;
+      align-items: center;
+      color: #fff;
+      font-family: sans-serif;
+      font-size: 14px;
+    }
 
-        .cube-face.left {
-            transform: rotateY(-90deg) translateZ(187.5px);
-        }
+    .story-header img {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      margin-right: 10px;
+    }
 
-        .story-header {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 10;
-            padding: 15px;
-            background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, transparent 100%);
-        }
+    .story-header .name {
+      font-weight: bold;
+      font-size: 14px;
+    }
 
-        .progress-bars {
-            display: flex;
-            gap: 4px;
-            margin-bottom: 15px;
-        }
-
-        .progress-bar {
-            flex: 1;
-            height: 3px;
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 2px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: #fff;
-            width: 0%;
-            transition: width 0.1s linear;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            color: white;
-        }
-
-        .user-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            margin-right: 10px;
-        }
-
-        .user-details h3 {
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .user-details span {
-            font-size: 12px;
-            opacity: 0.7;
-        }
-
-        .story-content {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .story-slide {
-            width: 100%;
-            height: 100%;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            padding: 60px 30px 30px;
-            text-align: center;
-            position: absolute;
-        }
-
-        .story-slide.active {
-            display: flex;
-        }
-
-        .story-slide h1 {
-            color: white;
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 20px;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
-        }
-
-        .story-slide p {
-            color: rgba(255,255,255,0.9);
-            font-size: 16px;
-            line-height: 1.5;
-            max-width: 300px;
-            margin-bottom: 30px;
-        }
-
-        .code-example {
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 10px;
-            padding: 15px;
-            margin: 20px 0;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            color: #00ff88;
-            text-align: left;
-            backdrop-filter: blur(10px);
-        }
-
-        /* Background gradients for different slides */
-        .story-slide:nth-child(1) {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        .story-slide:nth-child(2) {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        }
-        .story-slide:nth-child(3) {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        }
-        .story-slide:nth-child(4) {
-            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-        }
-        .story-slide:nth-child(5) {
-            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-        }
-        .story-slide:nth-child(6) {
-            background: linear-gradient(135deg, #ff6b6b 0%, #4ecdc4 100%);
-        }
-
-        .nav-areas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            display: flex;
-            z-index: 5;
-        }
-
-        .nav-area {
-            flex: 1;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background-color 0.1s;
-        }
-
-        .nav-area:active {
-            background-color: rgba(255,255,255,0.1);
-        }
-
-        .nav-area.left {
-            justify-content: flex-start;
-        }
-
-        .nav-area.right {
-            justify-content: flex-end;
-        }
-
-        .story-controls {
-            position: absolute;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 15px;
-            z-index: 10;
-        }
-
-        .control-btn {
-            width: 50px;
-            height: 50px;
-            border: 2px solid rgba(255,255,255,0.3);
-            background: rgba(0,0,0,0.3);
-            border-radius: 50%;
-            color: white;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
-        }
-
-        .control-btn:hover {
-            background: rgba(255,255,255,0.2);
-            transform: scale(1.1);
-        }
-
-        .auto-play {
-            position: absolute;
-            bottom: 90px;
-            right: 20px;
-            color: white;
-            font-size: 12px;
-            opacity: 0.7;
-        }
-
-        .user-indicator {
-            position: absolute;
-            top: 100px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: white;
-            font-size: 12px;
-            opacity: 0.7;
-            z-index: 10;
-        }
-    </style>
+    .story-header .meta {
+      font-size: 12px;
+      color: #ccc;
+    }
+  </style>
 </head>
 <body>
-    <div class="story-container" id="storyContainer">
-        <div class="cube-container" id="cubeContainer">
-            <!-- Front face - User 1 -->
-            <div class="cube-face front" id="user1">
-                <!-- Header with progress bars -->
-                <div class="story-header">
-                    <div class="progress-bars" id="progressBars1">
-                        <!-- Progress bars will be generated by JavaScript -->
-                    </div>
-                    <div class="user-info">
-                        <div class="user-avatar">JS</div>
-                        <div class="user-details">
-                            <h3>Learn JavaScript</h3>
-                            <span id="timeAgo1">2m ago</span>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Story content slides -->
-                <div class="story-content">
-                    <div class="story-slide active">
-                        <h1>🚀 Welcome to JavaScript!</h1>
-                        <p>Let's learn JavaScript by building this Instagram-style story viewer together!</p>
-                        <div class="code-example">
-// This is JavaScript!
-console.log("Hello, World!");
-                        </div>
-                        <p>Swipe right or click the right side to continue →</p>
-                    </div>
-
-                    <div class="story-slide">
-                        <h1>📱 HTML Structure</h1>
-                        <p>First, we create the HTML skeleton with semantic elements:</p>
-                        <div class="code-example">
-&lt;div class="story-container"&gt;
-  &lt;div class="story-header"&gt;
-    &lt;div class="progress-bars"&gt;&lt;/div&gt;
-  &lt;/div&gt;
-  &lt;div class="story-content"&gt;
-    &lt;div class="story-slide"&gt;&lt;/div&gt;
-  &lt;/div&gt;
-&lt;/div&gt;
-                        </div>
-                    </div>
-
-                    <div class="story-slide">
-                        <h1>🎨 CSS Styling</h1>
-                        <p>We use CSS to make it look beautiful with gradients, flexbox, and animations:</p>
-                        <div class="code-example">
-.story-container {
-  width: 375px;
-  height: 667px;
-  background: #000;
-  border-radius: 20px;
-  position: relative;
-}
-                        </div>
-                    </div>
-
-                    <div class="story-slide">
-                        <h1>⚡ JavaScript Magic</h1>
-                        <p>JavaScript adds interactivity - navigation, progress bars, and auto-play:</p>
-                        <div class="code-example">
-function nextStory() {
-  currentStory++;
-  if (currentStory >= stories.length) {
-    currentStory = 0;
-  }
-  showStory(currentStory);
-}
-                        </div>
-                    </div>
-
-                    <div class="story-slide">
-                        <h1>🎉 You Did It!</h1>
-                        <p>You've learned the basics of building interactive web apps with HTML, CSS, and JavaScript!</p>
-                        <div class="code-example">
-// Ready to build more? 
-const skills = ['HTML', 'CSS', 'JavaScript'];
-skills.forEach(skill => {
-  console.log(`I learned ${skill}!`);
-});
-                        </div>
-                        <p>Keep practicing and building awesome projects! 🚀</p>
-                    </div>
-                </div>
-
-                <!-- Navigation areas (invisible) -->
-                <div class="nav-areas">
-                    <div class="nav-area left" onclick="prevStory()"></div>
-                    <div class="nav-area right" onclick="nextStory()"></div>
-                </div>
-            </div>
-
-            <!-- Right face - User 2 -->
-            <div class="cube-face right" id="user2">
-                <!-- Header with progress bars -->
-                <div class="story-header">
-                    <div class="progress-bars" id="progressBars2">
-                        <!-- Progress bars will be generated by JavaScript -->
-                    </div>
-                    <div class="user-info">
-                        <div class="user-avatar" style="background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);">UI</div>
-                        <div class="user-details">
-                            <h3>UI Design</h3>
-                            <span id="timeAgo2">15m ago</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Story content slides -->
-                <div class="story-content">
-                    <div class="story-slide active">
-                        <h1>🎨 UI Design Principles</h1>
-                        <p>Creating beautiful and functional user interfaces with modern design principles!</p>
-                        <div class="code-example">
-/* Beautiful gradients */
-background: linear-gradient(
-  135deg, 
-  #667eea 0%, 
-  #764ba2 100%
-);
-                        </div>
-                        <p>Swipe left to go back ← or right for more users →</p>
-                    </div>
-                </div>
-
-                <!-- Navigation areas (invisible) -->
-                <div class="nav-areas">
-                    <div class="nav-area left" onclick="prevStory()"></div>
-                    <div class="nav-area right" onclick="nextStory()"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Control buttons -->
-        <div class="story-controls">
-            <div class="control-btn" onclick="toggleAutoPlay()">⏯️</div>
-            <div class="control-btn" onclick="resetStories()">🔄</div>
-        </div>
-
-        <div class="auto-play" id="autoPlayStatus">Auto-play: ON</div>
-        <div class="user-indicator" id="userIndicator">User 1 of 2</div>
+  <div class="story-container" id="storyContainer">
+    <div class="cube" id="cube">
+      <!-- Story 1 -->
+      <img src="https://picsum.photos/id/1015/300/500" class="front" alt="story1">
+      <!-- Story 2 -->
+      <img src="https://picsum.photos/id/1016/300/500" class="right" alt="story2">
+      <!-- Story 3 -->
+      <img src="https://picsum.photos/id/1018/300/500" class="back" alt="story3">
+      <!-- Story 4 -->
+      <img src="https://picsum.photos/id/1019/300/500" class="left" alt="story4">
     </div>
 
-    <script>
-        // JavaScript starts here!
-        
-        // Variables to track our story state
-        let currentUser = 0;
-        let currentStory = [0, 0]; // Story index for each user
-        let isAutoPlaying = true;
-        let autoPlayInterval;
-        const STORY_DURATION = 4000; // 4 seconds per story
-        
-        // User data
-        const users = [
-            {
-                stories: document.querySelectorAll('#user1 .story-slide'),
-                progressBars: 'progressBars1',
-                timeAgo: 'timeAgo1',
-                totalStories: 5
-            },
-            {
-                stories: document.querySelectorAll('#user2 .story-slide'),
-                progressBars: 'progressBars2', 
-                timeAgo: 'timeAgo2',
-                totalStories: 1
-            }
-        ];
+    <!-- Top bar inside story -->
+    <div class="top-bar">
+      <div class="progress">
+        <div class="progress-inner" id="progressBar"></div>
+      </div>
+      <div class="story-header" id="storyHeader">
+        <img src="https://i.pravatar.cc/100?img=1" alt="profile">
+        <div>
+          <div class="name">Mykee</div>
+          <div class="meta">@mykee • 5m</div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-        // Touch/drag variables
-        let startX = 0;
-        let startY = 0;
-        let isDragging = false;
-        let dragThreshold = 50;
-        
-        // Initialize the story viewer
-        function initializeStories() {
-            // Create progress bars for both users
-            createProgressBars(0);
-            createProgressBars(1);
-            
-            // Start auto-play
-            startAutoPlay();
-            
-            // Show first story
-            showStory();
+  <script>
+    const cube = document.getElementById("cube");
+    const container = document.getElementById("storyContainer");
+    const progressBar = document.getElementById("progressBar");
+    const storyHeader = document.getElementById("storyHeader");
 
-            // Add touch/mouse event listeners for drag
-            addDragListeners();
-        }
+    // Story data
+    const stories = [
+      { name: "Mykee", username: "@mykee", time: "5m", profile: "https://i.pravatar.cc/100?img=1" },
+      { name: "Sarah", username: "@sarah", time: "10m", profile: "https://i.pravatar.cc/100?img=2" }
+    ];
 
-        // Add drag functionality
-        function addDragListeners() {
-            const container = document.getElementById('storyContainer');
-            
-            // Mouse events
-            container.addEventListener('mousedown', handleDragStart);
-            container.addEventListener('mousemove', handleDragMove);
-            container.addEventListener('mouseup', handleDragEnd);
-            container.addEventListener('mouseleave', handleDragEnd);
-            
-            // Touch events
-            container.addEventListener('touchstart', handleDragStart);
-            container.addEventListener('touchmove', handleDragMove);
-            container.addEventListener('touchend', handleDragEnd);
-        }
+    let current = 0;
+    let startX = 0;
+    let currentRotation = 0;
+    let dragging = false;
 
-        function handleDragStart(e) {
-            isDragging = true;
-            startX = e.type === 'mousedown' ? e.clientX : e.touches[0].clientX;
-            startY = e.type === 'mousedown' ? e.clientY : e.touches[0].clientY;
-            
-            // Prevent default to avoid text selection
-            e.preventDefault();
-        }
+    function updateHeader() {
+      const story = stories[current % stories.length];
+      storyHeader.innerHTML = `
+        <img src="${story.profile}" alt="profile">
+        <div>
+          <div class="name">${story.name}</div>
+          <div class="meta">${story.username} • ${story.time}</div>
+        </div>
+      `;
+    }
 
-        function handleDragMove(e) {
-            if (!isDragging) return;
-            
-            const currentX = e.type === 'mousemove' ? e.clientX : e.touches[0].clientX;
-            const currentY = e.type === 'mousemove' ? e.clientY : e.touches[0].clientY;
-            
-            const deltaX = currentX - startX;
-            const deltaY = Math.abs(currentY - startY);
-            
-            // If vertical movement is too much, cancel horizontal drag
-            if (deltaY > 30) {
-                isDragging = false;
-                return;
-            }
-            
-            e.preventDefault();
-        }
+    function updateCube() {
+      cube.style.transition = "transform 0.6s ease-in-out";
+      cube.style.transform = `rotateY(${current * -90}deg)`;
+      currentRotation = current * -90;
 
-        function handleDragEnd(e) {
-            if (!isDragging) return;
-            
-            const endX = e.type === 'mouseup' ? e.clientX : (e.changedTouches ? e.changedTouches[0].clientX : startX);
-            const deltaX = endX - startX;
-            
-            isDragging = false;
-            
-            // Check if drag distance exceeds threshold
-            if (Math.abs(deltaX) > dragThreshold) {
-                if (deltaX > 0) {
-                    // Dragging right - go to PREVIOUS user (swipe right = previous)
-                    switchToPrevUser();
-                } else {
-                    // Dragging left - go to NEXT user (swipe left = next)
-                    switchToNextUser();
-                }
-            }
-        }
+      // reset progress bar
+      progressBar.style.transition = "none";
+      progressBar.style.width = "0%";
+      setTimeout(() => {
+        progressBar.style.transition = "width 5s linear";
+        progressBar.style.width = "100%";
+      }, 50);
 
-        function switchToNextUser() {
-            if (currentUser < users.length - 1) {
-                currentUser++;
-                updateCubeRotation();
-                showStory();
-                restartAutoPlay();
-            }
-        }
+      updateHeader();
+    }
 
-        function switchToPrevUser() {
-            if (currentUser > 0) {
-                currentUser--;
-                updateCubeRotation();
-                showStory();
-                restartAutoPlay();
-            }
-        }
+    // Drag control
+    function startDrag(x) {
+      dragging = true;
+      startX = x;
+      cube.style.transition = "none";
+    }
 
-        function updateCubeRotation() {
-            const cube = document.getElementById('cubeContainer');
-            const rotationY = currentUser * -90; // Negative for correct direction
-            cube.style.transform = `rotateY(${rotationY}deg)`;
-            
-            // Update user indicator
-            document.getElementById('userIndicator').textContent = `User ${currentUser + 1} of ${users.length}`;
-        }
-        
-        // Create progress bars dynamically
-        function createProgressBars(userIndex) {
-            const progressContainer = document.getElementById(users[userIndex].progressBars);
-            progressContainer.innerHTML = ''; // Clear existing bars
-            
-            for (let i = 0; i < users[userIndex].totalStories; i++) {
-                // Create progress bar element
-                const progressBar = document.createElement('div');
-                progressBar.className = 'progress-bar';
-                
-                // Create progress fill element
-                const progressFill = document.createElement('div');
-                progressFill.className = 'progress-fill';
-                progressFill.id = `progress-${userIndex}-${i}`;
-                
-                // Add fill to bar, bar to container
-                progressBar.appendChild(progressFill);
-                progressContainer.appendChild(progressBar);
-            }
-        }
-        
-        // Show a specific story
-        function showStory() {
-            const user = users[currentUser];
-            const storyIndex = currentStory[currentUser];
-            
-            // Hide all stories for current user
-            user.stories.forEach(story => story.classList.remove('active'));
-            
-            // Show current story
-            if (user.stories[storyIndex]) {
-                user.stories[storyIndex].classList.add('active');
-            }
-            
-            // Update progress bars
-            updateProgressBars();
-            
-            // Update time display
-            updateTimeDisplay();
-        }
-        
-        // Update progress bars
-        function updateProgressBars() {
-            const user = users[currentUser];
-            const storyIndex = currentStory[currentUser];
-            
-            // First, reset ALL progress bars and clear their transitions
-            for (let i = 0; i < user.totalStories; i++) {
-                const progressFill = document.getElementById(`progress-${currentUser}-${i}`);
-                if (progressFill) {
-                    progressFill.style.transition = 'none'; // Remove transition temporarily
-                    progressFill.style.width = '0%'; // Reset to 0
-                }
-            }
-            
-            // Small delay to ensure the reset takes effect
-            setTimeout(() => {
-                for (let i = 0; i < user.totalStories; i++) {
-                    const progressFill = document.getElementById(`progress-${currentUser}-${i}`);
-                    if (!progressFill) continue;
-                    
-                    if (i < storyIndex) {
-                        // Completed stories - fill immediately
-                        progressFill.style.width = '100%';
-                    } else if (i === storyIndex) {
-                        // Current story - animate only this one
-                        progressFill.style.width = '0%';
-                        if (isAutoPlaying) {
-                            // Add transition and animate
-                            progressFill.style.transition = `width ${STORY_DURATION}ms linear`;
-                            progressFill.style.width = '100%';
-                        }
-                    } else {
-                        // Future stories - keep at 0%
-                        progressFill.style.width = '0%';
-                    }
-                }
-            }, 10); // Very small delay to ensure DOM updates
-        }
-        
-        // Navigate to next story
-        function nextStory() {
-            const user = users[currentUser];
-            currentStory[currentUser]++;
-            
-            if (currentStory[currentUser] >= user.totalStories) {
-                // Move to next user or loop back
-                if (currentUser < users.length - 1) {
-                    currentUser++;
-                    currentStory[currentUser] = 0;
-                    updateCubeRotation();
-                } else {
-                    // Loop back to first user
-                    currentUser = 0;
-                    currentStory[0] = 0;
-                    updateCubeRotation();
-                }
-            }
-            
-            showStory();
-            restartAutoPlay();
-        }
-        
-        // Navigate to previous story
-        function prevStory() {
-            currentStory[currentUser]--;
-            
-            if (currentStory[currentUser] < 0) {
-                // Move to previous user or loop to end
-                if (currentUser > 0) {
-                    currentUser--;
-                    currentStory[currentUser] = users[currentUser].totalStories - 1;
-                    updateCubeRotation();
-                } else {
-                    // Loop to last user, last story
-                    currentUser = users.length - 1;
-                    currentStory[currentUser] = users[currentUser].totalStories - 1;
-                    updateCubeRotation();
-                }
-            }
-            
-            showStory();
-            restartAutoPlay();
-        }
-        
-        // Auto-play functionality
-        function startAutoPlay() {
-            if (isAutoPlaying) {
-                autoPlayInterval = setInterval(() => {
-                    nextStory();
-                }, STORY_DURATION);
-            }
-        }
-        
-        function stopAutoPlay() {
-            if (autoPlayInterval) {
-                clearInterval(autoPlayInterval);
-            }
-        }
-        
-        function restartAutoPlay() {
-            stopAutoPlay();
-            startAutoPlay();
-        }
-        
-        // Toggle auto-play on/off
-        function toggleAutoPlay() {
-            isAutoPlaying = !isAutoPlaying;
-            const status = document.getElementById('autoPlayStatus');
-            
-            if (isAutoPlaying) {
-                status.textContent = 'Auto-play: ON';
-                startAutoPlay();
-            } else {
-                status.textContent = 'Auto-play: OFF';
-                stopAutoPlay();
-                
-                // Reset progress bar transitions
-                const progressFills = document.querySelectorAll('.progress-fill');
-                progressFills.forEach(fill => {
-                    fill.style.transition = 'width 0.1s linear';
-                });
-            }
-        }
-        
-        // Reset all stories to beginning
-        function resetStories() {
-            currentUser = 0;
-            currentStory = [0, 0];
-            updateCubeRotation();
-            showStory();
-            restartAutoPlay();
-        }
-        
-        // Update time display
-        function updateTimeDisplay() {
-            const user = users[currentUser];
-            const timeElement = document.getElementById(user.timeAgo);
-            const times = [
-                ['2m ago', '5m ago', '1h ago', '3h ago', '1d ago'],
-                ['15m ago']
-            ];
-            
-            if (timeElement && times[currentUser]) {
-                timeElement.textContent = times[currentUser][currentStory[currentUser]] || times[currentUser][0];
-            }
-        }
-        
-        // Keyboard navigation
-        document.addEventListener('keydown', (e) => {
-            switch(e.key) {
-                case 'ArrowRight':
-                case ' ': // Spacebar
-                    e.preventDefault();
-                    nextStory();
-                    break;
-                case 'ArrowLeft':
-                    e.preventDefault();
-                    prevStory();
-                    break;
-                case 'ArrowUp':
-                    e.preventDefault();
-                    switchToPrevUser();
-                    break;
-                case 'ArrowDown':
-                    e.preventDefault();
-                    switchToNextUser();
-                    break;
-                case 'r':
-                case 'R':
-                    e.preventDefault();
-                    resetStories();
-                    break;
-                case 'p':
-                case 'P':
-                    e.preventDefault();
-                    toggleAutoPlay();
-                    break;
-            }
-        });
-        
-        // Initialize everything when page loads
-        document.addEventListener('DOMContentLoaded', initializeStories);
-        
-        // Pause auto-play when user hovers over story
-        document.querySelector('.story-container').addEventListener('mouseenter', () => {
-            if (isAutoPlaying) {
-                stopAutoPlay();
-            }
-        });
-        
-        // Resume auto-play when user stops hovering
-        document.querySelector('.story-container').addEventListener('mouseleave', () => {
-            if (isAutoPlaying) {
-                startAutoPlay();
-            }
-        });
-    </script>
+    function moveDrag(x) {
+      if (!dragging) return;
+      let deltaX = x - startX;
+      let rotation = currentRotation + (deltaX / container.offsetWidth) * 90;
+      cube.style.transform = `rotateY(${rotation}deg)`;
+    }
+
+    function endDrag(x) {
+      if (!dragging) return;
+      dragging = false;
+      let deltaX = x - startX;
+
+      if (Math.abs(deltaX) > 50) {
+        if (deltaX < 0) current = (current + 1) % 4;
+        else current = (current - 1 + 4) % 4;
+      }
+      updateCube();
+    }
+
+    // Mouse events
+    container.addEventListener("mousedown", e => startDrag(e.clientX));
+    container.addEventListener("mousemove", e => moveDrag(e.clientX));
+    container.addEventListener("mouseup", e => endDrag(e.clientX));
+    container.addEventListener("mouseleave", e => { if (dragging) endDrag(e.clientX); });
+
+    // Touch events
+    container.addEventListener("touchstart", e => startDrag(e.touches[0].clientX));
+    container.addEventListener("touchmove", e => moveDrag(e.touches[0].clientX));
+    container.addEventListener("touchend", e => endDrag(e.changedTouches[0].clientX));
+
+    // Init
+    updateCube();
+  </script>
+
 </body>
 </html>
