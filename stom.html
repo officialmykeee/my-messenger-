@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Instagram Story Cube with Header Inside</title>
+  <title>Instagram Story Cube (With Menu)</title>
   <style>
     body {
       display: flex;
@@ -27,33 +27,32 @@
       height: 100%;
       position: absolute;
       transform-style: preserve-3d;
-      transition: transform 0.6s ease-in-out;
+      transform: rotateY(0deg);
     }
 
-    .cube img {
+    .face {
       position: absolute;
       width: 100%;
       height: 100%;
-      object-fit: cover;
       border-radius: 20px;
+      overflow: hidden;
+      background-size: cover;
+      background-position: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
     }
 
     /* Cube faces */
-    .cube .front  { transform: rotateY(0deg)   translateZ(150px); }
-    .cube .right  { transform: rotateY(90deg)  translateZ(150px); }
-    .cube .back   { transform: rotateY(180deg) translateZ(150px); }
-    .cube .left   { transform: rotateY(-90deg) translateZ(150px); }
+    .front  { transform: rotateY(0deg)   translateZ(150px); }
+    .right  { transform: rotateY(90deg)  translateZ(150px); }
+    .back   { transform: rotateY(180deg) translateZ(150px); }
+    .left   { transform: rotateY(-90deg) translateZ(150px); }
 
-    /* Top bar area inside story */
+    /* Top gradient area */
     .top-bar {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
       padding: 10px;
       background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent);
-      border-radius: 20px 20px 0 0;
-      z-index: 3;
     }
 
     /* Progress bar */
@@ -68,16 +67,21 @@
       height: 100%;
       width: 0%;
       background: white;
-      transition: width linear;
     }
 
-    /* Story header (profile, name, meta) */
+    /* Story header */
     .story-header {
       display: flex;
       align-items: center;
+      justify-content: space-between; /* push menu to the right */
       color: #fff;
       font-family: sans-serif;
       font-size: 14px;
+    }
+
+    .story-info {
+      display: flex;
+      align-items: center;
     }
 
     .story-header img {
@@ -96,79 +100,121 @@
       font-size: 12px;
       color: #ccc;
     }
+
+    /* Menu (three dots) */
+    .menu {
+      font-size: 20px;
+      cursor: pointer;
+      user-select: none;
+      padding-left: 10px;
+    }
   </style>
 </head>
 <body>
 
   <div class="story-container" id="storyContainer">
     <div class="cube" id="cube">
+      
       <!-- Story 1 -->
-      <img src="https://picsum.photos/id/1015/300/500" class="front" alt="story1">
-      <!-- Story 2 -->
-      <img src="https://picsum.photos/id/1016/300/500" class="right" alt="story2">
-      <!-- Story 3 -->
-      <img src="https://picsum.photos/id/1018/300/500" class="back" alt="story3">
-      <!-- Story 4 -->
-      <img src="https://picsum.photos/id/1019/300/500" class="left" alt="story4">
-    </div>
-
-    <!-- Top bar inside story -->
-    <div class="top-bar">
-      <div class="progress">
-        <div class="progress-inner" id="progressBar"></div>
-      </div>
-      <div class="story-header" id="storyHeader">
-        <img src="https://i.pravatar.cc/100?img=1" alt="profile">
-        <div>
-          <div class="name">Mykee</div>
-          <div class="meta">@mykee • 5m</div>
+      <div class="face front" style="background-image:url('https://picsum.photos/id/1015/300/500')">
+        <div class="top-bar">
+          <div class="progress"><div class="progress-inner"></div></div>
+          <div class="story-header">
+            <div class="story-info">
+              <img src="https://i.pravatar.cc/100?img=1">
+              <div>
+                <div class="name">Mykee</div>
+                <div class="meta">@mykee • 5m</div>
+              </div>
+            </div>
+            <div class="menu">⋮</div>
+          </div>
         </div>
       </div>
+
+      <!-- Story 2 -->
+      <div class="face right" style="background-image:url('https://picsum.photos/id/1016/300/500')">
+        <div class="top-bar">
+          <div class="progress"><div class="progress-inner"></div></div>
+          <div class="story-header">
+            <div class="story-info">
+              <img src="https://i.pravatar.cc/100?img=2">
+              <div>
+                <div class="name">Sarah</div>
+                <div class="meta">@sarah • 10m</div>
+              </div>
+            </div>
+            <div class="menu">⋮</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Story 3 -->
+      <div class="face back" style="background-image:url('https://picsum.photos/id/1018/300/500')">
+        <div class="top-bar">
+          <div class="progress"><div class="progress-inner"></div></div>
+          <div class="story-header">
+            <div class="story-info">
+              <img src="https://i.pravatar.cc/100?img=3">
+              <div>
+                <div class="name">Alex</div>
+                <div class="meta">@alex • 15m</div>
+              </div>
+            </div>
+            <div class="menu">⋮</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Story 4 -->
+      <div class="face left" style="background-image:url('https://picsum.photos/id/1019/300/500')">
+        <div class="top-bar">
+          <div class="progress"><div class="progress-inner"></div></div>
+          <div class="story-header">
+            <div class="story-info">
+              <img src="https://i.pravatar.cc/100?img=4">
+              <div>
+                <div class="name">Nina</div>
+                <div class="meta">@nina • 20m</div>
+              </div>
+            </div>
+            <div class="menu">⋮</div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 
   <script>
     const cube = document.getElementById("cube");
     const container = document.getElementById("storyContainer");
-    const progressBar = document.getElementById("progressBar");
-    const storyHeader = document.getElementById("storyHeader");
-
-    // Story data
-    const stories = [
-      { name: "Mykee", username: "@mykee", time: "5m", profile: "https://i.pravatar.cc/100?img=1" },
-      { name: "Sarah", username: "@sarah", time: "10m", profile: "https://i.pravatar.cc/100?img=2" }
-    ];
 
     let current = 0;
     let startX = 0;
     let currentRotation = 0;
     let dragging = false;
 
-    function updateHeader() {
-      const story = stories[current % stories.length];
-      storyHeader.innerHTML = `
-        <img src="${story.profile}" alt="profile">
-        <div>
-          <div class="name">${story.name}</div>
-          <div class="meta">${story.username} • ${story.time}</div>
-        </div>
-      `;
-    }
-
     function updateCube() {
-      cube.style.transition = "transform 0.6s ease-in-out";
-      cube.style.transform = `rotateY(${current * -90}deg)`;
-      currentRotation = current * -90;
+      requestAnimationFrame(() => {
+        cube.style.transition = "transform 0.6s ease-in-out";
+        cube.style.transform = `rotateY(${current * -90}deg)`;
+        currentRotation = current * -90;
 
-      // reset progress bar
-      progressBar.style.transition = "none";
-      progressBar.style.width = "0%";
-      setTimeout(() => {
-        progressBar.style.transition = "width 5s linear";
-        progressBar.style.width = "100%";
-      }, 50);
+        // reset progress bars
+        const progressBars = container.querySelectorAll(".progress-inner");
+        progressBars.forEach(p => {
+          p.style.transition = "none";
+          p.style.width = "0%";
+        });
 
-      updateHeader();
+        // run animation on active bar
+        const active = progressBars[current % progressBars.length];
+        requestAnimationFrame(() => {
+          active.style.transition = "width 5s linear";
+          active.style.width = "100%";
+        });
+      });
     }
 
     // Drag control
@@ -208,8 +254,9 @@
     container.addEventListener("touchmove", e => moveDrag(e.touches[0].clientX));
     container.addEventListener("touchend", e => endDrag(e.changedTouches[0].clientX));
 
-    // Init
-    updateCube();
+    window.addEventListener("load", () => {
+      updateCube();
+    });
   </script>
 
 </body>
